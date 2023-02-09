@@ -28,13 +28,32 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            this.editor1 = new CDS.CSScripting.DotNetFrm48Editors.Scintilla.Editor();
+            this.SuspendLayout();
+            // 
+            // editor1
+            // 
+            this.editor1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.editor1.Location = new System.Drawing.Point(90, 66);
+            this.editor1.Name = "editor1";
+            this.editor1.Size = new System.Drawing.Size(605, 295);
+            this.editor1.TabIndex = 0;
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(14F, 29F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.editor1);
+            this.Name = "Form1";
             this.Text = "Form1";
+            this.ResumeLayout(false);
+
         }
 
         #endregion
+
+        private CDS.CSScripting.DotNetFrm48Editors.Scintilla.Editor editor1;
     }
 }
 

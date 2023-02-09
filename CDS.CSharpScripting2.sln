@@ -12,9 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDS.CSScripting.DotNet6Editors.Scintilla", "CDS.CSScripting.DotNet6Editors.Scintilla\CDS.CSScripting.DotNet6Editors.Scintilla.csproj", "{9133AFAC-5CF2-4EF9-B5C2-C1F7450BA51C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoFramework", "DemoFramework\DemoFramework.csproj", "{5152A471-3983-4332-A683-DF0F13E04DD2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDS.CSScripting.DotNetFrm48Editors.Scintilla", "CDS.CSScripting.DotNetFrm48Editors.Scintilla\CDS.CSScripting.DotNetFrm48Editors.Scintilla.csproj", "{BD5AFB2C-E56B-45C8-B8E1-DF992895EB12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNet6Demo", "DotNet6Demo\DotNet6Demo.csproj", "{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetFrm48Demo", "DotNetFrm48Demo\DotNetFrm48Demo.csproj", "{034A4B93-4D9B-418C-BB71-008D105A6206}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,14 +32,18 @@ Global
 		{9133AFAC-5CF2-4EF9-B5C2-C1F7450BA51C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9133AFAC-5CF2-4EF9-B5C2-C1F7450BA51C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9133AFAC-5CF2-4EF9-B5C2-C1F7450BA51C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5152A471-3983-4332-A683-DF0F13E04DD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5152A471-3983-4332-A683-DF0F13E04DD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5152A471-3983-4332-A683-DF0F13E04DD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5152A471-3983-4332-A683-DF0F13E04DD2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BD5AFB2C-E56B-45C8-B8E1-DF992895EB12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BD5AFB2C-E56B-45C8-B8E1-DF992895EB12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD5AFB2C-E56B-45C8-B8E1-DF992895EB12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD5AFB2C-E56B-45C8-B8E1-DF992895EB12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

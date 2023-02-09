@@ -8,6 +8,7 @@ namespace DotNet6Demo
         [STAThread]
         static void Main()
         {
+            CDS.CSScripting.Core.Class1.Beep();
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
