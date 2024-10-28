@@ -17,29 +17,23 @@ namespace ConsoleScratchFramework
 
     public static class ScriptSamples
     {
-        private static ScriptSample s1;
-        private static ScriptSample s2;
-        private static ScriptSample s3;
+        private static ScriptSample s1 = CreateS1();
+        private static ScriptSample s2 = CreateS2();
+        private static ScriptSample s3 = CreateS3();
+        private static ScriptSample s4 = CreateS4();
 
 
         public static ScriptSample S1 => s1;
         public static ScriptSample S2 => s2;
         public static ScriptSample S3 => s3;
+        public static ScriptSample S4 => s4;
 
 
-        static ScriptSamples()
+        private static ScriptSample CreateS1()
         {
-            CreateS1();
-            CreateS2();
-            CreateS3();
-        }   
+            var scriptSample = new ScriptSample();
 
-
-        private static void CreateS1()
-        {
-            s1 = new ScriptSample();
-
-            s1.Code = @"
+            scriptSample.Code = @"
         class XXX
         {
             /// <summary>
@@ -75,23 +69,26 @@ namespace ConsoleScratchFramework
         }
 ";
 
-            s1.Position = s1.Code.IndexOf(".Add") + 5;
+            scriptSample.Position = scriptSample.Code.IndexOf(".Add") + 5;
+
+            return scriptSample;
         }
 
 
-        private static void CreateS2()
+        private static ScriptSample CreateS2()
         {
-            s2 = new ScriptSample();
-            s2.Code = "Console.WriteLine(";
-            s2.Position = s2.Code.Length;
+            var scriptSample = new ScriptSample();
+            scriptSample.Code = "Console.WriteLine(";
+            scriptSample.Position = s2.Code.Length;
+            return scriptSample;
         }
 
 
-        private static void CreateS3()
+        private static ScriptSample CreateS3()
         {
-            s3 = new ScriptSample();
+            var scriptSample = new ScriptSample();
 
-            s3.Code = @"
+            scriptSample.Code = @"
     /// <summary>
     /// Calculates a term of the Fibonacci sequence
     /// </summary>
@@ -100,7 +97,25 @@ namespace ConsoleScratchFramework
     int Fibonacci(int n) => 0;
     Fib";
 
-            s3.Position = s3.Code.Length;
+            scriptSample.Position = scriptSample.Code.Length;
+        }
+
+
+
+        private static ScriptSample CreateS4()
+        {
+            var scriptSample = new ScriptSample();
+
+            scriptSample.Code = @"
+int xxx = 10;
+xxx = xxx * yyy;
+";
+
+            scriptSample.Position = scriptSample.Code.Length;
+
+            return scriptSample;
         }
     }
 }
+
+
