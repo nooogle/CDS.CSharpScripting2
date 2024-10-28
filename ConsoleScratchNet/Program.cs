@@ -1,12 +1,29 @@
 ﻿using ConsoleScratchFramework;
+using OpenAITests;
+
+public static class StaticConstructorTest
+{
+    private static string s;
+
+    public static string S => s;
+
+
+    static StaticConstructorTest()
+    {
+        s = "Hello World";
+    }
+}
+
 
 class Scratch
 {
     static async Task Main(string[] args)
     {
+        await Test(ScriptSamples.S5);
         await Test(ScriptSamples.S1);
         await Test(ScriptSamples.S2);
         await Test(ScriptSamples.S3);
+        await Test(ScriptSamples.S4);
     }
 
 
@@ -16,8 +33,8 @@ class Scratch
         int position = scriptSample.Position;
 
         ScriptManager scriptManager = await ScriptManager.CreateAsync();
-
-        scriptManager = scriptManager.ApplyScript(code);
+        scriptManager = await scriptManager.ApplyScriptAsync(code);
+        SyntaxTreeVisualizer.DisplayTree(await scriptManager.GetSyntaxTreeAsync());
 
         await scriptManager.GetSuggestionsAsync(position);
 

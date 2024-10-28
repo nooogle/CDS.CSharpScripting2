@@ -67,7 +67,8 @@ public class ScriptManager
             scriptProjectInfo
             .WithMetadataReferences(new[]
             {
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location)
             });
 
         scriptProjectInfo =

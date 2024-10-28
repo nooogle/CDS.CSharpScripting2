@@ -17,16 +17,38 @@ namespace ConsoleScratchFramework
 
     public static class ScriptSamples
     {
-        private static ScriptSample s1 = CreateS1();
-        private static ScriptSample s2 = CreateS2();
-        private static ScriptSample s3 = CreateS3();
-        private static ScriptSample s4 = CreateS4();
+        private static ScriptSample s1;
+        private static ScriptSample s2;
+        private static ScriptSample s3;
+        private static ScriptSample s4;
+        private static ScriptSample s5;
+
+
+        static ScriptSamples()
+        {
+            s1 = CreateS1();
+            s2 = CreateS2();
+            s3 = CreateS3();
+            s4 = CreateS4();
+            s5 = CreateS5();
+        }
 
 
         public static ScriptSample S1 => s1;
         public static ScriptSample S2 => s2;
         public static ScriptSample S3 => s3;
+
+
+        /// <summary>
+        /// Contains an error on the 2nd line
+        /// </summary>
         public static ScriptSample S4 => s4;
+
+
+        /// <summary>
+        /// Simulates mouse over the 'n' of System.Console
+        /// </summary>
+        public static ScriptSample S5 => s5;
 
 
         private static ScriptSample CreateS1()
@@ -79,7 +101,7 @@ namespace ConsoleScratchFramework
         {
             var scriptSample = new ScriptSample();
             scriptSample.Code = "Console.WriteLine(";
-            scriptSample.Position = s2.Code.Length;
+            scriptSample.Position = scriptSample.Code.Length;
             return scriptSample;
         }
 
@@ -98,6 +120,8 @@ namespace ConsoleScratchFramework
     Fib";
 
             scriptSample.Position = scriptSample.Code.Length;
+
+            return scriptSample;
         }
 
 
@@ -112,6 +136,18 @@ xxx = xxx * yyy;
 ";
 
             scriptSample.Position = scriptSample.Code.Length;
+
+            return scriptSample;
+        }
+
+
+        private static ScriptSample CreateS5()
+        {
+            var scriptSample = new ScriptSample();
+
+            scriptSample.Code = @"System.Console";
+
+            scriptSample.Position = 9;
 
             return scriptSample;
         }

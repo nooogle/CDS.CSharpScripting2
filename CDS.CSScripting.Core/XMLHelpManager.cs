@@ -3,33 +3,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ConsoleScratchFramework.ForLib
 {
-    public class MethodOverloadInfo
-    {
-        public string Name { get; set; }
-        public string Signature { get; set; }
-        public IList<ParameterInfo> Parameters { get; set; }
-        public string ReturnType { get; set; }
-        public string Summary { get; set; }
-        public string Remarks { get; set; }
-
-        public MethodOverloadInfo()
-        {
-            Parameters = new List<ParameterInfo>();
-        }
-    }
-
-    public class ParameterInfo
-    {
-        public string Name { get; set; }
-        public string Type { get; set; }
-        public string Documentation { get; set; }
-    }
-
-
     public static class XMLHelpManager
     {
         public static IEnumerable<MethodOverloadInfo> Test(SyntaxTree syntaxTree, SemanticModel semanticModel, int position)
@@ -131,68 +107,6 @@ namespace ConsoleScratchFramework.ForLib
             }
 
             return overloadInfos;
-        }
-
-
-        private static void DisplayMethodOverloads(
-            int position, 
-            InvocationExpressionSyntax invocationNode, 
-            SemanticModel semanticModel)
-        {
-            // Get the expression being invoked (e.g., 'System.Diagnostics.Debug.WriteLine')
-            var expression = invocationNode.Expression;
-
-            // Get symbol info for the expression
-            var symbolInfo = semanticModel.GetSymbolInfo(expression);
-
-            // Get the method symbol (could be null if code is incomplete)
-            ISymbol methodSymbol = symbolInfo.Symbol;
-
-            // If the method symbol is null, check candidate symbols
-            if (methodSymbol == null && symbolInfo.CandidateSymbols.Length > 0)
-            {
-                methodSymbol = symbolInfo.CandidateSymbols[0];
-            }
-
-            if (methodSymbol != null)
-            {
-                // Cast to method symbol if possible
-                var method = methodSymbol as IMethodSymbol;
-
-                if (method != null)
-                {
-                    // Get the method name
-                    var methodName = method.Name;
-
-                    // Get the containing type
-                    var containingType = method.ContainingType;
-
-                    // Get all overloads of the method in the containing type
-                    var methodOverloads = containingType.GetMembers(methodName)
-                        .OfType<IMethodSymbol>();
-
-                    // Extract XML documentation for each overload
-                    foreach (var overload in methodOverloads)
-                    {
-                        string signature = overload.ToDisplayString(
-                            SymbolDisplayFormat.CSharpErrorMessageFormat);
-
-                        string xmlDocumentation = overload.GetDocumentationCommentXml();
-
-                        Console.WriteLine("Method Signature: " + signature);
-                        Console.WriteLine("XML Documentation:\n" + xmlDocumentation);
-                        Console.WriteLine(new string('-', 50));
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("The symbol is not a method.");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Method symbol not found.");
-            }
         }
     }
 }
