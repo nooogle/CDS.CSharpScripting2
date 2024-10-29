@@ -1,4 +1,5 @@
-﻿using ConsoleScratchFramework;
+﻿using CDS.CSScripting;
+using ConsoleScratchFramework;
 using System;
 using System.Threading.Tasks;
 
@@ -7,9 +8,13 @@ class Scratch
 {
     static async Task Main(string[] args)
     {
+        //OpenAITests.OpenAITestsOverloads2.Run();
+
+        await Test(ScriptSamples.S5);
         await Test(ScriptSamples.S1);
         await Test(ScriptSamples.S2);
         await Test(ScriptSamples.S3);
+        await Test(ScriptSamples.S4);
     }
 
 
@@ -19,8 +24,8 @@ class Scratch
         int position = scriptSample.Position;
 
         ScriptManager scriptManager = await ScriptManager.CreateAsync();
-
-        scriptManager = scriptManager.ApplyScript(code);
+        scriptManager = await scriptManager.ApplyScriptAsync(code);
+        SyntaxTreeVisualizer.DisplayTree(await scriptManager.GetSyntaxTreeAsync());
 
         await scriptManager.GetSuggestionsAsync(position);
 

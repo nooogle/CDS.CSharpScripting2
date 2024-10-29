@@ -1,5 +1,5 @@
-﻿using ConsoleScratchFramework;
-using OpenAITests;
+﻿using CDS.CSScripting;
+using ConsoleScratchFramework;
 
 public static class StaticConstructorTest
 {

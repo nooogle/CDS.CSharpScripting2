@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace OpenAITests
+namespace CDS.CSScripting
 {
     public static class SyntaxTreeVisualizer
     {

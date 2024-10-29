@@ -1,4 +1,4 @@
-﻿using ConsoleScratchFramework.ForLib;
+﻿using CDS.CSScripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -63,13 +64,51 @@ public class ScriptManager
                 LanguageNames.CSharp,
                 isSubmission: true);
 
+
+        // Get paths to assemblies
+        string mscorlibPath = typeof(object).Assembly.Location;
+        string systemConsolePath = typeof(Console).Assembly.Location;
+
+        // Get paths to XML documentation files
+        string mscorlibXmlPath = GetXmlDocumentationPath(mscorlibPath);
+        string systemConsoleXmlPath = GetXmlDocumentationPath(systemConsolePath);
+
+        // Create documentation providers
+        DocumentationProvider mscorlibDocumentation = null;
+        DocumentationProvider systemConsoleDocumentation = null;
+
+        if (File.Exists(mscorlibXmlPath))
+        {
+            mscorlibDocumentation = XmlDocumentationProvider.CreateFromFile(mscorlibXmlPath);
+        }
+
+        if (File.Exists(systemConsoleXmlPath))
+        {
+            systemConsoleDocumentation = XmlDocumentationProvider.CreateFromFile(systemConsoleXmlPath);
+        }
+
+        // Create metadata references with documentation providers
+        var references = new List<MetadataReference>
+                    {
+                        MetadataReference.CreateFromFile(
+                            mscorlibPath,
+                            documentation: mscorlibDocumentation ?? DocumentationProvider.Default),
+
+                        MetadataReference.CreateFromFile(
+                            systemConsolePath,
+                            documentation: systemConsoleDocumentation ?? DocumentationProvider.Default)
+                    };
+
+        //references.Add(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+        //references.Add(MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location));
+
+
+
+
         scriptProjectInfo =
             scriptProjectInfo
-            .WithMetadataReferences(new[]
-            {
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location)
-            });
+            .WithMetadataReferences(references);
+
 
         scriptProjectInfo =
             scriptProjectInfo
@@ -481,13 +520,134 @@ public class ScriptManager
         }
     }
 
-    public async Task GetSuggestionsAsync(int position)
+    public async Task<(DetailedTypeInfo typeInfo, IEnumerable<MethodOverloadInfo> memberInfos)> GetSuggestionsAsync(int position)
     {
+        //X2.Test(await GetSyntaxTreeAsync(), await GetSemanticModelAsync(), position);
+
         var xmlInfo = XMLHelpManager.Test(
             syntaxTree: await GetSyntaxTreeAsync(),
             semanticModel: await GetSemanticModelAsync(),
             position: position);
 
-        var comp = await this.GetCompletionSuggestionsAsync(position: position);
+
+        return xmlInfo;
+    }
+
+
+    private static string GetXmlDocumentationPath(string assemblyPath)
+    {
+        string xmlPath = Path.ChangeExtension(assemblyPath, ".xml");
+
+        if (File.Exists(xmlPath))
+        {
+            return xmlPath;
+        }
+
+        // Fallback to common locations
+        string assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
+
+        var xmlFileName = $"{assemblyName}.xml";
+
+        var programFilesPaths = new List<string>
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+
+        var possiblePaths = new List<string>();
+
+
+        foreach (var programFilesPath in programFilesPaths)
+        {
+            // .NET Packs
+            var packsRoot = Path.Combine(
+                programFilesPath,
+                "dotnet",
+                "packs",
+                "Microsoft.NETCore.App.Ref");
+
+            if (Directory.Exists(packsRoot))
+            {
+                var packsSubFolders = Directory.GetDirectories(packsRoot).OrderByDescending(d => d);
+
+                foreach (var packSubFolder in packsSubFolders)
+                {
+                    var refFolder = Path.Combine(packSubFolder, "ref");
+                    if (!Directory.Exists(refFolder))
+                    {
+                        continue;
+                    }
+
+                    foreach (var xmlFolder in Directory.GetDirectories(refFolder).Where(f => Path.GetFileNameWithoutExtension(f).StartsWith("net")))
+                    {
+                        possiblePaths.Add(Path.Combine(xmlFolder, xmlFileName));
+                    }
+                }
+            }
+
+
+            // .NET Framework paths
+            foreach (var netFrameworkVersion in new[] { "v4.8.1", "v4.8", "v4.7.2" })
+            {
+                possiblePaths.Add(Path.Combine(programFilesPath, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework", netFrameworkVersion, $"{assemblyName}.xml"));
+            }
+        }
+
+
+
+        //foreach (var programFilesPath in programFilesPaths)
+        //{
+        //    // .NET Packs
+        //    var packsRoot = Path.Combine(
+        //        programFilesPath,
+        //        "dotnet",
+        //        "packs",
+        //        "Microsoft.NETCore.App.Ref");
+
+        //    if (Directory.Exists(packsRoot))
+        //    {
+        //        var packsSubFolders = Directory.GetDirectories(packsRoot);
+
+        //        foreach (var packSubFolder in packsSubFolders)
+        //        {
+        //            var refFolder = Path.Combine(packSubFolder, "ref");
+        //            if (!Directory.Exists(refFolder))
+        //            {
+        //                continue;
+        //            }
+
+        //            foreach (var xmlFolder in Directory.GetDirectories(refFolder).Where(f => Path.GetFileNameWithoutExtension(f).StartsWith("net")))
+        //            {
+        //                possiblePaths.Add(Path.Combine(xmlFolder, xmlFileName));
+        //            }
+        //        }
+        //    }
+
+        //    possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "shared", "Microsoft.NETCore.App", "5.0.0", $"{assemblyName}.xml"));
+
+        //    possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "shared", "Microsoft.NETCore.App", "8.0.10", $"{assemblyName}.xml"));
+
+        //    // .NET Framework paths
+        //    foreach (var netFrameworkVersion in new[] { "v4.8.1", "v4.8", "v4.7.2" })
+        //    {
+        //        possiblePaths.Add(Path.Combine(programFilesPath, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework", netFrameworkVersion, $"{assemblyName}.xml"));
+        //    }
+
+        //    // Add more versions if needed
+        //    foreach (var netCoreVersion in new[] { "3.1.0", "3.0.0", "2.2.0", "2.1.0" })
+        //    {
+        //        possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "packs", "Microsoft.NETCore.App.Ref", netCoreVersion, "ref", $"netcoreapp{netCoreVersion}", $"{assemblyName}.xml"));
+        //    }
+        //}
+
+        foreach (var path in possiblePaths)
+        {
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        return xmlPath; // Return the original path if no fallback found
     }
 }
