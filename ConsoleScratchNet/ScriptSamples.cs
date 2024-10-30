@@ -10,7 +10,7 @@ namespace ConsoleScratchFramework
 {
     public class ScriptSample
     {
-        public string Code { get; set; }
+        public string Code { get; set; } = "";
         public int Position { get; set; }
     }
 

@@ -11,12 +11,17 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-public class ScriptManager
+public partial class ScriptManager
 {
     private Document document;
     private string scriptText;
     private SyntaxTree cachedSyntaxTree;
     private SemanticModel cachedSemanticModel;
+    private Compilation compilation;
+    private ImmutableArray<Diagnostic> diagnostics;
+    private SourceText scriptSourceText;
+    private CDS.CSharpScripting.CompiledScript compiledScript;
+    private CompletionService completionService;
 
 
     public async Task<SyntaxTree> GetSyntaxTreeAsync()
@@ -48,7 +53,18 @@ public class ScriptManager
     private ScriptManager()
     {
         scriptText = "";
-        var workspace = new AdhocWorkspace();
+
+        // Create documentation providers
+        MetadataReference metadataRefMSCorLib = GetMetadataReference(typeof(object));
+        MetadataReference metadataRefConsoleDocumentation = GetMetadataReference(typeof(Console));
+
+        // Create metadata references with documentation providers
+        var references = new List<MetadataReference>
+        {
+            metadataRefMSCorLib,
+            metadataRefConsoleDocumentation,
+        };
+
 
         var compilationOptions = new CSharpCompilationOptions(
            OutputKind.DynamicallyLinkedLibrary,
@@ -62,65 +78,20 @@ public class ScriptManager
                 name: "Script",
                 assemblyName: "Script",
                 LanguageNames.CSharp,
-                isSubmission: true);
-
-
-        // Get paths to assemblies
-        string mscorlibPath = typeof(object).Assembly.Location;
-        string systemConsolePath = typeof(Console).Assembly.Location;
-
-        // Get paths to XML documentation files
-        string mscorlibXmlPath = GetXmlDocumentationPath(mscorlibPath);
-        string systemConsoleXmlPath = GetXmlDocumentationPath(systemConsolePath);
-
-        // Create documentation providers
-        DocumentationProvider mscorlibDocumentation = null;
-        DocumentationProvider systemConsoleDocumentation = null;
-
-        if (File.Exists(mscorlibXmlPath))
-        {
-            mscorlibDocumentation = XmlDocumentationProvider.CreateFromFile(mscorlibXmlPath);
-        }
-
-        if (File.Exists(systemConsoleXmlPath))
-        {
-            systemConsoleDocumentation = XmlDocumentationProvider.CreateFromFile(systemConsoleXmlPath);
-        }
-
-        // Create metadata references with documentation providers
-        var references = new List<MetadataReference>
-                    {
-                        MetadataReference.CreateFromFile(
-                            mscorlibPath,
-                            documentation: mscorlibDocumentation ?? DocumentationProvider.Default),
-
-                        MetadataReference.CreateFromFile(
-                            systemConsolePath,
-                            documentation: systemConsoleDocumentation ?? DocumentationProvider.Default)
-                    };
-
-        //references.Add(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
-        //references.Add(MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location));
-
-
-
-
-        scriptProjectInfo =
-            scriptProjectInfo
-            .WithMetadataReferences(references);
-
-
-        scriptProjectInfo =
-            scriptProjectInfo
+                isSubmission: true)
+            .WithMetadataReferences(references)
             .WithCompilationOptions(compilationOptions);
 
 
+        var workspace = new AdhocWorkspace();
         var scriptProject = workspace.AddProject(scriptProjectInfo);
+
 
         var scriptDocumentInfo = DocumentInfo.Create(
             DocumentId.CreateNewId(scriptProject.Id), "Script",
             sourceCodeKind: SourceCodeKind.Script,
             loader: TextLoader.From(TextAndVersion.Create(SourceText.From(scriptText), VersionStamp.Create())));
+
 
         document = workspace.AddDocument(scriptDocumentInfo);
     }
@@ -152,11 +123,7 @@ public class ScriptManager
     }
 
 
-    private Compilation compilation;
-    private ImmutableArray<Diagnostic> diagnostics;
-
-
-    public async Task<Compilation> GetCompilationAsync()
+    private async Task<Compilation> GetCompilationAsync()
     {
         if (compilation != null) { return compilation; }
 
@@ -174,46 +141,33 @@ public class ScriptManager
     }
 
 
-    SourceText scriptSourceText;
-    CDS.CSharpScripting.CompiledScript compiledScript;
-
 
     public async Task<SourceText> GetScriptSourceTextAsync() => scriptSourceText ?? (scriptSourceText = await document.GetTextAsync());
 
 
-    public void Compile()
+    public async Task Compile()
     {
         if (compiledScript != null) { return; }
 
-        SourceText scriptSourceText = GetScriptSourceTextAsync().Result;
+        SourceText scriptSourceText = await GetScriptSourceTextAsync();
         string script = scriptSourceText.ToString();
         compiledScript = CDS.CSharpScripting.ScriptCompiler.Compile(script);
     }
 
 
-    public CDS.CSharpScripting.CompilationOutput GetCompilationOutput()
+    public async Task<CDS.CSharpScripting.CompilationOutput> GetCompilationOutput()
     {
-        Compile();
+        await Compile();
         return compiledScript.CompilationOutput;
     }
 
 
     public async Task<T> RunAsync<T>()
     {
-        Compile();
+        await Compile();
         return await CDS.CSharpScripting.ScriptRunner.RunAsync<T>(compiledScript, globals: null);
     }
 
-
-    enum CompletionMode
-    {
-        AllInAlphabeticalOrder,
-        AllWithSingleLetterMatch,
-        MatchingFirstTwoOrMoreOnly,
-    }
-
-
-    private CompletionService completionService;
 
 
     /// <summary>
@@ -235,8 +189,8 @@ public class ScriptManager
             return ImmutableArray<CompletionItem>.Empty;
         }
 
-        var completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
-        var spanText = GetSpanText(completionMode, completionList.ItemsList[0]);
+        CodeCompletionMode completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
+        var spanText = GetSpanTextForCodeCompletion(completionMode, completionList.ItemsList[0]);
 
         var filteredItems = FilterCompletionItems(completionList.ItemsList.ToImmutableArray(), completionMode, spanText);
         SortCompletionItems(filteredItems, completionMode, spanText);
@@ -244,39 +198,43 @@ public class ScriptManager
         return filteredItems.ToImmutableArray();
     }
 
+
     private async Task<CompletionList> GetCompletionListAsync(int position)
     {
         return await completionService.GetCompletionsAsync(document, position, cancellationToken: default);
     }
 
-    private CompletionMode DetermineCompletionMode(CompletionItem firstItem)
+
+    private CodeCompletionMode DetermineCompletionMode(CompletionItem firstItem)
     {
         int spanLength = firstItem.Span.Length;
 
         if (spanLength == 0)
         {
-            return CompletionMode.AllInAlphabeticalOrder;
+            return CodeCompletionMode.AllInAlphabeticalOrder;
         }
         else if (spanLength == 1)
         {
-            return CompletionMode.AllWithSingleLetterMatch;
+            return CodeCompletionMode.AllWithSingleLetterMatch;
         }
         else
         {
-            return CompletionMode.MatchingFirstTwoOrMoreOnly;
+            return CodeCompletionMode.MatchingFirstTwoOrMoreOnly;
         }
     }
 
-    private string GetSpanText(CompletionMode mode, CompletionItem firstItem)
+
+    private string GetSpanTextForCodeCompletion(CodeCompletionMode mode, CompletionItem firstItem)
     {
-        return mode == CompletionMode.AllInAlphabeticalOrder
+        return mode == CodeCompletionMode.AllInAlphabeticalOrder
             ? string.Empty
             : scriptText.Substring(firstItem.Span.Start, firstItem.Span.Length);
     }
 
-    private List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, CompletionMode mode, string spanText)
+
+    private List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, CodeCompletionMode mode, string spanText)
     {
-        if (mode != CompletionMode.MatchingFirstTwoOrMoreOnly)
+        if (mode != CodeCompletionMode.MatchingFirstTwoOrMoreOnly)
         {
             return items.ToList();
         }
@@ -284,9 +242,10 @@ public class ScriptManager
         return items.Where(item => item.DisplayText.StartsWith(spanText, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
-    private void SortCompletionItems(List<CompletionItem> items, CompletionMode mode, string spanText)
+
+    private void SortCompletionItems(List<CompletionItem> items, CodeCompletionMode mode, string spanText)
     {
-        if (mode == CompletionMode.AllWithSingleLetterMatch && !string.IsNullOrEmpty(spanText))
+        if (mode == CodeCompletionMode.AllWithSingleLetterMatch && !string.IsNullOrEmpty(spanText))
         {
             var sorter = new CompletionItemSingleLetterMatchSorter(spanText[0]);
             items.Sort(sorter.Compare);
@@ -297,54 +256,56 @@ public class ScriptManager
         }
     }
 
-    public async Task GetMethodOverloadsAsync(int position)
-    {
-        // Step 1: Get the Semantic Model from the Document
-        var semanticModel = await document.GetSemanticModelAsync();
 
-        // Step 2: Get the Syntax Root (entire syntax tree)
-        var syntaxRoot = await document.GetSyntaxRootAsync();
+    //public async Task GetMethodOverloadsAsync(int position)
+    //{
+    //    // Step 1: Get the Semantic Model from the Document
+    //    var semanticModel = await document.GetSemanticModelAsync();
 
-        // Step 3: Find the nearest token to the given position
-        var token = syntaxRoot.FindToken(position);
+    //    // Step 2: Get the Syntax Root (entire syntax tree)
+    //    var syntaxRoot = await document.GetSyntaxRootAsync();
 
-        // Step 4: Get the closest ancestor that is an InvocationExpressionSyntax (method invocation)
-        var invocation = token.Parent?.AncestorsAndSelf().OfType<InvocationExpressionSyntax>().FirstOrDefault();
+    //    // Step 3: Find the nearest token to the given position
+    //    var token = syntaxRoot.FindToken(position);
 
-        if (invocation == null)
-        {
-            Console.WriteLine("No invocation found at the given position.");
-            return;
-        }
+    //    // Step 4: Get the closest ancestor that is an InvocationExpressionSyntax (method invocation)
+    //    var invocation = token.Parent?.AncestorsAndSelf().OfType<InvocationExpressionSyntax>().FirstOrDefault();
 
-        // Step 5: Try to get the symbol info using speculative analysis if the code is incomplete
-        SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(invocation);
+    //    if (invocation == null)
+    //    {
+    //        Console.WriteLine("No invocation found at the given position.");
+    //        return;
+    //    }
 
-        if (symbolInfo.Symbol == null)
-        {
-            // If we couldn't get the symbol, try speculative semantic analysis
-            symbolInfo = semanticModel.GetSpeculativeSymbolInfo(position, invocation, SpeculativeBindingOption.BindAsExpression);
-        }
+    //    // Step 5: Try to get the symbol info using speculative analysis if the code is incomplete
+    //    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(invocation);
 
-        var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+    //    if (symbolInfo.Symbol == null)
+    //    {
+    //        // If we couldn't get the symbol, try speculative semantic analysis
+    //        symbolInfo = semanticModel.GetSpeculativeSymbolInfo(position, invocation, SpeculativeBindingOption.BindAsExpression);
+    //    }
 
-        if (methodSymbol == null)
-        {
-            Console.WriteLine("No method symbol found.");
-            return;
-        }
+    //    var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
 
-        // Step 6: Retrieve method overloads using LookupSymbols
-        var methodGroup = semanticModel.LookupSymbols(position, methodSymbol.ContainingType, methodSymbol.Name)
-                                       .OfType<IMethodSymbol>();
+    //    if (methodSymbol == null)
+    //    {
+    //        Console.WriteLine("No method symbol found.");
+    //        return;
+    //    }
 
-        // Step 7: Print method overloads and parameters
-        foreach (var overload in methodGroup)
-        {
-            var parameters = overload.Parameters.Select(p => $"{p.Type} {p.Name}");
-            Console.WriteLine($"{overload.Name}({string.Join(", ", parameters)})");
-        }
-    }
+    //    // Step 6: Retrieve method overloads using LookupSymbols
+    //    var methodGroup = semanticModel.LookupSymbols(position, methodSymbol.ContainingType, methodSymbol.Name)
+    //                                   .OfType<IMethodSymbol>();
+
+    //    // Step 7: Print method overloads and parameters
+    //    foreach (var overload in methodGroup)
+    //    {
+    //        var parameters = overload.Parameters.Select(p => $"{p.Type} {p.Name}");
+    //        Console.WriteLine($"{overload.Name}({string.Join(", ", parameters)})");
+    //    }
+    //}
+
 
     //public async Task<ImmutableArray<CompletionItem>> GetCompletionSuggestionsAsync(int position)
     //{
@@ -498,27 +459,27 @@ public class ScriptManager
 
 
 
-    public async Task Test(int position)
-    {
-        SyntaxTree syntaxTree = await GetSyntaxTreeAsync();
+    //public async Task Test(int position)
+    //{
+    //    SyntaxTree syntaxTree = await GetSyntaxTreeAsync();
 
-        var compilation = CSharpCompilation.Create("ScriptAnalysis")
-            .AddReferences(
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Console).Assembly.Location))
-            .AddSyntaxTrees(syntaxTree);
+    //    var compilation = CSharpCompilation.Create("ScriptAnalysis")
+    //        .AddReferences(
+    //            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+    //            MetadataReference.CreateFromFile(typeof(Console).Assembly.Location))
+    //        .AddSyntaxTrees(syntaxTree);
 
-        SemanticModel semanticModel = await GetSemanticModelAsync();
+    //    SemanticModel semanticModel = await GetSemanticModelAsync();
 
-        SyntaxNode root = syntaxTree.GetRoot();
-        SyntaxToken token = root.FindToken(position);
-        SyntaxNode node = token.Parent;
+    //    SyntaxNode root = syntaxTree.GetRoot();
+    //    SyntaxToken token = root.FindToken(position);
+    //    SyntaxNode node = token.Parent;
 
-        while (node != null && !(node is InvocationExpressionSyntax))
-        {
-            node = node.Parent;
-        }
-    }
+    //    while (node != null && !(node is InvocationExpressionSyntax))
+    //    {
+    //        node = node.Parent;
+    //    }
+    //}
 
     public async Task<(DetailedTypeInfo typeInfo, IEnumerable<MethodOverloadInfo> memberInfos)> GetSuggestionsAsync(int position)
     {
@@ -531,6 +492,24 @@ public class ScriptManager
 
 
         return xmlInfo;
+    }
+
+
+    private MetadataReference GetMetadataReference(Type type)
+    {
+        var assemblyPath = type.Assembly.Location;
+        string xmlPath = GetXmlDocumentationPath(assemblyPath);
+        
+        DocumentationProvider documentationProvider =
+            File.Exists(xmlPath) ?
+            XmlDocumentationProvider.CreateFromFile(xmlPath) :
+            DocumentationProvider.Default;
+
+        var metadataReference = MetadataReference.CreateFromFile(
+            path: assemblyPath,
+            documentation: documentationProvider);
+
+        return metadataReference;
     }
 
 

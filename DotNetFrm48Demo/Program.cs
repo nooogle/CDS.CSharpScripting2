@@ -14,7 +14,6 @@ namespace DotNetFrm48Demo
         [STAThread]
         static void Main()
         {
-            CDS.CSScripting.Core.Class1.Beep();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

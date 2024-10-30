@@ -44,15 +44,6 @@ class Scratch
         //await TestGettingOutput(scriptManager);
     }
 
-    private static async Task SimpleFunctionArgs(ScriptManager scriptManager)
-    {
-        scriptManager = scriptManager.ApplyScript("Console.WriteLine(");
-        await scriptManager.Test(scriptManager.ScriptText.Length);
-
-        scriptManager = scriptManager.ApplyScript("return Math.Pow(1, y);");
-        await scriptManager.GetMethodOverloadsAsync(position: 13); // scriptManager.ScriptText.Length);
-    }
-
 
     private static async Task TestSimpleFunctinNameCompletion(ScriptManager scriptManager)
     {
