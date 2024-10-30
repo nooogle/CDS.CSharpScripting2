@@ -1,3 +1,5 @@
+using CDS.CSScripting;
+
 namespace DotNet6UnitTests
 {
     [TestClass]
@@ -27,6 +29,8 @@ namespace DotNet6UnitTests
         {
             var scriptManager = await ScriptManager.CreateAsync();
             scriptManager = scriptManager.ApplyScript("System.Console.Window");
+
+            var d = await scriptManager.GetDiagnosticsAsync();
 
             var completions = await scriptManager.GetCompletionSuggestionsAsync(scriptManager.ScriptText.Length);
 

@@ -1,4 +1,6 @@
 
+using CDS.CSScripting;
+
 namespace DotNet6UnitTests
 {
     [TestClass]

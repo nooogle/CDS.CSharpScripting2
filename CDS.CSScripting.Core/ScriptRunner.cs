@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace CDS.CSharpScripting
+namespace CDS.CSScripting
 {
     /// <summary>
     /// Run compiled scripts

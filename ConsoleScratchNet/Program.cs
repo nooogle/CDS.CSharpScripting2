@@ -36,6 +36,8 @@ class Scratch
         scriptManager = await scriptManager.ApplyScriptAsync(code);
         SyntaxTreeVisualizer.DisplayTree(await scriptManager.GetSyntaxTreeAsync());
 
+        var d = await scriptManager.GetDiagnosticsAsync();
+
         await scriptManager.GetSuggestionsAsync(position);
 
         //await TestSimpleFunctinNameCompletion(scriptManager);

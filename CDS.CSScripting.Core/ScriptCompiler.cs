@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Linq;
 
-namespace CDS.CSharpScripting
+namespace CDS.CSScripting
 {
     /// <summary>
     /// Script compilationn support

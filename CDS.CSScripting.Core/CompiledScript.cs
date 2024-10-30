@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace CDS.CSharpScripting
+namespace CDS.CSScripting
 {
     /// <summary>
     /// Utility to wrap a compiled script. 
