@@ -1,7 +1,9 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CDS.CSScripting
 {
@@ -60,7 +62,6 @@ namespace CDS.CSScripting
                 typeOfGlobals: typeOfGlobals);
         }
 
-
         /// <summary>
         /// Compile a C# script that returns a specific type. 
         /// </summary>
@@ -76,10 +77,33 @@ namespace CDS.CSScripting
             Type[] referenceTypes,
             Type typeOfGlobals)
         {
+            return Compile<ReturnType>(
+                script: script,
+                namespaces: namespaceTypes.Select(t => t.Namespace).ToArray(),
+                references: referenceTypes.Select(t => t.Assembly.GetName().Name).ToArray(),
+                typeOfGlobals: typeOfGlobals);
+        }
+
+
+        /// <summary>
+        /// Compile a C# script that returns a specific type. 
+        /// </summary>
+        /// <param name="script">Script text to compile</param>
+        /// <param name="namespaceTypes">An array of references. E.g. "System.Math"</param>
+        /// <param name="referenceTypes">An array assemblies to reference; the assembly for each type in this array is loaded and made available to the script</param>
+        /// <param name="typeOfGlobals">Type of the Globals class used to provide global params to the script; null if not required.</param>
+        /// <typeparam name="ReturnType">The type of object that is returned from the script</typeparam>
+        /// <returns>A compiled script</returns>
+        public static CompiledScript Compile<ReturnType>(
+            string script,
+            IEnumerable<string> namespaces,
+            IEnumerable<string> references,
+            Type typeOfGlobals)
+        {
             GC.Collect();
 
-            var scriptOptions = ScriptOptions.Default.WithImports(namespaceTypes.Select(r => r.Namespace));
-            scriptOptions = scriptOptions.AddReferences(referenceTypes.Select(a => a.Assembly));
+            var scriptOptions = ScriptOptions.Default.WithImports(namespaces.Distinct());
+            scriptOptions = scriptOptions.AddReferences(references.Distinct());
 
             var compiledScript = CSharpScript.Create<ReturnType>(
                  script,

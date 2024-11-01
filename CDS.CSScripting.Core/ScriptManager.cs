@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace CDS.CSScripting
@@ -15,6 +16,7 @@ namespace CDS.CSScripting
     {
         private Document document;
         private string scriptText;
+        private Env environment;
         private SyntaxTree cachedSyntaxTree;
         private SemanticModel cachedSemanticModel;
         private Compilation compilation;
@@ -50,14 +52,15 @@ namespace CDS.CSScripting
         public string ScriptText => scriptText;
 
 
-        private ScriptManager()
+        private ScriptManager(Env environment)
         {
             scriptText = "";
+            this.environment = environment;
 
             // Create documentation providers
             MetadataReference metadataRefMSCorLib = GetMetadataReference(typeof(object));
             MetadataReference metadataRefConsoleDocumentation = GetMetadataReference(typeof(Console));
-
+            
             // Create metadata references with documentation providers
             var references = new List<MetadataReference>
             {
@@ -65,31 +68,43 @@ namespace CDS.CSScripting
                 metadataRefConsoleDocumentation,
             };
 
-            string framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+            foreach (var referenceName in environment.ReferenceNames)
+            {
+                MetadataReference metadataRef = GetMetadataReference(referenceName);
+                references.Add(metadataRef);
+            }
 
-            if (!framework.Contains(".NET Framework"))
+
+            if (environment.GlobalType != null)
+            {
+                MetadataReference metadataRefGlobal = GetMetadataReference(environment.GlobalType);
+                references.Add(metadataRefGlobal);
+            }
+
+            if (!Env.IsNetFramework)
             {
                 MetadataReference metadataRefRuntime = MetadataReference.CreateFromFile(System.Reflection.Assembly.Load("System.Runtime").Location);
 
                 references.Add(metadataRefRuntime);
             }
 
+
             var compilationOptions = new CSharpCompilationOptions(
                OutputKind.DynamicallyLinkedLibrary,
-               usings: new[] { "System" });
+               usings: environment.NamespaceNames);
 
             var scriptProjectInfo =
                 ProjectInfo
                 .Create(
-                    ProjectId.CreateNewId(),
-                    VersionStamp.Create(),
+                    id: ProjectId.CreateNewId(),
+                    version: VersionStamp.Create(),
                     name: "Script",
                     assemblyName: "Script",
-                    LanguageNames.CSharp,
+                    language: LanguageNames.CSharp,
+                    hostObjectType: environment.GlobalType,
                     isSubmission: true)
                 .WithMetadataReferences(references)
                 .WithCompilationOptions(compilationOptions);
-
 
             var workspace = new AdhocWorkspace();
             var scriptProject = workspace.AddProject(scriptProjectInfo);
@@ -104,17 +119,18 @@ namespace CDS.CSScripting
             document = workspace.AddDocument(scriptDocumentInfo);
         }
 
-        private ScriptManager(Document scriptDocument, string scriptText)
+        private ScriptManager(Document scriptDocument, string scriptText, Env environment)
         {
             this.document = scriptDocument;
             this.scriptText = scriptText;
+            this.environment = environment;
         }
 
         public ScriptManager ApplyScript(string script)
         {
             var newSourceText = SourceText.From(script);
             var updatedDocument = document.WithText(newSourceText);
-            return new ScriptManager(updatedDocument, script);
+            return new ScriptManager(updatedDocument, script, environment);
         }
 
 
@@ -124,9 +140,12 @@ namespace CDS.CSScripting
         }
 
 
-        public static async Task<ScriptManager> CreateAsync()
+        public static async Task<ScriptManager> CreateAsync() => await CreateAsync(Env.Default);
+
+
+        public static async Task<ScriptManager> CreateAsync(Env environment)
         {
-            var task = Task.Run(() => new ScriptManager());
+            var task = Task.Run(() => new ScriptManager(environment));
             return await task;
         }
 
@@ -159,7 +178,12 @@ namespace CDS.CSScripting
 
             SourceText scriptSourceText = await GetScriptSourceTextAsync();
             string script = scriptSourceText.ToString();
-            compiledScript = ScriptCompiler.Compile(script);
+            
+            compiledScript = ScriptCompiler.Compile<object>(
+                script,
+                namespaces: environment.NamespaceNames,
+                references: environment.ReferenceNames,
+                typeOfGlobals: environment.GlobalType);
         }
 
 
@@ -172,10 +196,14 @@ namespace CDS.CSScripting
 
         public async Task<T> RunAsync<T>()
         {
-            await CompileAsync();
-            return await ScriptRunner.RunAsync<T>(compiledScript, globals: null);
+            return await RunAsync<T>(globals: null);
         }
 
+        public async Task<T> RunAsync<T>(object globals)
+        {
+            await CompileAsync();
+            return await ScriptRunner.RunAsync<T>(compiledScript, globals: globals);
+        }
 
 
         public async Task<ImmutableArray<CompletionItem>> GetCompletionSuggestionsAsync(int position)
@@ -202,12 +230,11 @@ namespace CDS.CSScripting
 
             return xmlInfo;
         }
-
-
-        private MetadataReference GetMetadataReference(Type type)
+        
+        private MetadataReference GetMetadataReference(string assemblyName)
         {
-            var assemblyPath = type.Assembly.Location;
-            string xmlPath = GetXmlDocumentationPath(assemblyPath);
+            var assembly = Assembly.Load(assemblyName);
+            string xmlPath = GetXmlDocumentationPath(assembly.Location);
 
             DocumentationProvider documentationProvider =
                 File.Exists(xmlPath) ?
@@ -215,10 +242,17 @@ namespace CDS.CSScripting
                 DocumentationProvider.Default;
 
             var metadataReference = MetadataReference.CreateFromFile(
-                path: assemblyPath,
+                path: assembly.Location,
                 documentation: documentationProvider);
 
             return metadataReference;
+        }
+
+
+        private MetadataReference GetMetadataReference(Type type)
+        {
+            var assemblyPath = type.Assembly.GetName().Name;
+            return GetMetadataReference(assemblyPath);
         }
 
 

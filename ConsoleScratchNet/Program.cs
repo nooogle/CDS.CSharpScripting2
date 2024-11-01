@@ -1,5 +1,6 @@
 ﻿using CDS.CSScripting;
 using ConsoleScratchFramework;
+using System.Reflection;
 
 public static class StaticConstructorTest
 {
@@ -19,6 +20,16 @@ class Scratch
 {
     static async Task Main(string[] args)
     {
+        try
+        {
+            var test = Assembly.Load("System.Drawing");
+            Console.WriteLine($"System.Drawing loaded from [{test.Location}]");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
         await Test(ScriptSamples.S5);
         await Test(ScriptSamples.S1);
         await Test(ScriptSamples.S2);
