@@ -194,10 +194,22 @@ namespace CDS.CSScripting
         }
 
 
+        public async Task RunAsync()
+        {
+            await RunAsync<object>(globals: null);
+        }
+
+
         public async Task<T> RunAsync<T>()
         {
             return await RunAsync<T>(globals: null);
         }
+
+        public async Task RunAsync(object globals)
+        {
+            await RunAsync<object>(globals);
+        }
+
 
         public async Task<T> RunAsync<T>(object globals)
         {

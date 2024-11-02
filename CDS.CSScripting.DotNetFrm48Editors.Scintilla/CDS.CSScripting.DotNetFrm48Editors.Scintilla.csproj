@@ -74,5 +74,16 @@
       <DependentUpon>Editor.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj">
+      <Project>{8b29ec18-9d93-4723-92bf-baeae84abfdd}</Project>
+      <Name>CDS.CSScripting.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Scintilla5.NET">
+      <Version>5.6.2</Version>
+    </PackageReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

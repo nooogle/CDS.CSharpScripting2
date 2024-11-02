@@ -30,6 +30,8 @@
             WarningCount = warningCount;
             ErrorCount = errorCount;
             Messages = messages;
+
+            //Microsoft.CodeAnalysis.CSharp
         }
     }
 }

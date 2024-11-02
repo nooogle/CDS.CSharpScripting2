@@ -35,7 +35,7 @@ namespace DotNet6UnitTests
             compilationOutput.WarningCount.Should().Be(0);
 
             // Run
-            await scriptManager.RunAsync<object>();
+            await scriptManager.RunAsync();
         }
 
 
@@ -91,7 +91,7 @@ namespace DotNet6UnitTests
             compilationOutput.WarningCount.Should().Be(0);
 
             // Check runtime
-            await scriptManager.RunAsync<object>();
+            await scriptManager.RunAsync();
         }
 
 
@@ -141,7 +141,7 @@ namespace DotNet6UnitTests
 
 
         /// <summary>
-        /// Tests using accessing and modifying global data from within a script.
+        /// Tests accessing and modifying global data from within a script.
         /// </summary>
         [TestMethod]
         public async Task ScriptWithGlobalData_CompilesAndRuns_WithoutErrorsOrWarnings()
@@ -169,7 +169,7 @@ namespace DotNet6UnitTests
             compilationOutput.WarningCount.Should().Be(0);
 
             // Check runtime
-            await scriptManager.RunAsync<object>(globalData);
+            await scriptManager.RunAsync(globalData);
             globalData.Animal.Should().Be("Donkey (modified by script)");
         }
     }

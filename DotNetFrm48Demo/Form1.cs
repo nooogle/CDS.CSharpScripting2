@@ -15,6 +15,15 @@ namespace DotNetFrm48Demo
         public Form1()
         {
             InitializeComponent();
+
+            _ = CreateSM();
+        }
+
+        private static async Task CreateSM()
+        {
+            CDS.CSScripting.ScriptManager s = await CDS.CSScripting.ScriptManager.CreateAsync();
+
+            System.Diagnostics.Debug.WriteLine(s);
         }
     }
 }
