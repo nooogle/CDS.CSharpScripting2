@@ -1,6 +1,7 @@
 ﻿using CDS.CSScripting;
 using ConsoleScratchFramework;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 
@@ -8,6 +9,7 @@ class Scratch
 {
     static async Task Main(string[] args)
     {
+
         //OpenAITests.OpenAITestsOverloads2.Run();
 
         await Test(ScriptSamples.S5);

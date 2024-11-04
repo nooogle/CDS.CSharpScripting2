@@ -61,9 +61,14 @@ namespace CDS.CSScripting
         {
             if (IsNetFramework)
             {
+                // For .NetFramework this requires the System.Drawing assembly, but calling
+                // Assembly.Load("System.Drawing") will not work - not sure why! Instead,
+                // we need to use the full name of the assembly.
+                var systemDrawingFullName = typeof(System.Drawing.Point).Assembly.FullName;
+
                 return new Env(
                     namespaceNames,
-                    referenceNames.Add("System.Drawing"),
+                    referenceNames.Add(systemDrawingFullName),
                     globalType);
             }
 

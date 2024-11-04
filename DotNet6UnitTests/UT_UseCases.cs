@@ -1,4 +1,8 @@
 using CDS.CSScripting;
+using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace DotNet6UnitTests
 {
