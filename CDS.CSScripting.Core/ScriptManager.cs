@@ -57,16 +57,17 @@ namespace CDS.CSScripting
             scriptText = "";
             this.environment = environment;
 
-            // Create documentation providers
-            MetadataReference metadataRefMSCorLib = GetMetadataReference(typeof(object));
-            MetadataReference metadataRefConsoleDocumentation = GetMetadataReference(typeof(Console));
-            
-            // Create metadata references with documentation providers
-            var references = new List<MetadataReference>
-            {
-                metadataRefMSCorLib,
-                metadataRefConsoleDocumentation,
-            };
+            var references = new List<MetadataReference>();
+
+            //// Create documentation providers
+            //MetadataReference metadataRefMSCorLib = GetMetadataReference(typeof(object));
+            //MetadataReference metadataRefConsoleDocumentation = GetMetadataReference(typeof(Console));
+
+            //// Create metadata references with documentation providers
+            //{
+            //    metadataRefMSCorLib,
+            //    metadataRefConsoleDocumentation,
+            //};
 
             foreach (var referenceName in environment.ReferenceNames)
             {
@@ -155,6 +156,7 @@ namespace CDS.CSScripting
             if (compilation != null) { return compilation; }
 
             compilation = await document.Project.GetCompilationAsync();
+
             return compilation;
         }
 

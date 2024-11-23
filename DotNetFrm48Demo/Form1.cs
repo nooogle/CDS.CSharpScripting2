@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,9 +15,30 @@ namespace DotNetFrm48Demo
 
         private static async Task CreateSM()
         {
-            CDS.CSScripting.ScriptManager s = await CDS.CSScripting.ScriptManager.CreateAsync();
 
-            System.Diagnostics.Debug.WriteLine(s);
+            var env =
+                CDS.CSScripting.Env
+                .Default
+                .WithAdditionalNamespaceForType<OpenCvSharp.Mat>()
+                .WithAdditionalReferenceForType<OpenCvSharp.Mat>();
+
+            CDS.CSScripting.ScriptManager s = await CDS.CSScripting.ScriptManager.CreateAsync(env);
+            await s.CompileAsync();
+            var como = await s.GetCompilationOutputAsync();
+            s = s.ApplyScript("int x = 10;");
+            var d = await s.GetDiagnosticsAsync();
+
+            try
+            {
+                await s.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
+            }
+
+            Console.Write(d.Length);
+
         }
     }
 }

@@ -35,15 +35,21 @@ namespace CDS.CSScripting
         static Env()
         {
             var defaultNamespaces = (new[] { typeof(object).Namespace }).ToImmutableList();
-            var defaultReferences = ImmutableList<string>.Empty;
+
+            var defaultReferences = new[]
+            {
+                typeof(object).Assembly.FullName,
+                typeof(Console).Assembly.FullName,
+            }.ToImmutableList();
+
             defaultInstance = new Env(defaultNamespaces, defaultReferences, null);
         }
 
 
         private Env(ImmutableList<string> namespaceNames, ImmutableList<string> referenceNames, Type globalType)
         {
-            this.namespaceNames = namespaceNames;
-            this.referenceNames = referenceNames;
+            this.namespaceNames = namespaceNames.Distinct().ToImmutableList();
+            this.referenceNames = referenceNames.Distinct().ToImmutableList();
             this.globalType = globalType;
         }
 
@@ -102,6 +108,16 @@ namespace CDS.CSScripting
                 namespaceNames,
                 referenceNames,
                 globalType);
+        }
+
+        public Env WithAdditionalReferenceForType<T>()
+        {
+            return WithAdditionalReferenceName(typeof(T).Assembly.FullName);
+        }
+
+        public Env WithAdditionalNamespaceForType<T>()
+        {
+            return WithAdditionalNamespaceName(typeof(T).Namespace);
         }
     }
 }

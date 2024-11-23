@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleScratchFramework", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleScratchNet", "ConsoleScratchNet\ConsoleScratchNet.csproj", "{0A5EDE44-94C9-403D-8A6B-E6AF0D0960B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary3", "ClassLibrary3\ClassLibrary3.csproj", "{2089453E-CB44-4189-8A2B-12343104ADFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,12 +66,12 @@ Global
 		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Release|Any CPU.Build.0 = Release|Any CPU
 		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Release|ARM64.ActiveCfg = Release|ARM64
 		{37A52ABC-74D6-47A3-BEAE-3CDEDB021D75}.Release|ARM64.Build.0 = Release|ARM64
-		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|Any CPU.Build.0 = Debug|x64
 		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|ARM64.ActiveCfg = Debug|ARM64
 		{034A4B93-4D9B-418C-BB71-008D105A6206}.Debug|ARM64.Build.0 = Debug|ARM64
-		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.Build.0 = Release|Any CPU
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.ActiveCfg = Release|x64
+		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|Any CPU.Build.0 = Release|x64
 		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|ARM64.ActiveCfg = Release|ARM64
 		{034A4B93-4D9B-418C-BB71-008D105A6206}.Release|ARM64.Build.0 = Release|ARM64
 		{D5DC8098-E3C8-4E16-8314-FC689A7FBEF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -96,6 +98,14 @@ Global
 		{0A5EDE44-94C9-403D-8A6B-E6AF0D0960B6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0A5EDE44-94C9-403D-8A6B-E6AF0D0960B6}.Release|ARM64.ActiveCfg = Release|ARM64
 		{0A5EDE44-94C9-403D-8A6B-E6AF0D0960B6}.Release|ARM64.Build.0 = Release|ARM64
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{2089453E-CB44-4189-8A2B-12343104ADFA}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
