@@ -80,7 +80,7 @@ namespace CDS.CSScripting
             return Compile<ReturnType>(
                 script: script,
                 namespaces: namespaceTypes.Select(t => t.Namespace).ToArray(),
-                references: referenceTypes.Select(t => t.Assembly.GetName().Name).ToArray(),
+                references: referenceTypes.Select(t => t.Assembly).ToArray(),
                 typeOfGlobals: typeOfGlobals);
         }
 
@@ -97,7 +97,7 @@ namespace CDS.CSScripting
         public static CompiledScript Compile<ReturnType>(
             string script,
             IEnumerable<string> namespaces,
-            IEnumerable<string> references,
+            IEnumerable<Assembly> references,
             Type typeOfGlobals)
         {
             GC.Collect();

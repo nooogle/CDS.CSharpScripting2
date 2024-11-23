@@ -9,7 +9,8 @@ namespace CDS.CSScripting
     public class Env
     {
         private ImmutableList<string> namespaceNames;
-        private ImmutableList<string> referenceNames;
+        //private ImmutableList<string> referenceNames;
+        private ImmutableList<Assembly> references;
         private Type globalType;
         private static Env defaultInstance;
         private static bool isNetFramework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains(".NET Framework");
@@ -26,7 +27,9 @@ namespace CDS.CSScripting
         public IEnumerable<string> NamespaceNames => namespaceNames;
 
 
-        public IEnumerable<string> ReferenceNames => referenceNames;
+        //public IEnumerable<string> ReferenceNames => referenceNames;
+
+        public IEnumerable<Assembly> References => references;
 
 
         public Type GlobalType => globalType;
@@ -38,18 +41,18 @@ namespace CDS.CSScripting
 
             var defaultReferences = new[]
             {
-                typeof(object).Assembly.FullName,
-                typeof(Console).Assembly.FullName,
+                typeof(object).Assembly,
+                typeof(Console).Assembly,
             }.ToImmutableList();
 
             defaultInstance = new Env(defaultNamespaces, defaultReferences, null);
         }
 
 
-        private Env(ImmutableList<string> namespaceNames, ImmutableList<string> referenceNames, Type globalType)
+        private Env(ImmutableList<string> namespaceNames, ImmutableList<Assembly> references, Type globalType)
         {
             this.namespaceNames = namespaceNames.Distinct().ToImmutableList();
-            this.referenceNames = referenceNames.Distinct().ToImmutableList();
+            this.references = references.Distinct().ToImmutableList();
             this.globalType = globalType;
         }
 
@@ -58,7 +61,7 @@ namespace CDS.CSScripting
         {
             return new Env(
                 namespaceNames.Add(type.Namespace),
-                referenceNames,
+                references,
                 globalType);
         }
 
@@ -70,17 +73,20 @@ namespace CDS.CSScripting
                 // For .NetFramework this requires the System.Drawing assembly, but calling
                 // Assembly.Load("System.Drawing") will not work - not sure why! Instead,
                 // we need to use the full name of the assembly.
-                var systemDrawingFullName = typeof(System.Drawing.Point).Assembly.FullName;
+                var systemDrawingFullName = typeof(System.Drawing.Point).Assembly;
 
                 return new Env(
                     namespaceNames,
-                    referenceNames.Add(systemDrawingFullName),
+                    references.Add(systemDrawingFullName),
                     globalType);
             }
 
+            var newReferenceNames = new[] { "System.Drawing", "System.Drawing.Primitives" };
+            var newAssemblies = newReferenceNames.Select(Assembly.Load);
+
             return new Env(
-                namespaceNames,
-                referenceNames.AddRange(new[] { "System.Drawing", "System.Drawing.Primitives" }),
+                namespaceNames: namespaceNames,
+                references: references.AddRange(newAssemblies),
                 globalType);
         }
 
@@ -88,16 +94,18 @@ namespace CDS.CSScripting
         {
             return new Env(
                 namespaceNames.Add(namespaceName),
-                referenceNames,
+                references,
                 globalType);
         }
 
 
         public Env WithAdditionalReferenceName(string referenceName)
         {
+            var assembly = Assembly.Load(referenceName);
+
             return new Env(
                 namespaceNames,
-                referenceNames.Add(referenceName),
+                references.Add(assembly),
                 globalType);
         }
 
@@ -106,8 +114,16 @@ namespace CDS.CSScripting
         {
             return new Env(
                 namespaceNames,
-                referenceNames,
+                references,
                 globalType);
+        }
+
+        public Env WithGlobalType<T>()
+        {
+            return new Env(
+                namespaceNames,
+                references,
+                typeof(T));
         }
 
         public Env WithAdditionalReferenceForType<T>()

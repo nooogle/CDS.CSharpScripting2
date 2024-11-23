@@ -2,61 +2,48 @@
 using OpenCvSharp;
 using System.Threading.Tasks;
 
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
+public class Globals
+{
+    public Mat HostMat { get; set; } = new Mat();
+}
 
 
 class Scratch
 {
     static async Task Main(string[] args)
     {
-        await CSTest();
+        Globals globals = new Globals();
 
         string script = @"
-            Mat mat = Cv2.ImRead(@""C:\Users\jon\Downloads\OCR\4.jpg"", ImreadModes.Grayscale);
-            Mat blurred = new Mat();
-            Cv2.GaussianBlur(mat, blurred, new Size(5, 5), 0);
-            ";
+            // Step 1: Create a black image, 256x256, 8U1C
+            Mat image = new Mat(256, 256, MatType.CV_8UC1, Scalar.Black);
 
-        script = "";
-        //script = @"using OpenCvSharp; Mat mat = null;";
-        //script = @"Mat mat = null;";
+            // Step 2: Set a single white pixel in the center
+            int centerX = image.Width / 2;
+            int centerY = image.Height / 2;
+            image.Set<byte>(centerY, centerX, 255);
+
+            // Step 3: Perform a Gaussian blur of size 25x25 into a new image
+            Cv2.GaussianBlur(image, HostMat, new Size(25, 25), 0);
+image.CopyTo(HostMat);
+        ";
 
         var env =
             Env
             .Default
-            .WithAdditionalNamespaceForType<Mat>();
-
-        env = env.WithAdditionalReferenceForType<Mat>();
+            .WithAdditionalNamespaceForType<Mat>()
+            .WithAdditionalReferenceForType<Mat>()
+            .WithGlobalType<Globals>();
 
         var scriptManager = await ScriptManager.CreateAsync(env);
         scriptManager = await scriptManager.ApplyScriptAsync(script);
 
         var diagnostics = await scriptManager.GetDiagnosticsAsync();
         var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-    }
+        await scriptManager.RunAsync(globals);
 
+        byte value = globals.HostMat.At<byte>(128, 128);
 
-    static async Task CSTest()
-    {
-        string code = @"
-using OpenCvSharp;
-public int Add(int x, int y) => x + y;";
-
-        // Add necessary references and imports
-        var options = ScriptOptions.Default
-            .AddReferences(typeof(OpenCvSharp.Mat).Assembly) // Add OpenCvSharp assembly
-            .AddImports("System", "OpenCvSharp");
-
-        var script = CSharpScript.Create<int>(code, options);
-
-        // Compile the script once
-        var compiledScriptDiagnostics = script.Compile();
-        if (compiledScriptDiagnostics.Length == 0) // No diagnostics
-        {
-            // Run the script multiple times without recompiling
-            var result1 = await script.RunAsync();
-            var result2 = await script.RunAsync();
-        }
     }
 }
+

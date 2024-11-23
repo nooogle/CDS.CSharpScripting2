@@ -69,9 +69,9 @@ namespace CDS.CSScripting
             //    metadataRefConsoleDocumentation,
             //};
 
-            foreach (var referenceName in environment.ReferenceNames)
+            foreach (var reference in environment.References)
             {
-                MetadataReference metadataRef = GetMetadataReference(referenceName);
+                MetadataReference metadataRef = GetMetadataReference(reference);
                 references.Add(metadataRef);
             }
 
@@ -184,7 +184,7 @@ namespace CDS.CSScripting
             compiledScript = ScriptCompiler.Compile<object>(
                 script,
                 namespaces: environment.NamespaceNames,
-                references: environment.ReferenceNames,
+                references: environment.References,
                 typeOfGlobals: environment.GlobalType);
         }
 
@@ -245,9 +245,8 @@ namespace CDS.CSScripting
             return xmlInfo;
         }
         
-        private MetadataReference GetMetadataReference(string assemblyName)
+        private MetadataReference GetMetadataReference(Assembly assembly)
         {
-            var assembly = Assembly.Load(assemblyName);
             string xmlPath = GetXmlDocumentationPath(assembly.Location);
 
             DocumentationProvider documentationProvider =
@@ -265,8 +264,7 @@ namespace CDS.CSScripting
 
         private MetadataReference GetMetadataReference(Type type)
         {
-            var assemblyPath = type.Assembly.GetName().Name;
-            return GetMetadataReference(assemblyPath);
+            return GetMetadataReference(type.Assembly);
         }
 
 
