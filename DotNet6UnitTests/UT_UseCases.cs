@@ -10,7 +10,7 @@ namespace DotNet6UnitTests
     /// This demonstrates that the key use cases are all satistifed
     /// </summary>
     [TestClass]
-    public class UT_UseCases
+    public partial class UT_UseCases
     {
 
         /// <summary>

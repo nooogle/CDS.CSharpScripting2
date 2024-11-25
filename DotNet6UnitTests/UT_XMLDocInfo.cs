@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DotNet6UnitTests
 {
     [TestClass]
-    public class UT_XMLDocInfo
+    public partial class UT_XMLDocInfo
     {
         /// <summary>
         /// Check we get some type information when hovering over 'Console'

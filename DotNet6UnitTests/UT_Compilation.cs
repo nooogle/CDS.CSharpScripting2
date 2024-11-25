@@ -3,17 +3,24 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenCvSharp;
 using System.Threading.Tasks;
+using VerifyMSTest;
+
 
 namespace DotNet6UnitTests
 {
     [TestClass]
-    public class UT_Compilation
+    public partial class UT_Compilation
     {
         /// <summary>
         /// Test that references are resolved during compilation.
         /// </summary>
+        /// <remarks>
+        /// This tests that a bug fix has been applied to the compilation process.
+        /// Originally, the references were not being resolved correctly, causing
+        /// the script compilation to fail.
+        /// </remarks>
         [TestMethod]
-        public async Task NoErrors_GeneratedDurationCompilation_OfValidScriptAndEnv()
+        public async Task NoErrorsGenerated_DurationCompilation_OfValidScriptAndEnv()
         {
             var script = "";
 
@@ -27,8 +34,10 @@ namespace DotNet6UnitTests
             scriptManager = await scriptManager.ApplyScriptAsync(script);
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
 
-            compilationOutput.Should().NotBeNull();
-            compilationOutput.ErrorCount.Should().Be(0);
+            await Verifier.Verify(compilationOutput);
+
+            //compilationOutput.Should().NotBeNull();
+            //compilationOutput.ErrorCount.Should().Be(0);
         }
 
         public class Globals

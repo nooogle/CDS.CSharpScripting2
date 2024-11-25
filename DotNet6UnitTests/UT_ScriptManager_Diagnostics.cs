@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace DotNet6UnitTests
 {
     [TestClass]
-    public class UT_ScriptManager_Diagnostics
+    public partial class UT_ScriptManager_Diagnostics
     {
         /// <summary>
         /// Check that a script with no errors generates 0 diagnostics messages
