@@ -1,9 +1,9 @@
 using CDS.CSScripting;
-using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenCvSharp;
 using System.Threading.Tasks;
 using VerifyMSTest;
+using VerifyTests;
 
 
 namespace DotNet6UnitTests
@@ -11,6 +11,7 @@ namespace DotNet6UnitTests
     [TestClass]
     public partial class UT_Compilation
     {
+    
         /// <summary>
         /// Test that references are resolved during compilation.
         /// </summary>
@@ -34,12 +35,17 @@ namespace DotNet6UnitTests
             scriptManager = await scriptManager.ApplyScriptAsync(script);
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
 
-            await Verifier.Verify(compilationOutput);
-
-            //compilationOutput.Should().NotBeNull();
-            //compilationOutput.ErrorCount.Should().Be(0);
+            // Verify
+            await
+                Verifier
+                .Verify(compilationOutput, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
+
+        /// <summary>
+        /// Globals class used to store global variables for the script.
+        /// </summary>
         public class Globals
         {
             public int ImageSize { get; set; } = 256;
@@ -79,7 +85,12 @@ Cv2.GaussianBlur(image, HostMat, new Size(25, 25), 0);
             await scriptManager.RunAsync(globals);
 
             byte value = globals.HostMat.At<byte>(globals.ImageSize / 2, globals.ImageSize / 2);
-            value.Should().Be(2);
+
+            // Verify
+            await
+                Verifier
+                .Verify(value, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
     }
 }

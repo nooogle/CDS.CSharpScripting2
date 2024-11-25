@@ -1,0 +1,4 @@
+﻿{
+  Addition: 30,
+  Multiplication: 200
+}

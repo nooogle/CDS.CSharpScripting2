@@ -1,8 +1,7 @@
 using CDS.CSScripting;
-using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Threading.Tasks;
+using VerifyMSTest;
 
 namespace DotNet6UnitTests
 {
@@ -19,9 +18,10 @@ namespace DotNet6UnitTests
             scriptManager = scriptManager.ApplyScript("Console");
             (var typeInfo, var memberInfo) = await scriptManager.GetSuggestionsAsync(position: 3);
 
-            typeInfo.Should().NotBeNull();
-            typeInfo.Name.Should().Be(nameof(Console));
-            typeInfo.Summary.Should().NotBeNullOrEmpty();
+            await
+                Verifier
+                .Verify(typeInfo, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
     }
 }

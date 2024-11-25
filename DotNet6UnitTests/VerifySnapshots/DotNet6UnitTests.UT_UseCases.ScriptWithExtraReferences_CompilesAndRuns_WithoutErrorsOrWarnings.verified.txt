@@ -1,0 +1,5 @@
+﻿{
+  Diagnostics: null,
+  CompilationOutput: {},
+  PointX: 1
+}

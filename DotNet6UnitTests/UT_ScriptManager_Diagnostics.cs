@@ -1,7 +1,8 @@
 using CDS.CSScripting;
-using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
+using VerifyMSTest;
+using VerifyTests;
 
 namespace DotNet6UnitTests
 {
@@ -20,7 +21,11 @@ namespace DotNet6UnitTests
             scriptManager = scriptManager.ApplyScript(script);
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
 
-            diagnostics.Should().HaveCount(0);
+            // Verify
+            await
+                Verifier
+                .Verify(diagnostics, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
 
@@ -36,9 +41,19 @@ namespace DotNet6UnitTests
             scriptManager = scriptManager.ApplyScript(script);
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
 
-            diagnostics.Should().HaveCount(1);
-            diagnostics[0].Severity.Should().Be(Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
-            diagnostics[0].GetMessage().Should().Be("The name 'yyy' does not exist in the current context");
+            var actual = new
+            {
+                Count = diagnostics.Length,
+                Severity = diagnostics[0].Severity,
+                Message = diagnostics[0].GetMessage(),
+                All = diagnostics[0]
+            };
+
+            // Verify
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
 
@@ -61,9 +76,20 @@ namespace DotNet6UnitTests
             scriptManager = scriptManager.ApplyScript(script);
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
 
-            diagnostics.Should().HaveCount(1);
-            diagnostics[0].Severity.Should().Be(Microsoft.CodeAnalysis.DiagnosticSeverity.Warning);
-            diagnostics[0].GetMessage().ToLower().Should().Contain("is obsolete");
+            // Collate the diagnostics
+            var actual = new
+            {
+                Count = diagnostics.Length,
+                Severity = diagnostics[0].Severity,
+                Message = diagnostics[0].GetMessage(),
+                All = diagnostics[0]
+            };
+
+            // Verify
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
     }
 }

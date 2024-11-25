@@ -1,0 +1,5 @@
+﻿{
+  Diagnostics: null,
+  CompilationOutput: {},
+  Result: 100.0
+}

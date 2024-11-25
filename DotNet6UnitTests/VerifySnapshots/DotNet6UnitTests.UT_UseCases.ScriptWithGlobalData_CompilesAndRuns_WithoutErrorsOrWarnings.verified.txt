@@ -1,0 +1,7 @@
+﻿{
+  Diagnostics: null,
+  CompilationOutput: {},
+  GlobalData: {
+    Animal: Donkey (modified by script)
+  }
+}

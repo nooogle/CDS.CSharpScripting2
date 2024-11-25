@@ -1,8 +1,9 @@
 using CDS.CSScripting;
-using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
+using System.ComponentModel;
 using System.Threading.Tasks;
+using VerifyMSTest;
+using VerifyTests;
 
 namespace DotNet6UnitTests
 {
@@ -12,33 +13,42 @@ namespace DotNet6UnitTests
     [TestClass]
     public partial class UT_UseCases
     {
-
         /// <summary>
-        /// Check a script using default settings compiles and runs without any issues.
+        /// Check a good script using default settings doesn't have any diagnostics or compilation errors
+        ///  and can also run without throwing exceptions.
         /// </summary>
         [TestMethod]
-        [DataRow("", DisplayName = "Empty script")]
-        [DataRow("System.Console.WriteLine();", DisplayName = "Console write blank line;")]
-        [DataRow("int x = 10; int y = 20; int z = x + y;", DisplayName = "Basic integer maths")]
-        [DataRow("System.Math.Pow(2, 10);", DisplayName = "Basic Math class test")]
-        public async Task IsolatedScript_Compiles_WithoutErrorsOrWarnings(string script)
+        [DataRow("", "empty", DisplayName = "Empty script")]
+        [DataRow("System.Console.WriteLine();", "console_blank_line", DisplayName = "Console write blank line;")]
+        [DataRow("int x = 10; int y = 20; int z = x + y;", "basic_maths", DisplayName = "Basic integer maths")]
+        [DataRow("System.Math.Pow(2, 10);", "math_class", DisplayName = "Basic Math class test")]
+        public async Task IsolatedScript_DiagnosticsAndCompilation_HasNoErrorsOrWarnings(string script, string testName)
         {
             // Setup
             var scriptManager = await ScriptManager.CreateAsync();
             scriptManager = scriptManager.ApplyScript(script);
 
-            // Check editor
+            // Check diagnostics
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
-            diagnostics.Length.Should().Be(0);
 
-            // Check compilation
+            // Compile
             await scriptManager.CompileAsync();
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-            compilationOutput.Messages.Length.Should().Be(0);
-            compilationOutput.ErrorCount.Should().Be(0);
-            compilationOutput.WarningCount.Should().Be(0);
 
-            // Run
+            // Get all results
+            var actual = new
+            {
+                Diagnostics = diagnostics,
+                CompilationOutput = compilationOutput
+            };
+
+            // Verify
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.ExtendedFileName(testName));
+
+            // Run - no exceptions
             await scriptManager.RunAsync();
         }
 
@@ -55,18 +65,30 @@ namespace DotNet6UnitTests
 
             // Check editor
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
-            diagnostics.Length.Should().Be(0);
 
-            // Check compilation
+            // Compile
             await scriptManager.CompileAsync();
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-            compilationOutput.Messages.Length.Should().Be(0);
-            compilationOutput.ErrorCount.Should().Be(0);
-            compilationOutput.WarningCount.Should().Be(0);
 
-            // Check execution
+
+            // Execute
             var result = await scriptManager.RunAsync<double>();
-            result.Should().Be(100);
+
+
+            // Collate all results
+            var actual = new
+            {
+                Diagnostics = diagnostics,
+                CompilationOutput = compilationOutput,
+                Result = result
+            };
+
+            // Verify all results
+
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
 
@@ -85,17 +107,26 @@ namespace DotNet6UnitTests
 
             // Check editor
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
-            diagnostics.Length.Should().Be(0);
 
-            // Check compilation 
+            // Compile 
             await scriptManager.CompileAsync();
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-            compilationOutput.Messages.Length.Should().Be(0);
-            compilationOutput.ErrorCount.Should().Be(0);
-            compilationOutput.WarningCount.Should().Be(0);
 
             // Check runtime
             await scriptManager.RunAsync();
+
+            // Collate all results
+            var actual = new
+            {
+                Diagnostics = diagnostics,
+                CompilationOutput = compilationOutput
+            };
+
+            // Verify all results
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
 
@@ -120,18 +151,27 @@ namespace DotNet6UnitTests
 
             // Check editor
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
-            diagnostics.Length.Should().Be(0);
 
-            // Check compilation 
+            // Compile
             await scriptManager.CompileAsync();
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-            compilationOutput.Messages.Length.Should().Be(0);
-            compilationOutput.ErrorCount.Should().Be(0);
-            compilationOutput.WarningCount.Should().Be(0);
 
             // Check runtime
             var pX = await scriptManager.RunAsync<int>();
-            pX.Should().Be(1);
+
+            // Collate all results
+            var actual = new
+            {
+                Diagnostics = diagnostics,
+                CompilationOutput = compilationOutput,
+                PointX = pX
+            };
+
+            // Verify all results
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
 
 
@@ -161,20 +201,29 @@ namespace DotNet6UnitTests
             var scriptManager = await ScriptManager.CreateAsync(environment);
             scriptManager = scriptManager.ApplyScript("Animal += \" (modified by script)\"");
 
-            // Check editor
+            // Get editor diagnostics
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
-            diagnostics.Length.Should().Be(0);
 
-            // Check compilation 
+            // Compile
             await scriptManager.CompileAsync();
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-            compilationOutput.Messages.Length.Should().Be(0);
-            compilationOutput.ErrorCount.Should().Be(0);
-            compilationOutput.WarningCount.Should().Be(0);
 
             // Check runtime
             await scriptManager.RunAsync(globalData);
-            globalData.Animal.Should().Be("Donkey (modified by script)");
+
+            // Collate all results
+            var actual = new
+            {
+                Diagnostics = diagnostics,
+                CompilationOutput = compilationOutput,
+                GlobalData = globalData
+            };
+
+            // Verify all results
+            await
+                Verifier
+                .Verify(actual, VerifySupport.Settings)
+                .UseFileName(VerifySupport.SimpleFileName());
         }
     }
 }

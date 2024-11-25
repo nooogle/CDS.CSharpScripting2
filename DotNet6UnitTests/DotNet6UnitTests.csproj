@@ -30,4 +30,8 @@
     <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="VerifySnapshots\" />
+  </ItemGroup>
+
 </Project>
