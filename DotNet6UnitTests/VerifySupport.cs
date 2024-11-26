@@ -4,17 +4,33 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VerifyMSTest;
-using VerifyTests;
 
 [assembly: UsesVerify]
 
-namespace DotNet6UnitTests
+namespace VerifyTests
 {
+    /// <summary>
+    /// Pwerforms checks on the Verify settings to ensure they are correctly configured.
+    /// </summary>
+    [TestClass]
+    public partial class VerifyCheck
+    {
+        /// <summary>
+        /// Runs the Verify checks which can help with customisation and configuration of the git 
+        /// settings that help mamage the verification files.
+        /// </summary>
+        [TestMethod]
+        public async Task Run()
+        {
+            await VerifyChecks.Run();
+        }
+    }
+
+
     /// <summary>
     /// Support class for the Verify library.
     /// </summary>
-    [TestClass]
-    public partial class VerifySupport
+    public static class VerifyHelper
     {
         /// <summary>
         /// Standard settings for any test that uses Verify.
@@ -25,7 +41,7 @@ namespace DotNet6UnitTests
         /// <summary>
         /// Initialize the settings for the Verify library.
         /// </summary>
-        static VerifySupport()
+        static VerifyHelper()
         {
             Settings = new();
             Settings.UseDirectory("VerifySnapshots");
@@ -33,16 +49,44 @@ namespace DotNet6UnitTests
 
 
         /// <summary>
-        /// Runs the Verify checks which can help with customisation and configuration of the git 
-        /// settings that help mamage the verification files.
+        /// Verify the target object using the standard settings.
         /// </summary>
-        /// <returns></returns>
-        [TestMethod]
-        public async Task Run()
+        /// <param name="target">
+        /// The object to verify. This can be a string, a stream, or any object that can be serialized.
+        /// </param>
+        /// <param name="methodName">
+        /// Leave blank - the compiler will calculate this.
+        /// </param>
+        /// <returns>
+        /// A task that can be awaited.
+        /// </returns>
+        public static SettingsTask Verify(object? target, [CallerMemberName] string methodName = "")
         {
-            await VerifyChecks.Run();
+            return Verifier.Verify(target, Settings).UseFileName(SimpleFileName(stackDepth: 2, methodName: methodName));
         }
 
+
+        /// <summary>
+        /// Verify the target object using the standard settings. The test name is used to make
+        /// the verification file unique. Use this method when a test method has multiple DataRow
+        /// inputs or multiple Verify calls.
+        /// </summary>
+        /// <param name="testName">
+        /// Unique name for the test. This is used to make the verification file unique.
+        /// </param>
+        /// <param name="target">
+        /// The object to verify. This can be a string, a stream, or any object that can be serialized.
+        /// </param>
+        /// <param name="methodName">
+        /// Leave blank - the compiler will calculate this.
+        /// </param>
+        /// <returns>
+        /// A task that can be awaited.
+        /// </returns>
+        public static SettingsTask Verify(string testName, object? target, [CallerMemberName] string methodName = "")
+        {
+            return Verifier.Verify(target, Settings).UseFileName(ExtendedFileName(testName, stackDepth: 2, methodName: methodName));
+        }
 
 
         /// <summary>
@@ -50,15 +94,21 @@ namespace DotNet6UnitTests
         /// have only a single verification and therefore won't have multiple possible verification files.
         /// The filename includeds the namespace, class name, and method name.
         /// </summary>
-        /// <param name="methodName">Leave blank - the compiler will calculate this</param>
+        /// <param name="methodName">
+        /// The method name.
+        /// </param>
+        /// <param name="stackDepth">
+        /// The stack depth to use to determine the calling class.
+        /// </param>
         /// <returns>A full path and filename for the verified text file</returns>
         /// <exception cref="System.Exception">Thrown if a filename cannot be calculated</exception>
-        public static string SimpleFileName(
-                [CallerMemberName] string methodName = "")
+        private static string SimpleFileName(
+            int stackDepth,
+            string methodName)
         {
             // Get the calling class name with namespace
             var stackTrace = new StackTrace();
-            var frame = stackTrace.GetFrame(1); // Get the immediate caller
+            var frame = stackTrace.GetFrame(stackDepth);
             var declaringType = frame?.GetMethod()?.DeclaringType;
 
             if (declaringType?.DeclaringType == null)
@@ -78,25 +128,34 @@ namespace DotNet6UnitTests
         /// may result in multiple tests being verified in a single test method.
         /// The filename includeds the namespace, class name, method name, and test name.
         /// </summary>
-        /// <param name="testName">A unique name for the specific test</param>
-        /// <param name="methodName">Leave blank - the compiler will calculate this</param>
+        /// <param name="testName">
+        /// The name of the test. This should be unique for each verification.
+        /// </param>
+        /// <param name="methodName">
+        /// The method name.
+        /// </param>
+        /// <param name="stackDepth">
+        /// The stack depth to use to determine the calling class.
+        /// </param>
         /// <returns>A full path and filename for the verified text file</returns>
         /// <exception cref="System.Exception">Thrown if a filename cannot be calculated</exception>
         /// <remarks>
-        /// There are two scenarios where this method is useful:
+        /// Scenarios where this method is useful:
         /// 1. When a test method has multiple DataRow attributes.
         /// 2. When a test method has multiple Verify calls.
+        /// 3. Both of the above.
         /// </remarks>
         public static string ExtendedFileName(
-                string testName,
-                [CallerMemberName] string methodName = "")
+            string testName,
+            int stackDepth,
+            string methodName)
         {
             // Get the calling class name with namespace
             var stackTrace = new StackTrace();
-            var frame = stackTrace.GetFrame(1); // Get the immediate caller
+            var frame = stackTrace.GetFrame(stackDepth);
             var declaringType = frame?.GetMethod()?.DeclaringType;
 
-            if(declaringType?.DeclaringType == null)
+            if (declaringType?.DeclaringType == null)
             {
                 throw new System.Exception("Failed to determine the declaring type of the caller!");
             }

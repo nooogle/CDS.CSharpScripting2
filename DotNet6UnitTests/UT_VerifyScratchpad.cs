@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using VerifyMSTest;
+using VerifyTests;
 
 namespace DotNet6UnitTests
 {
@@ -22,10 +23,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = 100 + 200;
 
-            await
-                Verifier
-                .Verify(additionResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(additionResult);
         }
 
 
@@ -45,10 +43,7 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await
-                Verifier
-                .Verify(actuals, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actuals);
         }
 
 
@@ -63,15 +58,8 @@ namespace DotNet6UnitTests
             int additionResult = 100 + 200;
             int multiplicationResult = 100 * 200;
 
-            await
-                Verifier
-                .Verify(additionResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: "Addition"));
-
-            await
-                Verifier
-                .Verify(multiplicationResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: "Multiplication"));
+            await VerifyHelper.Verify(testName: "Addition", target: additionResult);
+            await VerifyHelper.Verify(testName: "Multiplication", target: multiplicationResult);
         }
 
 
@@ -87,10 +75,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = a + b;
 
-            await
-                Verifier
-                .Verify(additionResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: $"{testName}"));
+            await VerifyHelper.Verify(testName: testName, additionResult);
         }
 
 
@@ -114,10 +99,7 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await
-                Verifier
-                .Verify(actuals, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: testName));
+            await VerifyHelper.Verify(testName: testName, actuals);
         }
 
 
@@ -135,15 +117,8 @@ namespace DotNet6UnitTests
             int additionResult = a + b;
             int multiplicationResult = a * b;
 
-            await
-                Verifier
-                .Verify(additionResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: $"Add_{testName}"));
-
-            await
-                Verifier
-                .Verify(multiplicationResult, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName: $"Mult_{testName}"));
+            await VerifyHelper.Verify(testName: $"Add_{testName}", target: additionResult);
+            await VerifyHelper.Verify(testName: $"Mult_{testName}", target: multiplicationResult);
         }
     }
 }

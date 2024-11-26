@@ -43,10 +43,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.ExtendedFileName(testName));
+            await VerifyHelper.Verify(testName: testName, actual);
 
             // Run - no exceptions
             await scriptManager.RunAsync();
@@ -84,11 +81,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
 
 
@@ -123,10 +116,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
 
 
@@ -168,10 +158,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
 
 
@@ -220,10 +207,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
     }
 }

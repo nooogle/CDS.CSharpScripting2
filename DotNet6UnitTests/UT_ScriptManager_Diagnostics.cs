@@ -22,10 +22,7 @@ namespace DotNet6UnitTests
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
 
             // Verify
-            await
-                Verifier
-                .Verify(diagnostics, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(diagnostics);
         }
 
 
@@ -49,11 +46,7 @@ namespace DotNet6UnitTests
                 All = diagnostics[0]
             };
 
-            // Verify
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
 
 
@@ -85,11 +78,7 @@ namespace DotNet6UnitTests
                 All = diagnostics[0]
             };
 
-            // Verify
-            await
-                Verifier
-                .Verify(actual, VerifySupport.Settings)
-                .UseFileName(VerifySupport.SimpleFileName());
+            await VerifyHelper.Verify(actual);
         }
     }
 }
