@@ -23,7 +23,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = 100 + 200;
 
-            await VerifyHelper.Verify(additionResult);
+            await Verifier.Verify(additionResult, VerifyHelper.Settings);
         }
 
 
@@ -43,13 +43,13 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await VerifyHelper.Verify(actuals);
+            await Verifier.Verify(actuals, VerifyHelper.Settings);
         }
 
 
         /// <summary>
         /// A simple test that verifies multiple operations, where each
-        /// verification has a customised filename.
+        /// verification has a customised method name.
         /// *** IMO compound verification is better ***
         /// </summary>
         [TestMethod]
@@ -58,8 +58,15 @@ namespace DotNet6UnitTests
             int additionResult = 100 + 200;
             int multiplicationResult = 100 * 200;
 
-            await VerifyHelper.Verify(testName: "Addition", target: additionResult);
-            await VerifyHelper.Verify(testName: "Multiplication", target: multiplicationResult);
+            await 
+                Verifier
+                .Verify(additionResult, VerifyHelper.Settings)
+                .UseMethodName($"{nameof(NoDataRows_MultipleVerification)}_test=Add");
+
+            await 
+                Verifier
+                .Verify(multiplicationResult, VerifyHelper.Settings)
+                .UseMethodName($"{nameof(NoDataRows_MultipleVerification)}_test=Multiply");
         }
 
 
@@ -75,7 +82,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = a + b;
 
-            await VerifyHelper.Verify(testName: testName, additionResult);
+            await Verifier.Verify(additionResult, VerifyHelper.Settings).UseParameters(testName);
         }
 
 
@@ -99,7 +106,7 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await VerifyHelper.Verify(testName: testName, actuals);
+            await Verifier.Verify(actuals, VerifyHelper.Settings).UseParameters(testName);
         }
 
 
@@ -117,8 +124,8 @@ namespace DotNet6UnitTests
             int additionResult = a + b;
             int multiplicationResult = a * b;
 
-            await VerifyHelper.Verify(testName: $"Add_{testName}", target: additionResult);
-            await VerifyHelper.Verify(testName: $"Mult_{testName}", target: multiplicationResult);
+            await Verifier.Verify(additionResult, VerifyHelper.Settings).UseParameters($"Add_{testName}");
+            await Verifier.Verify(multiplicationResult, VerifyHelper.Settings).UseParameters($"Mult_{testName}");
         }
     }
 }

@@ -20,7 +20,7 @@ namespace DotNet6UnitTests
 
             var completions = await scriptManager.GetCompletionSuggestionsAsync(scriptManager.ScriptText.Length);
 
-            await VerifyHelper.Verify(completions);
+            await Verifier.Verify(completions, VerifyHelper.Settings);
         }
 
 
@@ -37,7 +37,7 @@ namespace DotNet6UnitTests
                 await scriptManager
                 .GetCompletionSuggestionsAsync(scriptManager.ScriptText.Length);
 
-            await VerifyHelper.Verify(completions);
+            await Verifier.Verify(completions, VerifyHelper.Settings);
         }
     }
 }

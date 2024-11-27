@@ -35,7 +35,7 @@ namespace DotNet6UnitTests
             scriptManager = await scriptManager.ApplyScriptAsync(script);
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
 
-            await VerifyHelper.Verify(compilationOutput);
+            await Verifier.Verify(compilationOutput, VerifyHelper.Settings);
         }
 
 
@@ -82,7 +82,7 @@ Cv2.GaussianBlur(image, HostMat, new Size(25, 25), 0);
 
             byte value = globals.HostMat.At<byte>(globals.ImageSize / 2, globals.ImageSize / 2);
 
-            await VerifyHelper.Verify(value);
+            await Verifier.Verify(value, VerifyHelper.Settings);
         }
     }
 }

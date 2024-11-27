@@ -43,7 +43,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify
-            await VerifyHelper.Verify(testName: testName, actual);
+            await Verifier.Verify(actual, VerifyHelper.Settings).UseParameters(testName);
 
             // Run - no exceptions
             await scriptManager.RunAsync();
@@ -81,7 +81,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await VerifyHelper.Verify(actual);
+            await Verifier.Verify(actual, VerifyHelper.Settings);
         }
 
 
@@ -116,7 +116,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await VerifyHelper.Verify(actual);
+            await Verifier.Verify(actual, VerifyHelper.Settings);
         }
 
 
@@ -158,7 +158,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await VerifyHelper.Verify(actual);
+            await Verifier.Verify(actual, VerifyHelper.Settings);
         }
 
 
@@ -207,7 +207,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await VerifyHelper.Verify(actual);
+            await Verifier.Verify(actual, VerifyHelper.Settings);
         }
     }
 }
