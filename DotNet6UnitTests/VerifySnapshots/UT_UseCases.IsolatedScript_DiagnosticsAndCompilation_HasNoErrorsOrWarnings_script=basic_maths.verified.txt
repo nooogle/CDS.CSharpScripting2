@@ -1,4 +1,0 @@
-﻿{
-  Diagnostics: null,
-  CompilationOutput: {}
-}

@@ -25,12 +25,15 @@
         {
           Kind: Remove,
           Characters: [
-            "<"
+            <
           ]
         }
       ],
       CommitCharacterRules: null,
-      FormatOnCommit: false
+      EnterKeyRule: Default,
+      FormatOnCommit: false,
+      MatchPriority: 0,
+      SelectionBehavior: Default
     },
     IsComplexTextEdit: false
   },
@@ -60,12 +63,15 @@
         {
           Kind: Remove,
           Characters: [
-            "<"
+            <
           ]
         }
       ],
       CommitCharacterRules: null,
-      FormatOnCommit: false
+      EnterKeyRule: Default,
+      FormatOnCommit: false,
+      MatchPriority: 0,
+      SelectionBehavior: Default
     },
     IsComplexTextEdit: false
   },
@@ -95,12 +101,15 @@
         {
           Kind: Remove,
           Characters: [
-            "<"
+            <
           ]
         }
       ],
       CommitCharacterRules: null,
-      FormatOnCommit: false
+      EnterKeyRule: Default,
+      FormatOnCommit: false,
+      MatchPriority: 0,
+      SelectionBehavior: Default
     },
     IsComplexTextEdit: false
   },
@@ -130,12 +139,15 @@
         {
           Kind: Remove,
           Characters: [
-            "<"
+            <
           ]
         }
       ],
       CommitCharacterRules: null,
-      FormatOnCommit: false
+      EnterKeyRule: Default,
+      FormatOnCommit: false,
+      MatchPriority: 0,
+      SelectionBehavior: Default
     },
     IsComplexTextEdit: false
   }

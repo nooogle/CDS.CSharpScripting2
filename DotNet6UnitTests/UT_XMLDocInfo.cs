@@ -19,7 +19,7 @@ namespace DotNet6UnitTests
             scriptManager = scriptManager.ApplyScript("Console");
             (var typeInfo, var memberInfo) = await scriptManager.GetSuggestionsAsync(position: 3);
 
-            await Verifier.Verify(typeInfo, VerifyHelper.Settings);
+            await Verify(typeInfo);
         }
     }
 }

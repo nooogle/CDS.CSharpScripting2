@@ -43,7 +43,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify
-            await Verifier.Verify(actual, VerifyHelper.Settings).UseParameters(testName);
+            await Verify(actual).UseParameters(testName);
 
             // Run - no exceptions
             await scriptManager.RunAsync();
@@ -81,7 +81,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            await Verify(actual);
         }
 
 
@@ -116,7 +116,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            await Verify(actual);
         }
 
 
@@ -157,8 +157,8 @@ namespace DotNet6UnitTests
                 PointX = pX
             };
 
-            // Verify all results
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            // Verify all results   
+            await Verify(actual);
         }
 
 
@@ -207,7 +207,7 @@ namespace DotNet6UnitTests
             };
 
             // Verify all results
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            await Verify(actual);
         }
     }
 }

@@ -1,6 +1,5 @@
 using CDS.CSScripting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OpenCvSharp;
 using System.Threading.Tasks;
 using VerifyMSTest;
 using VerifyTests;
@@ -11,68 +10,102 @@ namespace DotNet6UnitTests
     [TestClass]
     public partial class UT_Compilation
     {
-    
         /// <summary>
-        /// Test that references are resolved during compilation.
+        /// Globals class to store MathNet calculation results
         /// </summary>
-        /// <remarks>
-        /// This tests that a bug fix has been applied to the compilation process.
-        /// Originally, the references were not being resolved correctly, causing
-        /// the script compilation to fail.
-        /// </remarks>
-        [TestMethod]
-        public async Task NoErrorsGenerated_DurationCompilation_OfValidScriptAndEnv()
+        public class MathGlobals
         {
-            var script = "";
+            public MathNetResults Result { get; set; } = new MathNetResults();
+        }
 
-            var env =
-                Env
-                .Default
-                .WithAdditionalNamespaceForType<OpenCvSharp.Mat>()
-                .WithAdditionalReferenceForType<OpenCvSharp.Mat>();
-
-            var scriptManager = await ScriptManager.CreateAsync(env);
-            scriptManager = await scriptManager.ApplyScriptAsync(script);
-            var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-
-            await Verifier.Verify(compilationOutput, VerifyHelper.Settings);
+        /// <summary>
+        /// Container for MathNet calculation results
+        /// </summary>
+        public class MathNetResults
+        {
+            public double Determinant { get; set; }
+            public System.Numerics.Complex[] Eigenvalues { get; set; } = new System.Numerics.Complex[0];
+            public double[] VectorProduct { get; set; } = new double[0];
         }
 
 
+
         /// <summary>
-        /// Globals class used to store global variables for the script.
+        /// This code is essentially the same as the script code, but is executed in the test method.
+        /// We can use this to help verify that the script is working correctly and that we get
+        /// the same results as the equivalent code in the test method.
         /// </summary>
-        public class Globals
+        /// <returns></returns>
+        static MathNetResults MathnetTest()
         {
-            public int ImageSize { get; set; } = 256;
-            public Mat HostMat { get; set; } = new Mat();
+            // Create a 3x3 matrix with some values
+            var matrix = MathNet.Numerics.LinearAlgebra.Matrix<double>.Build.DenseOfArray(new double[,] {
+    { 1, 2, 3 },
+    { 4, 5, 6 },
+    { 7, 8, 9 }
+});
+
+            // Compute determinant
+            MathNetResults Result = new MathNetResults();
+            Result.Determinant = matrix.Determinant();
+
+            // Compute eigenvalues
+            var evd = matrix.Evd();
+            Result.Eigenvalues = evd.EigenValues.ToArray();
+
+            // Matrix-vector multiplication
+            var vector = MathNet.Numerics.LinearAlgebra.Vector<double>.Build.Dense(new[] { 1.0, 2.0, 3.0 });
+            var product = matrix.Multiply(vector);
+            Result.VectorProduct = product.ToArray();
+
+            // All done
+            return Result;
         }
 
 
         [TestMethod]
-        public async Task HostImage_ModifiedByScript_ContainsNewPixels()
+        public async Task MathNet_UsedInScript_PerformsCalculationCorrectly()
         {
-            Globals globals = new Globals();
+            // Define globals for script execution
+            var globals = new MathGlobals();
 
+            // Get the results from the MathNet code for comparison
+            var expectedResults = MathnetTest();
+
+
+            // Script that uses MathNet.Numerics functionality
             string script = @"
-Mat image = new Mat(ImageSize, ImageSize, MatType.CV_8UC1, Scalar.Black);
+using MathNet.Numerics.LinearAlgebra;
 
-// Set a single white pixel in the center
-int centerX = image.Width / 2;
-int centerY = image.Height / 2;
-image.Set<byte>(centerY, centerX, 255);
+// Create a 3x3 matrix with some values
+var matrix = Matrix<double>.Build.DenseOfArray(new double[,] {
+    { 1, 2, 3 },
+    { 4, 5, 6 },
+    { 7, 8, 9 }
+});
 
-// Perform a Gaussian blur of size 25x25 into the host image
-Cv2.GaussianBlur(image, HostMat, new Size(25, 25), 0);
+// Compute determinant
+Result.Determinant = matrix.Determinant();
+
+// Compute eigenvalues
+var evd = matrix.Evd();
+Result.Eigenvalues = evd.EigenValues.ToArray();
+
+// Matrix-vector multiplication
+var vector = Vector<double>.Build.Dense(new[] { 1.0, 2.0, 3.0 });
+var product = matrix.Multiply(vector);
+Result.VectorProduct = product.ToArray();
 ";
 
-            var env =
-                Env
+            // Setup environment with MathNet.Numerics references
+            var env = Env
                 .Default
-                .WithAdditionalNamespaceForType<Mat>()
-                .WithAdditionalReferenceForType<Mat>()
-                .WithGlobalType<Globals>();
+                .WithAdditionalNamespaceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()
+                .WithAdditionalReferenceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()
+                .WithAdditionalReferenceName("System.Runtime.Numerics")
+                .WithGlobalType<MathGlobals>();
 
+            // Create script manager and run the script
             var scriptManager = await ScriptManager.CreateAsync(env);
             scriptManager = await scriptManager.ApplyScriptAsync(script);
 
@@ -80,9 +113,16 @@ Cv2.GaussianBlur(image, HostMat, new Size(25, 25), 0);
             var compilationOutput = await scriptManager.GetCompilationOutputAsync();
             await scriptManager.RunAsync(globals);
 
-            byte value = globals.HostMat.At<byte>(globals.ImageSize / 2, globals.ImageSize / 2);
+            // Bundle the data together for verification
+            var verificationData = new
+            {
+                expectedResults,
+                globals.Result
+            };
 
-            await Verifier.Verify(value, VerifyHelper.Settings);
+
+            // Verify the results
+            await Verify(verificationData);
         }
     }
 }

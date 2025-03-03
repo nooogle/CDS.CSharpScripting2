@@ -23,7 +23,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = 100 + 200;
 
-            await Verifier.Verify(additionResult, VerifyHelper.Settings);
+            await Verify(additionResult);
         }
 
 
@@ -43,7 +43,7 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await Verifier.Verify(actuals, VerifyHelper.Settings);
+            await Verify(actuals);
         }
 
 
@@ -59,13 +59,11 @@ namespace DotNet6UnitTests
             int multiplicationResult = 100 * 200;
 
             await 
-                Verifier
-                .Verify(additionResult, VerifyHelper.Settings)
+                Verify(additionResult)
                 .UseMethodName($"{nameof(NoDataRows_MultipleVerification)}_test=Add");
 
             await 
-                Verifier
-                .Verify(multiplicationResult, VerifyHelper.Settings)
+                Verify(multiplicationResult)
                 .UseMethodName($"{nameof(NoDataRows_MultipleVerification)}_test=Multiply");
         }
 
@@ -82,7 +80,7 @@ namespace DotNet6UnitTests
         {
             int additionResult = a + b;
 
-            await Verifier.Verify(additionResult, VerifyHelper.Settings).UseParameters(testName);
+            await Verify(additionResult).UseParameters(testName);
         }
 
 
@@ -106,7 +104,7 @@ namespace DotNet6UnitTests
                 Multiplication = multiplicationResult
             };
 
-            await Verifier.Verify(actuals, VerifyHelper.Settings).UseParameters(testName);
+            await Verify(actuals).UseParameters(testName);
         }
 
 
@@ -124,8 +122,8 @@ namespace DotNet6UnitTests
             int additionResult = a + b;
             int multiplicationResult = a * b;
 
-            await Verifier.Verify(additionResult, VerifyHelper.Settings).UseParameters($"Add_{testName}");
-            await Verifier.Verify(multiplicationResult, VerifyHelper.Settings).UseParameters($"Mult_{testName}");
+            await Verify(additionResult).UseParameters($"Add_{testName}");
+            await Verify(multiplicationResult).UseParameters($"Mult_{testName}");
         }
     }
 }

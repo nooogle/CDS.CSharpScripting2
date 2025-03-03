@@ -22,7 +22,7 @@ namespace DotNet6UnitTests
             var diagnostics = await scriptManager.GetDiagnosticsAsync();
 
             // Verify
-            await Verifier.Verify(diagnostics, VerifyHelper.Settings);
+            await Verify(diagnostics);
         }
 
 
@@ -46,7 +46,7 @@ namespace DotNet6UnitTests
                 All = diagnostics[0]
             };
 
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            await Verify(actual);
         }
 
 
@@ -78,7 +78,7 @@ namespace DotNet6UnitTests
                 All = diagnostics[0]
             };
 
-            await Verifier.Verify(actual, VerifyHelper.Settings);
+            await Verify(actual);
         }
     }
 }

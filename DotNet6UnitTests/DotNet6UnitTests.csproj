@@ -2,24 +2,23 @@
 
   <PropertyGroup>
     <TargetFrameworks>net48;net8.0</TargetFrameworks>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
-    <Platforms>AnyCPU;ARM64</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.12.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
-    <PackageReference Include="coverlet.collector" Version="6.0.2">
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.8.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.8.2" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
-    <PackageReference Include="Verify.MSTest" Version="28.3.2" />
+    <PackageReference Include="Verify.MSTest" Version="28.13.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
@@ -28,10 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="VerifySnapshots\" />
   </ItemGroup>
 
 </Project>

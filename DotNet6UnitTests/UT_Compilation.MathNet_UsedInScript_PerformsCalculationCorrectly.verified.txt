@@ -1,0 +1,58 @@
+﻿{
+  expectedResults: {
+    Determinant: 0,
+    Eigenvalues: [
+      {
+        Real: 16.116843969807057,
+        Imaginary: 0,
+        Magnitude: 16.116843969807057,
+        Phase: 0
+      },
+      {
+        Real: -1.1168439698070447,
+        Imaginary: 0,
+        Magnitude: 1.1168439698070447,
+        Phase: 3.1415926535897931
+      },
+      {
+        Real: -8.0462971793560689E-16,
+        Imaginary: 0,
+        Magnitude: 8.0462971793560689E-16,
+        Phase: 3.1415926535897931
+      }
+    ],
+    VectorProduct: [
+      14,
+      32,
+      50
+    ]
+  },
+  Result: {
+    Determinant: 0,
+    Eigenvalues: [
+      {
+        Real: 16.116843969807057,
+        Imaginary: 0,
+        Magnitude: 16.116843969807057,
+        Phase: 0
+      },
+      {
+        Real: -1.1168439698070447,
+        Imaginary: 0,
+        Magnitude: 1.1168439698070447,
+        Phase: 3.1415926535897931
+      },
+      {
+        Real: -8.0462971793560689E-16,
+        Imaginary: 0,
+        Magnitude: 8.0462971793560689E-16,
+        Phase: 3.1415926535897931
+      }
+    ],
+    VectorProduct: [
+      14,
+      32,
+      50
+    ]
+  }
+}

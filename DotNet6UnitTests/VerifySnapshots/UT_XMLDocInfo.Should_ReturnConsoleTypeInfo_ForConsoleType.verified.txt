@@ -1,7 +1,0 @@
-﻿{
-  Name: Console,
-  Namespace: System,
-  Accessibility: Public,
-  BaseType: object,
-  Summary: Represents the standard input, output, and error streams for console applications. This class cannot be inherited.
-}
