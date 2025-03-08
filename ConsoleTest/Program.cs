@@ -27,7 +27,7 @@ public static class StaticConstructorTest
 class Scratch
 {
     static async Task Main(string[] args)
-    {
+    {        
         CDS.CSScripting2.Core.EnvironmentInfo.WriteToDebug();
 
         await OpenCVSharpTests.Test.Run();

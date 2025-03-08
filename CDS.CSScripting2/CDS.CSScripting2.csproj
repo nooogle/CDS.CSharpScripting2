@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Platforms>AnyCPU;x64</Platforms>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <Title>C# Scripting</Title>
@@ -11,6 +15,7 @@
     <Company>Carpe Diem Systems</Company>
     <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
     <PackageIcon>script.png</PackageIcon>
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +23,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.13.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Editors\T\" />
+    <Folder Include="Editors\ScintillaEditor\" />
   </ItemGroup>
 
   
