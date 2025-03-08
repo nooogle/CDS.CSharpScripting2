@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CDS.CSScripting.CodeCompletion
+namespace CDS.CSScripting2.CodeCompletion
 {
     public partial class Manager
     {

@@ -1,14 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
     <Title>C# Scripting</Title>
+    <Description>Library for C# script editing, compilation and execution.</Description>
     <Authors>Jon Shadforth</Authors>
     <Company>Carpe Diem Systems</Company>
+    <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
     <PackageIcon>script.png</PackageIcon>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,5 +29,11 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-  </ItemGroup> 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Editors\T\" />
+  </ItemGroup>
+
+  
 </Project>

@@ -1,8 +1,4 @@
-using CDS.CSScripting;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
-using VerifyMSTest;
-using VerifyTests;
+using CDS.CSScripting2;
 
 namespace DotNet6UnitTests
 {

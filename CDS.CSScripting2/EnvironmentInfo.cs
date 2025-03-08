@@ -3,7 +3,7 @@
     using System.Runtime.InteropServices;
     using System.Text;
 
-namespace CDS.CSScripting.Core
+namespace CDS.CSScripting2.Core
 {
     /// <summary>
     /// Provides information about the system and application.

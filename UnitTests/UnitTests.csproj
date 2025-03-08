@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net48;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -21,12 +21,8 @@
     <PackageReference Include="Verify.MSTest" Version="28.13.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
-  </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj" />
+    <ProjectReference Include="..\CDS.CSScripting2\CDS.CSScripting2.csproj" />
   </ItemGroup>
 
 </Project>

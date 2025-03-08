@@ -13,7 +13,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj" />
+    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting2.csproj" />
   </ItemGroup>
 
 </Project>

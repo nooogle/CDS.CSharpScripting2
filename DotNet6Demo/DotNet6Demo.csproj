@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj" />
+    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting2.csproj" />
     <ProjectReference Include="..\CDS.CSScripting.DotNet6Editors.Scintilla\CDS.CSScripting.DotNet6Editors.Scintilla.csproj" />
   </ItemGroup>
 

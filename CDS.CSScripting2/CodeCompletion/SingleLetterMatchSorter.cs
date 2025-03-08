@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Completion;
 
-namespace CDS.CSScripting.CodeCompletion
+namespace CDS.CSScripting2.CodeCompletion
 {
     class SingleLetterMatchSorter
     {

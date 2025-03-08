@@ -10,7 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace CDS.CSScripting
+namespace CDS.CSScripting2
 {
     public partial class ScriptManager
     {

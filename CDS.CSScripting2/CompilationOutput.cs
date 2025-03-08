@@ -1,4 +1,4 @@
-﻿namespace CDS.CSScripting
+﻿namespace CDS.CSScripting2
 {
     /// <summary>
     /// Basic compilation results

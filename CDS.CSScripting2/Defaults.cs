@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CDS.CSScripting
+namespace CDS.CSScripting2
 {
     /// <summary>
     /// Default settings and data for the project

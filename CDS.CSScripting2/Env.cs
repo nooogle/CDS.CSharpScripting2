@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace CDS.CSScripting
+namespace CDS.CSScripting2
 {
     public class Env
     {

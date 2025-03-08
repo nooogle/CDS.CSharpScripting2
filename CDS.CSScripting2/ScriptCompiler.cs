@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace CDS.CSScripting
+namespace CDS.CSScripting2
 {
     /// <summary>
     /// Script compilationn support

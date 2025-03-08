@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace CDS.CSScripting
+namespace CDS.CSScripting2
 {
     public static class XMLHelpManager
     {

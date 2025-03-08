@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace CDS.CSScripting.CodeCompletion
+namespace CDS.CSScripting2.CodeCompletion
 {
     public class StringComparerWithBiasForSingleLetter
     {

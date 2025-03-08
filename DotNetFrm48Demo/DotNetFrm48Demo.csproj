@@ -101,9 +101,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSScripting.Core\CDS.CSScripting.Core.csproj">
+    <ProjectReference Include="..\CDS.CSScripting2\CDS.CSScripting2.csproj">
       <Project>{8b29ec18-9d93-4723-92bf-baeae84abfdd}</Project>
-      <Name>CDS.CSScripting.Core</Name>
+      <Name>CDS.CSScripting2</Name>
     </ProjectReference>
     <ProjectReference Include="..\CDS.CSScripting.DotNetFrm48Editors.Scintilla\CDS.CSScripting.DotNetFrm48Editors.Scintilla.csproj">
       <Project>{bd5afb2c-e56b-45c8-b8e1-df992895eb12}</Project>
