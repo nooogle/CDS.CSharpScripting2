@@ -11,7 +11,7 @@ using System.Collections.Immutable;
 
 namespace CDS.CSScripting2.Editors.RichTextEditor
 {
-    public partial class RTFEditor : UserControl
+    public partial class RTFScriptEditor : UserControl
     {
         private ProcessScriptDelegate processScript;
         private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
@@ -26,7 +26,7 @@ namespace CDS.CSScripting2.Editors.RichTextEditor
             set => richTextBox.Text = value;
         }
 
-        public RTFEditor()
+        public RTFScriptEditor()
         {
             InitializeComponent();
 

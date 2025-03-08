@@ -16,6 +16,17 @@ namespace WinFormsTest
             rtfEditor.SetProcessScriptHandler(rtfEditorManager.ProcessScript);
 
             rtfEditor.Script = @"Console.WriteLineX(""Hello, from the script!"");";
+
+
+            // ---
+
+            var scintillaEditorManager = new CDS.CSScripting2.Editors.EditorManager(
+                scintillaEditor.ApplyDiagnostics,
+                scintillaEditor.ApplySyntaxElements);
+
+            scintillaEditor.SetProcessScriptHandler(scintillaEditorManager.ProcessScript);
+
+            scintillaEditor.Script = @"Console.WriteLineX(""Hello, from the script!"");";
         }
     }
 }

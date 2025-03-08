@@ -1,6 +1,6 @@
 ﻿namespace CDS.CSScripting2.Editors.RichTextEditor
 {
-    partial class RTFEditor
+    partial class RTFScriptEditor
     {
         /// <summary> 
         /// Required designer variable.
