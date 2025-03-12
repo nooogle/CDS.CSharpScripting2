@@ -1,21 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <TargetFrameworks>net8.0-windows10.0.17763.0;net48</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>true</ImplicitUsings>
     <Nullable>disable</Nullable>
     <Platforms>AnyCPU;x64;ARM64</Platforms>
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageIcon>script.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <Title>C# Scripting</Title>
     <Description>Library for C# script editing, compilation and execution.</Description>
     <Authors>Jon Shadforth</Authors>
     <Company>Carpe Diem Systems</Company>
     <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
-    <PackageIcon>script.png</PackageIcon>
-    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,15 +28,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="readme.md">
+    <None Include="readme.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Update="script.png">
+    <None Include="script.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
   
 </Project>
