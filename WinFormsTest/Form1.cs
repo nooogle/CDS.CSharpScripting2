@@ -26,7 +26,7 @@ namespace WinFormsTest
 
             scintillaEditor.SetProcessScriptHandler(scintillaEditorManager.ProcessScript);
 
-            scintillaEditor.Script = @"Console.WriteLineX(""Hello, from the script!"");";
+            scintillaEditor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
         }
     }
 }
