@@ -38,6 +38,7 @@
             // 
             scintilla.AutocompleteListSelectedBackColor = Color.FromArgb(0, 120, 215);
             scintilla.Dock = DockStyle.Fill;
+            scintilla.Font = new Font("Cascadia Code", 10.12F);
             scintilla.LexerName = null;
             scintilla.Location = new Point(0, 0);
             scintilla.Name = "scintilla";

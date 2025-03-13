@@ -1,6 +1,6 @@
-﻿namespace WinFormsTest
+﻿namespace WinFormsTest.Demos.GlobalsDemo
 {
-    partial class Form1
+    partial class FormGlobals
     {
         /// <summary>
         ///  Required designer variable.
@@ -29,17 +29,16 @@
         private void InitializeComponent()
         {
             tableLayoutPanel1 = new TableLayoutPanel();
-            outputPanel = new RichTextBox();
+            scintillaScriptEditor = new CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor();
             btnCompile = new Button();
             btnRun = new Button();
-            systemInfoPanel1 = new SystemInfoPanel();
-            btnCreateScintillaEditor = new Button();
-            btnCreateRTFEditor = new Button();
-            groupBoxCreate = new GroupBox();
             groupBoxScript = new GroupBox();
+            propertyGrid1 = new PropertyGrid();
+            groupBox1 = new GroupBox();
+            outputPanel = new CDS.CSScripting2.OutputPanels.RTFOutputPanel();
             tableLayoutPanel1.SuspendLayout();
-            groupBoxCreate.SuspendLayout();
             groupBoxScript.SuspendLayout();
+            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -47,24 +46,24 @@
             tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tableLayoutPanel1.ColumnCount = 1;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
             tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanel1.Location = new Point(12, 187);
-            tableLayoutPanel1.Margin = new Padding(12);
+            tableLayoutPanel1.Location = new Point(344, 24);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 2;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(776, 310);
+            tableLayoutPanel1.Size = new Size(587, 520);
             tableLayoutPanel1.TabIndex = 2;
             // 
-            // outputPanel
+            // scintillaScriptEditor
             // 
-            outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 209);
-            outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(770, 98);
-            outputPanel.TabIndex = 4;
-            outputPanel.Text = "";
+            scintillaScriptEditor.Dock = DockStyle.Fill;
+            scintillaScriptEditor.Location = new Point(3, 3);
+            scintillaScriptEditor.Name = "scintillaScriptEditor";
+            scintillaScriptEditor.Script = "";
+            scintillaScriptEditor.Size = new Size(581, 340);
+            scintillaScriptEditor.TabIndex = 5;
             // 
             // btnCompile
             // 
@@ -86,85 +85,68 @@
             btnRun.UseVisualStyleBackColor = true;
             btnRun.Click += btnRun_Click;
             // 
-            // systemInfoPanel1
-            // 
-            systemInfoPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            systemInfoPanel1.BorderStyle = BorderStyle.FixedSingle;
-            systemInfoPanel1.Location = new Point(12, 15);
-            systemInfoPanel1.Name = "systemInfoPanel1";
-            systemInfoPanel1.Size = new Size(776, 51);
-            systemInfoPanel1.TabIndex = 3;
-            // 
-            // btnCreateScintillaEditor
-            // 
-            btnCreateScintillaEditor.Location = new Point(15, 22);
-            btnCreateScintillaEditor.Name = "btnCreateScintillaEditor";
-            btnCreateScintillaEditor.Size = new Size(140, 23);
-            btnCreateScintillaEditor.TabIndex = 9;
-            btnCreateScintillaEditor.Text = "Create Scintilla editor";
-            btnCreateScintillaEditor.UseVisualStyleBackColor = true;
-            btnCreateScintillaEditor.Click += btnCreateScintillaEditor_Click;
-            // 
-            // btnCreateRTFEditor
-            // 
-            btnCreateRTFEditor.Location = new Point(161, 22);
-            btnCreateRTFEditor.Name = "btnCreateRTFEditor";
-            btnCreateRTFEditor.Size = new Size(140, 23);
-            btnCreateRTFEditor.TabIndex = 10;
-            btnCreateRTFEditor.Text = "Create RTF editor";
-            btnCreateRTFEditor.UseVisualStyleBackColor = true;
-            btnCreateRTFEditor.Click += btnCreateRTFEditor_Click;
-            // 
-            // groupBoxCreate
-            // 
-            groupBoxCreate.Controls.Add(btnCreateScintillaEditor);
-            groupBoxCreate.Controls.Add(btnCreateRTFEditor);
-            groupBoxCreate.Location = new Point(12, 72);
-            groupBoxCreate.Name = "groupBoxCreate";
-            groupBoxCreate.Size = new Size(314, 60);
-            groupBoxCreate.TabIndex = 11;
-            groupBoxCreate.TabStop = false;
-            groupBoxCreate.Text = "Editor";
-            // 
             // groupBoxScript
             // 
             groupBoxScript.Controls.Add(btnCompile);
             groupBoxScript.Controls.Add(btnRun);
-            groupBoxScript.Enabled = false;
-            groupBoxScript.Location = new Point(332, 72);
+            groupBoxScript.Location = new Point(15, 24);
             groupBoxScript.Name = "groupBoxScript";
             groupBoxScript.Size = new Size(314, 60);
             groupBoxScript.TabIndex = 12;
             groupBoxScript.TabStop = false;
             groupBoxScript.Text = "Script";
             // 
-            // Form1
+            // propertyGrid1
+            // 
+            propertyGrid1.Location = new Point(15, 31);
+            propertyGrid1.Name = "propertyGrid1";
+            propertyGrid1.Size = new Size(284, 227);
+            propertyGrid1.TabIndex = 13;
+            // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(propertyGrid1);
+            groupBox1.Location = new Point(15, 94);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new Padding(12);
+            groupBox1.Size = new Size(314, 273);
+            groupBox1.TabIndex = 14;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Globals";
+            // 
+            // outputPanel
+            // 
+            outputPanel.Dock = DockStyle.Fill;
+            outputPanel.Location = new Point(3, 349);
+            outputPanel.Name = "outputPanel";
+            outputPanel.Size = new Size(581, 168);
+            outputPanel.TabIndex = 6;
+            // 
+            // FormGlobals
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 521);
+            ClientSize = new Size(943, 568);
+            Controls.Add(groupBox1);
             Controls.Add(groupBoxScript);
-            Controls.Add(groupBoxCreate);
             Controls.Add(tableLayoutPanel1);
-            Controls.Add(systemInfoPanel1);
-            Name = "Form1";
+            Name = "FormGlobals";
             Padding = new Padding(12);
             Text = "Form1";
             tableLayoutPanel1.ResumeLayout(false);
-            groupBoxCreate.ResumeLayout(false);
             groupBoxScript.ResumeLayout(false);
+            groupBox1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
         private TableLayoutPanel tableLayoutPanel1;
-        private SystemInfoPanel systemInfoPanel1;
         private Button btnCompile;
         private Button btnRun;
-        private RichTextBox outputPanel;
-        private Button btnCreateScintillaEditor;
-        private Button btnCreateRTFEditor;
-        private GroupBox groupBoxCreate;
         private GroupBox groupBoxScript;
+        private PropertyGrid propertyGrid1;
+        private GroupBox groupBox1;
+        private CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
+        private CDS.CSScripting2.OutputPanels.RTFOutputPanel outputPanel;
     }
 }

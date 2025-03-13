@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace WinFormsTest;
+namespace WinFormsTest.TestSupport;
 
 
 /// <summary>

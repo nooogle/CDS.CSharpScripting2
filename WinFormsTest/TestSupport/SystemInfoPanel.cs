@@ -1,4 +1,6 @@
-﻿namespace WinFormsTest;
+﻿using WinFormsTest.TestSupport;
+
+namespace WinFormsTest;
 
 
 /// <summary>

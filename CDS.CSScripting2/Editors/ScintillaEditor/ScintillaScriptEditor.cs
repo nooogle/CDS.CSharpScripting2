@@ -49,8 +49,8 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
 
     private void InitialiseEditor()
     {
-        scintilla.Styles[ScintillaNET.Style.Default].Font = "Courier New";
-        scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
+        //scintilla.Styles[ScintillaNET.Style.Default].Font = "Courier New";
+        //scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
 
         //scintilla.Lexer = ScintillaNET.Lexer.Null;
         scintilla.MouseDwellTime = 500;

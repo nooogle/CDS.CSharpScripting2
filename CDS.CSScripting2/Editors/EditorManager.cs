@@ -1,4 +1,5 @@
 ﻿
+
 namespace CDS.CSScripting2.Editors;
 
 public class EditorManager
@@ -39,6 +40,18 @@ public class EditorManager
         var diagnostics = await scriptManager.GetDiagnosticsAsync();
         applyDiagnostics(diagnostics);
         applySyntaxElements(syntaxElements);
+    }
+
+    public async Task RunAsync()
+    {
+        await CreateScriptManager();
+        await scriptManager.RunAsync();
+    }
+
+    public async Task RunAsync(object globals)
+    {
+        await CreateScriptManager();
+        await scriptManager.RunAsync(globals);
     }
 
     private async Task CreateScriptManager()
