@@ -28,70 +28,63 @@
         /// </summary>
         private void InitializeComponent()
         {
-            rtfEditor = new CDS.CSScripting2.Editors.RichTextEditor.RTFScriptEditor();
-            scintillaEditor = new CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor();
             tableLayoutPanel1 = new TableLayoutPanel();
-            label2 = new Label();
-            label1 = new Label();
+            outputPanel = new RichTextBox();
+            btnCompile = new Button();
+            btnRun = new Button();
             systemInfoPanel1 = new SystemInfoPanel();
+            btnCreateScintillaEditor = new Button();
+            btnCreateRTFEditor = new Button();
+            groupBoxCreate = new GroupBox();
+            groupBoxScript = new GroupBox();
             tableLayoutPanel1.SuspendLayout();
+            groupBoxCreate.SuspendLayout();
+            groupBoxScript.SuspendLayout();
             SuspendLayout();
-            // 
-            // rtfEditor
-            // 
-            rtfEditor.Dock = DockStyle.Fill;
-            rtfEditor.Location = new Point(2, 24);
-            rtfEditor.Margin = new Padding(2, 1, 2, 1);
-            rtfEditor.Name = "rtfEditor";
-            rtfEditor.Script = "";
-            rtfEditor.Size = new Size(384, 403);
-            rtfEditor.TabIndex = 0;
-            // 
-            // scintillaEditor
-            // 
-            scintillaEditor.Dock = DockStyle.Fill;
-            scintillaEditor.Location = new Point(391, 26);
-            scintillaEditor.Name = "scintillaEditor";
-            scintillaEditor.Script = "";
-            scintillaEditor.Size = new Size(382, 399);
-            scintillaEditor.TabIndex = 1;
             // 
             // tableLayoutPanel1
             // 
             tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tableLayoutPanel1.ColumnCount = 2;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.Controls.Add(label2, 1, 0);
-            tableLayoutPanel1.Controls.Add(rtfEditor, 0, 1);
-            tableLayoutPanel1.Controls.Add(scintillaEditor, 1, 1);
-            tableLayoutPanel1.Controls.Add(label1, 0, 0);
-            tableLayoutPanel1.Location = new Point(12, 81);
+            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
+            tableLayoutPanel1.Location = new Point(12, 187);
             tableLayoutPanel1.Margin = new Padding(12);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 23F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 99.99999F));
-            tableLayoutPanel1.Size = new Size(776, 428);
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
+            tableLayoutPanel1.Size = new Size(776, 310);
             tableLayoutPanel1.TabIndex = 2;
             // 
-            // label2
+            // outputPanel
             // 
-            label2.AutoSize = true;
-            label2.Location = new Point(391, 0);
-            label2.Name = "label2";
-            label2.Size = new Size(48, 15);
-            label2.TabIndex = 3;
-            label2.Text = "Scintilla";
+            outputPanel.Dock = DockStyle.Fill;
+            outputPanel.Location = new Point(3, 209);
+            outputPanel.Name = "outputPanel";
+            outputPanel.Size = new Size(770, 98);
+            outputPanel.TabIndex = 4;
+            outputPanel.Text = "";
             // 
-            // label1
+            // btnCompile
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(3, 0);
-            label1.Name = "label1";
-            label1.Size = new Size(26, 15);
-            label1.TabIndex = 2;
-            label1.Text = "RTF";
+            btnCompile.Location = new Point(6, 22);
+            btnCompile.Name = "btnCompile";
+            btnCompile.Size = new Size(75, 23);
+            btnCompile.TabIndex = 8;
+            btnCompile.Text = "Compile";
+            btnCompile.UseVisualStyleBackColor = true;
+            btnCompile.Click += btnCompile_Click;
+            // 
+            // btnRun
+            // 
+            btnRun.Location = new Point(87, 22);
+            btnRun.Name = "btnRun";
+            btnRun.Size = new Size(75, 23);
+            btnRun.TabIndex = 6;
+            btnRun.Text = "Run";
+            btnRun.UseVisualStyleBackColor = true;
+            btnRun.Click += btnRun_Click;
             // 
             // systemInfoPanel1
             // 
@@ -102,29 +95,76 @@
             systemInfoPanel1.Size = new Size(776, 51);
             systemInfoPanel1.TabIndex = 3;
             // 
+            // btnCreateScintillaEditor
+            // 
+            btnCreateScintillaEditor.Location = new Point(15, 22);
+            btnCreateScintillaEditor.Name = "btnCreateScintillaEditor";
+            btnCreateScintillaEditor.Size = new Size(140, 23);
+            btnCreateScintillaEditor.TabIndex = 9;
+            btnCreateScintillaEditor.Text = "Create Scintilla editor";
+            btnCreateScintillaEditor.UseVisualStyleBackColor = true;
+            btnCreateScintillaEditor.Click += btnCreateScintillaEditor_Click;
+            // 
+            // btnCreateRTFEditor
+            // 
+            btnCreateRTFEditor.Location = new Point(161, 22);
+            btnCreateRTFEditor.Name = "btnCreateRTFEditor";
+            btnCreateRTFEditor.Size = new Size(140, 23);
+            btnCreateRTFEditor.TabIndex = 10;
+            btnCreateRTFEditor.Text = "Create RTF editor";
+            btnCreateRTFEditor.UseVisualStyleBackColor = true;
+            btnCreateRTFEditor.Click += btnCreateRTFEditor_Click;
+            // 
+            // groupBoxCreate
+            // 
+            groupBoxCreate.Controls.Add(btnCreateScintillaEditor);
+            groupBoxCreate.Controls.Add(btnCreateRTFEditor);
+            groupBoxCreate.Location = new Point(12, 72);
+            groupBoxCreate.Name = "groupBoxCreate";
+            groupBoxCreate.Size = new Size(314, 60);
+            groupBoxCreate.TabIndex = 11;
+            groupBoxCreate.TabStop = false;
+            groupBoxCreate.Text = "Editor";
+            // 
+            // groupBoxScript
+            // 
+            groupBoxScript.Controls.Add(btnCompile);
+            groupBoxScript.Controls.Add(btnRun);
+            groupBoxScript.Enabled = false;
+            groupBoxScript.Location = new Point(332, 72);
+            groupBoxScript.Name = "groupBoxScript";
+            groupBoxScript.Size = new Size(314, 60);
+            groupBoxScript.TabIndex = 12;
+            groupBoxScript.TabStop = false;
+            groupBoxScript.Text = "Script";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 521);
+            Controls.Add(groupBoxScript);
+            Controls.Add(groupBoxCreate);
             Controls.Add(tableLayoutPanel1);
             Controls.Add(systemInfoPanel1);
             Name = "Form1";
             Padding = new Padding(12);
             Text = "Form1";
-            Load += Form1_Load;
             tableLayoutPanel1.ResumeLayout(false);
-            tableLayoutPanel1.PerformLayout();
+            groupBoxCreate.ResumeLayout(false);
+            groupBoxScript.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
-
-        private CDS.CSScripting2.Editors.RichTextEditor.RTFScriptEditor rtfEditor;
-        private CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor scintillaEditor;
         private TableLayoutPanel tableLayoutPanel1;
-        private Label label2;
-        private Label label1;
         private SystemInfoPanel systemInfoPanel1;
+        private Button btnCompile;
+        private Button btnRun;
+        private RichTextBox outputPanel;
+        private Button btnCreateScintillaEditor;
+        private Button btnCreateRTFEditor;
+        private GroupBox groupBoxCreate;
+        private GroupBox groupBoxScript;
     }
 }

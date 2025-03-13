@@ -1,32 +1,107 @@
+using System.Diagnostics;
+
 namespace WinFormsTest
 {
     public partial class Form1 : Form
     {
+        /// <summary>
+        /// Globals class for the demo
+        /// </summary>
+        public class Globals
+        {
+            public string Animal { get; set; } = "Cat";
+        }
+
+
+        private CDS.CSScripting2.Editors.IEditor? editor;
+        private CDS.CSScripting2.Editors.EditorManager? editorManager;
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void btnCreateScintillaEditor_Click(object sender, EventArgs e)
         {
-            var rtfEditorManager = new CDS.CSScripting2.Editors.EditorManager(
-                rtfEditor.ApplyDiagnostics,
-                rtfEditor.ApplySyntaxElements);
-
-            rtfEditor.SetProcessScriptHandler(rtfEditorManager.ProcessScript);
-
-            rtfEditor.Script = @"Console.WriteLineX(""Hello, from the script!"");";
+            CreateEditor(() => new CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor());
+        }
 
 
-            // ---
+        private void CreateEditor(Func<CDS.CSScripting2.Editors.IEditor> editorFactory)
+        {
+            editor = editorFactory();
+            InitialiseEditor();
+            PlaceEditorOnForm();
+            groupBoxCreate.Enabled = false;
+            groupBoxScript.Enabled = true;
+        }
 
-            var scintillaEditorManager = new CDS.CSScripting2.Editors.EditorManager(
-                scintillaEditor.ApplyDiagnostics,
-                scintillaEditor.ApplySyntaxElements);
+        private void InitialiseEditor()
+        {
+            if (editor == null)
+            {
+                throw new InvalidOperationException("Editor control not created");
+            }
 
-            scintillaEditor.SetProcessScriptHandler(scintillaEditorManager.ProcessScript);
+            var env =
+                CDS.CSScripting2.Env.Default
+                .WithDrawingReferences()
+                .WithGlobalType(typeof(Globals));
 
-            scintillaEditor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
+            editorManager = new CDS.CSScripting2.Editors.EditorManager(
+                environment: env,
+                editor.ApplyDiagnostics,
+                editor.ApplySyntaxElements);
+
+            editor.SetProcessScriptHandler(editorManager.ProcessScript);
+
+            editor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
+        }
+
+        private void btnCreateRTFEditor_Click(object sender, EventArgs e)
+        {
+            CreateEditor(() => new CDS.CSScripting2.Editors.RichTextEditor.RTFScriptEditor());
+        }
+
+        private void PlaceEditorOnForm()
+        {
+            var editorAsControl = editor as Control;
+
+            if (editorAsControl == null)
+            {
+                throw new InvalidOperationException("Editor control not created");
+            }
+
+            tableLayoutPanel1.Controls.Add(editorAsControl, 0, 0);
+            editorAsControl.Dock = DockStyle.Fill;
+        }
+
+        private void btnRun_Click(object sender, EventArgs e)
+        {
+
+        }
+
+
+        private async void btnCompile_Click(object sender, EventArgs e)
+        {
+            Enabled = false;
+            outputPanel.Clear();
+
+            var stopWatch = Stopwatch.StartNew();
+            var compilationOutput = await editorManager!.CompileAsync();
+            stopWatch.Stop();
+
+            foreach (var message in compilationOutput.Messages)
+            {
+                outputPanel.AppendText(message + Environment.NewLine);
+            }
+
+            outputPanel.AppendText(
+                $"Compilation took {stopWatch.ElapsedMilliseconds}ms and completed with " +
+                $"{compilationOutput.WarningCount} warnings and " +
+                $"{compilationOutput.ErrorCount} errors.");
+
+            Enabled = true;
         }
     }
 }

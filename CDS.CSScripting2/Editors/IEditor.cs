@@ -1,13 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Immutable;
 
-namespace CDS.CSScripting2.Editors
+namespace CDS.CSScripting2.Editors;
+
+public interface IEditor
 {
-    public interface IEditor
-    {
+    string Script { get; set; }
 
-    }
+
+    void ApplyDiagnostics(ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics);
+    
+    
+    void ApplySyntaxElements(ImmutableArray<Syntax.SyntaxElement> syntaxElements);
+
+
+
+    void SetProcessScriptHandler(ProcessScriptDelegate processScript);
 }
+
