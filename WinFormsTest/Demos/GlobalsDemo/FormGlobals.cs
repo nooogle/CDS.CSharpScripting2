@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace WinFormsTest.Demos.GlobalsDemo;
 
@@ -25,7 +26,7 @@ public partial class FormGlobals : Form
     private void InitialiseEditor()
     {
         var env =
-            CDS.CSScripting2.Env.Default
+            CDS.CSScripting2.ScriptEnvironment.Default
             .WithDrawingReferences()
             .WithGlobalType(typeof(SharedData));
 
@@ -58,7 +59,11 @@ public partial class FormGlobals : Form
         isRunningOrCompilingSentry = true;
 
         outputPanel.Clear();
+        var stopwatch = Stopwatch.StartNew();
         await action();
+        stopwatch.Stop();
+
+        outputPanel.AppendLine($"Execution time: {stopwatch.ElapsedMilliseconds}ms");
 
         groupBoxScript.Enabled = true;
         isRunningOrCompilingSentry = false;
@@ -66,13 +71,14 @@ public partial class FormGlobals : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
+        using var consoleHook = new CDS.CSScripting2.ConsoleOutputHook(outputPanel.Append);
+
         await PerformScriptManagerActions(async () =>
         {
-            using var consoleHook = new CDS.CSScripting2.ConsoleOutputHook(outputPanel.Append);
-
             await editorManager!.RunAsync(sharedData);
-            propertyGrid1.Refresh();
         });
+
+        propertyGrid1.Refresh();
     }
 
     private async void btnCompile_Click(object sender, EventArgs e)

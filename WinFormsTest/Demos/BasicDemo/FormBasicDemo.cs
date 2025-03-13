@@ -36,7 +36,7 @@ public partial class FormBasicDemo : Form
     private void InitialiseEditor()
     {
         editorManager = new CDS.CSScripting2.Editors.EditorManager(
-            environment: CDS.CSScripting2.Env.Default,
+            environment: CDS.CSScripting2.ScriptEnvironment.Default,
             scintillaScriptEditor.ApplyDiagnostics,
             scintillaScriptEditor.ApplySyntaxElements);
 

@@ -1,10 +1,11 @@
-﻿# CDS.CSScripting.Core
+﻿# CDS.CSScripting2
 
 C# Scripting: compilation, execution, editor framework
 
 ## Description
 
-CDS.CSScripting.Core is a .NET Standard 2.0 compatible scripting library that supports both .NET Framework and .NET 6+. It provides a framework for compiling, executing, and editing C# scripts.
+TODO update!
+CDS.CSScripting2 is a .NET Standard 2.0 compatible scripting library that supports both .NET Framework and .NET 6+. It provides a framework for compiling, executing, and editing C# scripts.
 
 ## Features
 

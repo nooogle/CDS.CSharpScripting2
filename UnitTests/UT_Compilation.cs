@@ -94,7 +94,7 @@ Result.VectorProduct = product.ToArray();
 ";
 
             // Setup environment with MathNet.Numerics references
-            var env = Env
+            var env = ScriptEnvironment
                 .Default
                 .WithAdditionalNamespaceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()
                 .WithAdditionalReferenceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()

@@ -16,7 +16,7 @@ namespace CDS.CSScripting2
     {
         private Document document;
         private string scriptText;
-        private Env environment;
+        private ScriptEnvironment environment;
         private SyntaxTree cachedSyntaxTree;
         private SemanticModel cachedSemanticModel;
         private Compilation compilation;
@@ -52,7 +52,7 @@ namespace CDS.CSScripting2
         public string ScriptText => scriptText;
 
 
-        private ScriptManager(Env environment)
+        private ScriptManager(ScriptEnvironment environment)
         {
             scriptText = "";
             this.environment = environment;
@@ -82,7 +82,7 @@ namespace CDS.CSScripting2
                 references.Add(metadataRefGlobal);
             }
 
-            if (!Env.IsNetFramework)
+            if (!ScriptEnvironment.IsNetFramework)
             {
                 MetadataReference metadataRefRuntime = MetadataReference.CreateFromFile(System.Reflection.Assembly.Load("System.Runtime").Location);
 
@@ -120,7 +120,7 @@ namespace CDS.CSScripting2
             document = workspace.AddDocument(scriptDocumentInfo);
         }
 
-        private ScriptManager(Document scriptDocument, string scriptText, Env environment)
+        private ScriptManager(Document scriptDocument, string scriptText, ScriptEnvironment environment)
         {
             this.document = scriptDocument;
             this.scriptText = scriptText;
@@ -141,10 +141,10 @@ namespace CDS.CSScripting2
         }
 
 
-        public static async Task<ScriptManager> CreateAsync() => await CreateAsync(Env.Default);
+        public static async Task<ScriptManager> CreateAsync() => await CreateAsync(ScriptEnvironment.Default);
 
 
-        public static async Task<ScriptManager> CreateAsync(Env environment)
+        public static async Task<ScriptManager> CreateAsync(ScriptEnvironment environment)
         {
             var task = Task.Run(() => new ScriptManager(environment));
             return await task;

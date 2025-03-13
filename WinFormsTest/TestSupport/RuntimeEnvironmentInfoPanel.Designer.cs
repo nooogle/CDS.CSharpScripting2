@@ -1,6 +1,6 @@
 ﻿namespace WinFormsTest
 {
-    partial class SystemInfoPanel
+    partial class RuntimeEnvironmentInfoPanel
     {
         /// <summary> 
         /// Required designer variable.

@@ -6,12 +6,12 @@ namespace WinFormsTest;
 /// <summary>
 /// Panel to display system information
 /// </summary>
-public partial class SystemInfoPanel : UserControl
+public partial class RuntimeEnvironmentInfoPanel : UserControl
 {
     /// <summary>
     /// Constructor
     /// </summary>
-    public SystemInfoPanel()
+    public RuntimeEnvironmentInfoPanel()
     {
         InitializeComponent();
     }
@@ -23,6 +23,6 @@ public partial class SystemInfoPanel : UserControl
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        labelSystemInfo.Text = SystemInfo.Get();
+        labelSystemInfo.Text = CDS.CSScripting2.RuntimeEnvironmentInfo.Get();
     }
 }

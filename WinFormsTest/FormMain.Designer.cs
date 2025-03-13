@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             demosTreeView = new DemosTreeView();
-            systemInfoPanel1 = new SystemInfoPanel();
+            systemInfoPanel1 = new RuntimeEnvironmentInfoPanel();
             SuspendLayout();
             // 
             // demosTreeView
@@ -64,6 +64,6 @@
         #endregion
 
         private DemosTreeView demosTreeView;
-        private SystemInfoPanel systemInfoPanel1;
+        private RuntimeEnvironmentInfoPanel systemInfoPanel1;
     }
 }

@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20241108" />
+    <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +28,15 @@
     <Compile Update="Demos\BasicDemo\FormBasicDemo.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Demos\OpenCvSharpDemo\FormOpenCvSharpDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Demos\OpenCvSharpDemo\IMG_1412.jpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

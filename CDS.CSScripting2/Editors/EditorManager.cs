@@ -7,10 +7,10 @@ public class EditorManager
     private ScriptManager scriptManager;
     private ApplyDiagnosticsDelegate applyDiagnostics;
     private ApplySyntaxElementsDelegate applySyntaxElements;
-    private Env environment;
+    private ScriptEnvironment environment;
 
     public EditorManager(
-        Env environment,
+        ScriptEnvironment environment,
         ApplyDiagnosticsDelegate applyDiagnostics, 
         ApplySyntaxElementsDelegate applySyntaxElements)
     {

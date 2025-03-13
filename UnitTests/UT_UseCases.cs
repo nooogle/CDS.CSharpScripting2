@@ -89,7 +89,7 @@ namespace DotNet6UnitTests
         public async Task ScriptWithSuppliedUsing_Compiles_WithoutErrorsOrWarnings()
         {
             // Setup
-            var environment = Env.Default.WithAdditionalNamespaceType(typeof(System.Collections.ArrayList));
+            var environment = ScriptEnvironment.Default.WithAdditionalNamespaceType(typeof(System.Collections.ArrayList));
             var scriptManager = await ScriptManager.CreateAsync(environment);
             scriptManager = scriptManager.ApplyScript("var arrayList = new ArrayList(); arrayList.Add(1);");
 
@@ -125,7 +125,7 @@ namespace DotNet6UnitTests
             // the System.Drawing assembly, and for .NetCore/.Net5 
             // onwards this also requires System.Drawing.Primitives assembly.
             var environment =
-                Env
+                ScriptEnvironment
                 .Default
                 .WithAdditionalNamespaceName("System.Drawing")
                 .WithDrawingReferences();
@@ -174,7 +174,7 @@ namespace DotNet6UnitTests
         {
             // Setup the environment with a global data type
             var environment =
-                Env
+                ScriptEnvironment
                 .Default
                 .WithGlobalType(typeof(GlobalData));
 

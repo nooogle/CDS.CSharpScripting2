@@ -29,6 +29,12 @@ public partial class FormMain: Form
             parent: this,
             createForm: () => new Demos.GlobalsDemo.FormGlobals(settingsManager.Settings.Demos.GlobalsDemo));
 
+        scintillaGroup.AddDemo(
+            name: "OpenCvSharp",
+            tooltip: "Demonstrates using a script to perform image processing",
+            parent: this,
+            createForm: () => new Demos.OpenCvSharpDemo.FormOpenCvSharpDemo(settingsManager.Settings.Demos.OpenCvSharpDemo));
+
         var otherGroup = demosTreeView.AddGroup(name: "Other");
 
         otherGroup.AddDemo(
