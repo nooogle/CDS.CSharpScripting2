@@ -4,7 +4,7 @@ namespace CDS.CSScripting2.Editors.RichTextEditor;
 
 public partial class RTFScriptEditor : UserControl, IEditor
 {
-    private ProcessScriptDelegate processScript;
+    private ProcessScriptDelegateAsync processScriptAsync;
     private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
     private string lastScript = "";
     private Font errorFont;
@@ -25,9 +25,9 @@ public partial class RTFScriptEditor : UserControl, IEditor
         toolTipManager = new ToolTipManager(richTextBox, toolTip);
     }
 
-    public void SetProcessScriptHandler(ProcessScriptDelegate processScript)
+    public void SetProcessScriptHandler(ProcessScriptDelegateAsync processScriptAsync)
     {
-        this.processScript = processScript;
+        this.processScriptAsync = processScriptAsync;
     }
 
 
@@ -102,10 +102,10 @@ public partial class RTFScriptEditor : UserControl, IEditor
         }
     }
 
-    private void PerformLiveCompilationOfChangedScript()
+    private async void PerformLiveCompilationOfChangedScript()
     {
         ClearWarningAndErrorIndicators();
-        processScript?.Invoke(Script);
+        await processScriptAsync?.Invoke(Script);
         lastScript = Script;
     }
 

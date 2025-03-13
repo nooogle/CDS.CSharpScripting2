@@ -23,6 +23,9 @@
     <Compile Update="Demos\FormRTFDemo.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Demos\BasicDemo\FormBasicDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

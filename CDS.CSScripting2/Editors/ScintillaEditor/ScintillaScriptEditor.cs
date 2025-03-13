@@ -12,7 +12,7 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     private string lastScript = "";
 
     private ToolTipManager toolTipManager;
-    private ProcessScriptDelegate processScript;
+    private ProcessScriptDelegateAsync processScriptAsync;
 
     public ScintillaScriptEditor()
     {
@@ -41,9 +41,9 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         }
     }
 
-    public void SetProcessScriptHandler(ProcessScriptDelegate processScript)
+    public void SetProcessScriptHandler(ProcessScriptDelegateAsync processScriptAsync)
     {
-        this.processScript = processScript;
+        this.processScriptAsync = processScriptAsync;
     }
 
 
@@ -111,10 +111,10 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     }
 
 
-    private void PerformLiveCompilationOfChangedScript()
+    private async void PerformLiveCompilationOfChangedScript()
     {
         ClearWarningAndErrorIndicators();
-        processScript(Script);
+        await processScriptAsync?.Invoke(Script);
         lastScript = Script;
     }
 

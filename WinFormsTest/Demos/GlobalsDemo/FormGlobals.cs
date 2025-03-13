@@ -1,22 +1,13 @@
 using System.ComponentModel;
-using System.Diagnostics;
 
 namespace WinFormsTest.Demos.GlobalsDemo;
 
 public partial class FormGlobals : Form
 {
-    /// <summary>
-    /// Globals class for the demo
-    /// </summary>
-    public class Globals
-    {
-        public string Animal { get; set; } = "Cat";
-    }
-
-
     private Settings settings;
     private CDS.CSScripting2.Editors.EditorManager? editorManager;
-    private Globals globals = new Globals();
+    private SharedData sharedData = new SharedData();
+    private bool isRunningOrCompilingSentry = false;
 
     public FormGlobals(Settings settings)
     {
@@ -28,7 +19,7 @@ public partial class FormGlobals : Form
     {
         base.OnLoad(e);
         InitialiseEditor();
-        propertyGrid1.SelectedObject = globals;
+        propertyGrid1.SelectedObject = sharedData;
     }
 
     private void InitialiseEditor()
@@ -36,21 +27,21 @@ public partial class FormGlobals : Form
         var env =
             CDS.CSScripting2.Env.Default
             .WithDrawingReferences()
-            .WithGlobalType(typeof(Globals));
+            .WithGlobalType(typeof(SharedData));
 
         editorManager = new CDS.CSScripting2.Editors.EditorManager(
             environment: env,
             scintillaScriptEditor.ApplyDiagnostics,
             scintillaScriptEditor.ApplySyntaxElements);
 
-        scintillaScriptEditor.SetProcessScriptHandler(editorManager.ProcessScript);
+        scintillaScriptEditor.SetProcessScriptHandler(editorManager.ProcessScriptAsync);
 
         scintillaScriptEditor.Script = settings.Script;
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
-        if (isRunningOrCompiling)
+        if (isRunningOrCompilingSentry)
         {
             e.Cancel = true;
             return;
@@ -59,22 +50,18 @@ public partial class FormGlobals : Form
         base.OnClosing(e);
         settings.Script = scintillaScriptEditor.Script;
     }
-
-    private bool isRunningOrCompiling = false;
-
-
     private async Task PerformScriptManagerActions(Func<Task> action)
     {
-        if (isRunningOrCompiling) { return; }
+        if (isRunningOrCompilingSentry) { return; }
 
         groupBoxScript.Enabled = false;
-        isRunningOrCompiling = true;
+        isRunningOrCompilingSentry = true;
 
         outputPanel.Clear();
         await action();
 
         groupBoxScript.Enabled = true;
-        isRunningOrCompiling = false;
+        isRunningOrCompilingSentry = false;
     }
 
     private async void btnRun_Click(object sender, EventArgs e)
@@ -83,7 +70,7 @@ public partial class FormGlobals : Form
         {
             using var consoleHook = new CDS.CSScripting2.ConsoleOutputHook(outputPanel.Append);
 
-            await editorManager!.RunAsync(globals);
+            await editorManager!.RunAsync(sharedData);
             propertyGrid1.Refresh();
         });
     }
@@ -101,8 +88,8 @@ public partial class FormGlobals : Form
                 outputPanel.AppendLine(message);
             }
 
-            outputPanel.AppendLine($"\t{compilationOutput.WarningCount} warnings" + Environment.NewLine);
-            outputPanel.AppendLine($"\t{compilationOutput.ErrorCount} errors" + Environment.NewLine);
+            outputPanel.AppendLine($"\t{compilationOutput.WarningCount} warnings");
+            outputPanel.AppendLine($"\t{compilationOutput.ErrorCount} errors");
         });
     }
 }

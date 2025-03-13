@@ -1,6 +1,6 @@
-﻿namespace WinFormsTest.Demos.GlobalsDemo
+﻿namespace WinFormsTest.Demos.BasicDemo
 {
-    partial class FormGlobals
+    partial class FormBasicDemo
     {
         /// <summary>
         ///  Required designer variable.
@@ -33,12 +33,7 @@
             outputPanel = new CDS.CSScripting2.OutputPanels.RTFOutputPanel();
             btnCompile = new Button();
             btnRun = new Button();
-            groupBoxScript = new GroupBox();
-            propertyGrid1 = new PropertyGrid();
-            groupBox1 = new GroupBox();
             tableLayoutPanel1.SuspendLayout();
-            groupBoxScript.SuspendLayout();
-            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -48,12 +43,12 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
             tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanel1.Location = new Point(344, 24);
+            tableLayoutPanel1.Location = new Point(15, 44);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 2;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(587, 520);
+            tableLayoutPanel1.Size = new Size(916, 500);
             tableLayoutPanel1.TabIndex = 2;
             // 
             // scintillaScriptEditor
@@ -62,21 +57,21 @@
             scintillaScriptEditor.Location = new Point(3, 3);
             scintillaScriptEditor.Name = "scintillaScriptEditor";
             scintillaScriptEditor.Script = "";
-            scintillaScriptEditor.Size = new Size(581, 340);
+            scintillaScriptEditor.Size = new Size(910, 327);
             scintillaScriptEditor.TabIndex = 5;
             // 
             // outputPanel
             // 
             outputPanel.AllowClickLinks = true;
             outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 349);
+            outputPanel.Location = new Point(3, 336);
             outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(581, 168);
+            outputPanel.Size = new Size(910, 161);
             outputPanel.TabIndex = 6;
             // 
             // btnCompile
             // 
-            btnCompile.Location = new Point(6, 22);
+            btnCompile.Location = new Point(15, 15);
             btnCompile.Name = "btnCompile";
             btnCompile.Size = new Size(75, 23);
             btnCompile.TabIndex = 8;
@@ -86,7 +81,7 @@
             // 
             // btnRun
             // 
-            btnRun.Location = new Point(87, 22);
+            btnRun.Location = new Point(96, 15);
             btnRun.Name = "btnRun";
             btnRun.Size = new Size(75, 23);
             btnRun.TabIndex = 6;
@@ -94,49 +89,18 @@
             btnRun.UseVisualStyleBackColor = true;
             btnRun.Click += btnRun_Click;
             // 
-            // groupBoxScript
-            // 
-            groupBoxScript.Controls.Add(btnCompile);
-            groupBoxScript.Controls.Add(btnRun);
-            groupBoxScript.Location = new Point(15, 24);
-            groupBoxScript.Name = "groupBoxScript";
-            groupBoxScript.Size = new Size(314, 60);
-            groupBoxScript.TabIndex = 12;
-            groupBoxScript.TabStop = false;
-            groupBoxScript.Text = "Script";
-            // 
-            // propertyGrid1
-            // 
-            propertyGrid1.Location = new Point(15, 31);
-            propertyGrid1.Name = "propertyGrid1";
-            propertyGrid1.Size = new Size(284, 227);
-            propertyGrid1.TabIndex = 13;
-            // 
-            // groupBox1
-            // 
-            groupBox1.Controls.Add(propertyGrid1);
-            groupBox1.Location = new Point(15, 94);
-            groupBox1.Name = "groupBox1";
-            groupBox1.Padding = new Padding(12);
-            groupBox1.Size = new Size(314, 273);
-            groupBox1.TabIndex = 14;
-            groupBox1.TabStop = false;
-            groupBox1.Text = "Globals";
-            // 
-            // FormGlobals
+            // FormBasicDemo
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(943, 568);
-            Controls.Add(groupBox1);
-            Controls.Add(groupBoxScript);
+            Controls.Add(btnRun);
+            Controls.Add(btnCompile);
             Controls.Add(tableLayoutPanel1);
-            Name = "FormGlobals";
+            Name = "FormBasicDemo";
             Padding = new Padding(12);
-            Text = "Globals demo";
+            Text = "Basic demo";
             tableLayoutPanel1.ResumeLayout(false);
-            groupBoxScript.ResumeLayout(false);
-            groupBox1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -144,9 +108,6 @@
         private TableLayoutPanel tableLayoutPanel1;
         private Button btnCompile;
         private Button btnRun;
-        private GroupBox groupBoxScript;
-        private PropertyGrid propertyGrid1;
-        private GroupBox groupBox1;
         private CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSScripting2.OutputPanels.RTFOutputPanel outputPanel;
     }

@@ -27,7 +27,7 @@ public class EditorManager
         return compilationOutput;
     }
 
-    public async void ProcessScript(string script)
+    public async Task ProcessScriptAsync(string script)
     {
         await CreateScriptManager();
 

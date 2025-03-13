@@ -18,6 +18,12 @@ public partial class FormMain: Form
         var scintillaGroup = demosTreeView.AddGroup(name: "Scintilla");
 
         scintillaGroup.AddDemo(
+            name: "Basic",
+            tooltip: "A simple Scintilla editor with no additional features",
+            parent: this,
+            createForm: () => new Demos.BasicDemo.FormBasicDemo(settingsManager.Settings.Demos.BasicDemo));
+
+        scintillaGroup.AddDemo(
             name: "Globals",
             tooltip: "Simple global variables to allow data sharing between the application and the script",
             parent: this,

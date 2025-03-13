@@ -25,7 +25,7 @@ public partial class FormRTFDemo : Form
             rtfScriptEditor.ApplyDiagnostics,
             rtfScriptEditor.ApplySyntaxElements);
 
-        rtfScriptEditor.SetProcessScriptHandler(editorManager.ProcessScript);
+        rtfScriptEditor.SetProcessScriptHandler(editorManager.ProcessScriptAsync);
 
         rtfScriptEditor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
     }
