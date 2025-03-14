@@ -10,6 +10,7 @@ public partial class RTFScriptEditor : UserControl, IEditor
     private Font errorFont;
     private ToolTipManager toolTipManager;
     private int programmaticTextChangeSentryDepth = 0;
+    private GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
 
     public string Script
     {
@@ -25,9 +26,12 @@ public partial class RTFScriptEditor : UserControl, IEditor
         toolTipManager = new ToolTipManager(richTextBox, toolTip);
     }
 
-    public void SetProcessScriptHandler(ProcessScriptDelegateAsync processScriptAsync)
+    public void SetDelegates(
+        ProcessScriptDelegateAsync processScriptAsync,
+        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
     {
         this.processScriptAsync = processScriptAsync;
+        this.getAutoCompleteListAsync = getAutoCompleteListAsync;
     }
 
 

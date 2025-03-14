@@ -13,6 +13,8 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
 
     private ToolTipManager toolTipManager;
     private ProcessScriptDelegateAsync processScriptAsync;
+    private GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
+
 
     public ScintillaScriptEditor()
     {
@@ -41,9 +43,12 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         }
     }
 
-    public void SetProcessScriptHandler(ProcessScriptDelegateAsync processScriptAsync)
+    public void SetDelegates(
+        ProcessScriptDelegateAsync processScriptAsync,
+        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
     {
         this.processScriptAsync = processScriptAsync;
+        this.getAutoCompleteListAsync = getAutoCompleteListAsync;
     }
 
 
@@ -51,6 +56,8 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     {
         //scintilla.Styles[ScintillaNET.Style.Default].Font = "Courier New";
         //scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
+
+
 
         //scintilla.Lexer = ScintillaNET.Lexer.Null;
         scintilla.MouseDwellTime = 500;
@@ -148,15 +155,6 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         scintilla.IndicatorFillRange(position: start, length: length);
     }
 
-
-    private void scintilla_TextChanged(object sender, EventArgs e)
-    {
-        lastDiagnostics = ImmutableArray<Microsoft.CodeAnalysis.Diagnostic>.Empty;
-
-        timerChangeMonitor.Stop();
-        timerChangeMonitor.Start();
-    }
-
     private void scintilla_MouseMove(object sender, MouseEventArgs e)
     {
         var characterPosition = scintilla.CharPositionFromPointClose(e.Location.X, e.Location.Y);
@@ -164,5 +162,78 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         toolTipManager.HandleMouseMove(
             diagnostics: lastDiagnostics,
             characterPosition: characterPosition);
+    }
+
+    private void scintilla_AutoCCancelled(object sender, EventArgs e)
+    {
+
+    }
+
+    private void scintilla_AutoCCharDeleted(object sender, EventArgs e)
+    {
+
+    }
+
+    private void scintilla_AutoCCompleted(object sender, ScintillaNET.AutoCSelectionEventArgs e)
+    {
+
+    }
+
+    private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e)
+    {
+        HandleTextChanged();
+    }
+
+    private void HandleTextChanged()
+    {
+        lastDiagnostics = ImmutableArray<Microsoft.CodeAnalysis.Diagnostic>.Empty;
+
+        timerChangeMonitor.Stop();
+        timerChangeMonitor.Start();
+    }
+
+    private void scintilla_Delete(object sender, ScintillaNET.ModificationEventArgs e)
+    {
+        HandleTextChanged();
+    }
+
+    private async void scintilla_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space && e.Control)
+        {
+            await TryRunAutoComplete();
+        }
+
+    }
+
+    private async Task TryRunAutoComplete()
+    {
+        // Do we have a handler for this?
+        if (getAutoCompleteListAsync == null) { return; }
+
+        // Cancel any existing autocomplete
+        scintilla.AutoCCancel();
+
+        // Make sure the current script has been sent to the script processor
+        PerformLiveCompilationOfChangedScript();
+
+        // Get the word fragment at the caret position
+        int currentPosition = scintilla.CurrentPosition;
+        int wordStartPosition = scintilla.WordStartPosition(position: currentPosition, onlyWordCharacters: true);
+        int lenEntered = currentPosition - wordStartPosition;
+        string word = scintilla.GetTextRange(wordStartPosition, length: lenEntered);
+
+        // Get the autocomplete list
+        var roslynCompletionList = await getAutoCompleteListAsync(currentPosition);
+
+        // Convert the list to a string
+        var scintillaCompletionList = 
+            string
+            .Join(
+                scintilla.AutoCSeparator.ToString(), 
+                roslynCompletionList.Select(c => c.DisplayText));
+
+        // show an autocomplete list
+        scintilla.AutoCShow(word.Length, scintillaCompletionList);
     }
 }

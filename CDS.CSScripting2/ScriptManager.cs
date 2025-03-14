@@ -23,7 +23,6 @@ namespace CDS.CSScripting2
         private ImmutableArray<Diagnostic> diagnostics;
         private SourceText scriptSourceText;
         private CompiledScript compiledScript;
-        private CodeCompletion.Manager completionManager;
 
 
         public async Task<SyntaxTree> GetSyntaxTreeAsync()
@@ -58,16 +57,6 @@ namespace CDS.CSScripting2
             this.environment = environment;
 
             var references = new List<MetadataReference>();
-
-            //// Create documentation providers
-            //MetadataReference metadataRefMSCorLib = GetMetadataReference(typeof(object));
-            //MetadataReference metadataRefConsoleDocumentation = GetMetadataReference(typeof(Console));
-
-            //// Create metadata references with documentation providers
-            //{
-            //    metadataRefMSCorLib,
-            //    metadataRefConsoleDocumentation,
-            //};
 
             foreach (var reference in environment.References)
             {
@@ -222,15 +211,10 @@ namespace CDS.CSScripting2
 
         public async Task<ImmutableArray<CompletionItem>> GetCompletionSuggestionsAsync(int position)
         {
-            completionManager =
-                completionManager ??
-                new CodeCompletion.Manager(
+            return await CodeCompletion.Manager.Get(
                     scriptText: scriptText,
-                    document: document);
-
-            return await
-                completionManager
-                .GetCompletionSuggestionsAsync(position);
+                    document: document,
+                    cursorPosition: position);
         }
 
 

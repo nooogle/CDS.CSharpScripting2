@@ -1,5 +1,6 @@
 ﻿
 
+
 namespace CDS.CSScripting2.Editors;
 
 public class EditorManager
@@ -25,6 +26,13 @@ public class EditorManager
         await scriptManager.CompileAsync();
         var compilationOutput = await scriptManager.GetCompilationOutputAsync();
         return compilationOutput;
+    }
+
+    public async Task<IEnumerable<Microsoft.CodeAnalysis.Completion.CompletionItem>> GetAutoCompletions(int cursorPosition)
+    {
+        await CreateScriptManager();
+        var completions = await scriptManager.GetCompletionSuggestionsAsync(cursorPosition);
+        return completions;
     }
 
     public async Task ProcessScriptAsync(string script)

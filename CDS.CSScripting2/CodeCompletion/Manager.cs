@@ -1,100 +1,110 @@
 ﻿using Microsoft.CodeAnalysis.Completion;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace CDS.CSScripting2.CodeCompletion
+namespace CDS.CSScripting2.CodeCompletion;
+
+
+public static class Manager
 {
-    public partial class Manager
+    public static async Task<ImmutableArray<CompletionItem>> Get(
+        string scriptText, 
+        Microsoft.CodeAnalysis.Document document, 
+        int cursorPosition)
     {
-        private Microsoft.CodeAnalysis.Document document;
-        private CompletionService completionService;
-        private string scriptText;
+        // make a new document that only goes up to the position
+        var subScriptText = scriptText.Substring(0, cursorPosition);
+        var subDocument = document.WithText(Microsoft.CodeAnalysis.Text.SourceText.From(subScriptText));
 
+        var completionService = CompletionService.GetService(document);
 
-        public Manager(string scriptText, Microsoft.CodeAnalysis.Document document)
+        var defaultEmptyResult = ImmutableArray<CompletionItem>.Empty;
+
+        try
         {
-            this.scriptText = scriptText;
-            this.document = document;
-            completionService = CompletionService.GetService(document);
-        }
 
+            var completionList = await completionService.GetCompletionsAsync(
+                subDocument, 
+                cursorPosition, 
+                cancellationToken: default);
 
-        public async Task<ImmutableArray<CompletionItem>> GetCompletionSuggestionsAsync(int position)
-        {
-            var completionList = await GetCompletionListAsync(position);
             if (completionList == null || completionList.ItemsList.Count == 0)
             {
-                return ImmutableArray<CompletionItem>.Empty;
+                return defaultEmptyResult;
             }
 
             Mode completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
-            var spanText = GetSpanTextForCodeCompletion(completionMode, completionList.ItemsList[0]);
+            
+            var spanText = GetSpanTextForCodeCompletion(
+                scriptText: subScriptText,
+                completionMode, 
+                completionList.ItemsList[0]);
 
             var filteredItems = FilterCompletionItems(completionList.ItemsList.ToImmutableArray(), completionMode, spanText);
+
             SortCompletionItems(filteredItems, completionMode, spanText);
 
             return filteredItems.ToImmutableArray();
         }
-
-
-        private async Task<CompletionList> GetCompletionListAsync(int position)
+        catch (Exception ex)
         {
-            return await completionService.GetCompletionsAsync(document, position, cancellationToken: default);
+            // TODO understand why this is happening
+            System.Diagnostics.Debug.WriteLine($"Exception in GetCompletionSuggestionsAsync: {ex.Message}");
+            return defaultEmptyResult;
+        }
+    }
+
+
+    private static Mode DetermineCompletionMode(CompletionItem firstItem)
+    {
+        int spanLength = firstItem.Span.Length;
+
+        if (spanLength == 0)
+        {
+            return Mode.AllInAlphabeticalOrder;
+        }
+        else if (spanLength == 1)
+        {
+            return Mode.AllWithSingleLetterMatch;
+        }
+        else
+        {
+            return Mode.MatchingFirstTwoOrMoreOnly;
+        }
+    }
+
+
+    private static string GetSpanTextForCodeCompletion(
+        string scriptText,
+        Mode mode, 
+        CompletionItem firstItem)
+    {
+        return mode == Mode.AllInAlphabeticalOrder
+            ? string.Empty
+            : scriptText.Substring(firstItem.Span.Start, firstItem.Span.Length);
+    }
+
+
+    private static List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, Mode mode, string spanText)
+    {
+        if (mode != Mode.MatchingFirstTwoOrMoreOnly)
+        {
+            return items.ToList();
         }
 
+        return items.Where(item => item.DisplayText.StartsWith(spanText, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
 
-        private Mode DetermineCompletionMode(CompletionItem firstItem)
+
+    private static void SortCompletionItems(List<CompletionItem> items, Mode mode, string spanText)
+    {
+        if (mode == Mode.AllWithSingleLetterMatch && !string.IsNullOrEmpty(spanText))
         {
-            int spanLength = firstItem.Span.Length;
-
-            if (spanLength == 0)
-            {
-                return Mode.AllInAlphabeticalOrder;
-            }
-            else if (spanLength == 1)
-            {
-                return Mode.AllWithSingleLetterMatch;
-            }
-            else
-            {
-                return Mode.MatchingFirstTwoOrMoreOnly;
-            }
+            var sorter = new SingleLetterMatchSorter(spanText[0]);
+            items.Sort(sorter.Compare);
         }
-
-
-        private string GetSpanTextForCodeCompletion(Mode mode, CompletionItem firstItem)
+        else
         {
-            return mode == Mode.AllInAlphabeticalOrder
-                ? string.Empty
-                : scriptText.Substring(firstItem.Span.Start, firstItem.Span.Length);
-        }
-
-
-        private List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, Mode mode, string spanText)
-        {
-            if (mode != Mode.MatchingFirstTwoOrMoreOnly)
-            {
-                return items.ToList();
-            }
-
-            return items.Where(item => item.DisplayText.StartsWith(spanText, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
-
-        private void SortCompletionItems(List<CompletionItem> items, Mode mode, string spanText)
-        {
-            if (mode == Mode.AllWithSingleLetterMatch && !string.IsNullOrEmpty(spanText))
-            {
-                var sorter = new SingleLetterMatchSorter(spanText[0]);
-                items.Sort(sorter.Compare);
-            }
-            else
-            {
-                items.Sort(); // Use default sort
-            }
+            items.Sort(); // Use default sort
         }
     }
 }

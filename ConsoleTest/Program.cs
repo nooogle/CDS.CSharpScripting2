@@ -1,25 +1,5 @@
 ﻿namespace ConsoleTest;
 
-//public class Globals
-//{
-//    public Mat HostMat { get; set; } = new Mat();
-//}
-
-
-//public static class StaticConstructorTest
-//{
-//    private static string s;
-
-//    public static string S => s;
-
-
-//    static StaticConstructorTest()
-//    {
-//        s = "Hello World";
-//    }
-//}
-
-
 class Scratch
 {
     static async Task Main(string[] args)
@@ -32,6 +12,7 @@ class Scratch
         testMenu.AddTest(new Demos.SharedDataDemo());
         testMenu.AddTest(new Demos.MathNetDemo());
         testMenu.AddTest(new Demos.OpenCvSharpDemo());
+        testMenu.AddTest(new Demos.CompletionSuggestionsDemo());
 
         await testMenu.RunAsync();
 

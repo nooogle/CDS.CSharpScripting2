@@ -40,7 +40,9 @@ public partial class FormBasicDemo : Form
             scintillaScriptEditor.ApplyDiagnostics,
             scintillaScriptEditor.ApplySyntaxElements);
 
-        scintillaScriptEditor.SetProcessScriptHandler(editorManager.ProcessScriptAsync);
+        scintillaScriptEditor.SetDelegates(
+            editorManager.ProcessScriptAsync,
+            editorManager.GetAutoCompletions);
 
         scintillaScriptEditor.Script = settings.Script;
     }
