@@ -1,32 +1,18 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace CDS.CSScripting2.Editors.Syntax;
 
 public class ScriptSyntaxAnalyser
 {
+    /// <summary>
+    /// Analyzes the syntax tree and returns a list of syntax elements for syntax highlighting.
+    /// </summary>
+    /// <param name="syntaxTree">The syntax tree to analyze.</param>
+    /// <returns>An immutable array of syntax elements.</returns>
     public static ImmutableArray<SyntaxElement> Go(SyntaxTree syntaxTree)
     {
-        // This bit would replace everything apart from it fails to get the first 3 
-        // backslashes of an XML documentation summary block !
-        //
-        //var syntaxElements2 = new List<SyntaxElement>();
-        //var allNodes = syntaxTree.GetCompilationUnitRoot().DescendantNodesAndTokensAndSelf(descendIntoTrivia: true);
-        //foreach(var node in allNodes)
-        //{
-        //    syntaxElements2.Add(new SyntaxElement(
-        //        span: node.Span,
-        //        kind: node.Kind()));
-        //}
-
-        //return syntaxElements2.ToImmutableArray();
-
         var compilationUnitRoot = syntaxTree.GetCompilationUnitRoot();
         var syntaxElements = new List<SyntaxElement>();
         RecursiveAddNode(compilationUnitRoot, syntaxElements);
@@ -34,25 +20,20 @@ public class ScriptSyntaxAnalyser
         return syntaxElements.ToImmutableArray();
     }
 
+    /// <summary>
+    /// Removes duplicate syntax elements from the list.
+    /// </summary>
+    /// <param name="syntaxElements">The list of syntax elements.</param>
     private static void RemoveDuplicates(List<SyntaxElement> syntaxElements)
     {
         var bySpanStart = syntaxElements.OrderBy(s => s.Span.Start);
         var duplicateFree = new List<SyntaxElement>();
 
-        foreach(var element in bySpanStart)
+        foreach (var element in bySpanStart)
         {
-            if(duplicateFree.Count == 0)
+            if (duplicateFree.Count == 0 || element != duplicateFree.Last())
             {
                 duplicateFree.Add(element);
-            }
-            else
-            {
-                var lastNonDuplicatedElement = duplicateFree.Last();
-
-                if(element != lastNonDuplicatedElement)
-                {
-                    duplicateFree.Add(element);
-                }
             }
         }
 
@@ -60,12 +41,14 @@ public class ScriptSyntaxAnalyser
         syntaxElements.AddRange(duplicateFree);
     }
 
-
+    /// <summary>
+    /// Recursively adds syntax nodes and their children to the list of syntax elements.
+    /// </summary>
+    /// <param name="syntaxNode">The syntax node to process.</param>
+    /// <param name="syntaxElements">The list of syntax elements.</param>
     private static void RecursiveAddNode(SyntaxNode syntaxNode, List<SyntaxElement> syntaxElements)
     {
-        syntaxElements.Add(new SyntaxElement(
-            span: syntaxNode.Span,
-            kind: syntaxNode.Kind()));
+        syntaxElements.Add(new SyntaxElement(syntaxNode.Span, syntaxNode.Kind()));
 
         foreach (var leadingTrivia in syntaxNode.GetLeadingTrivia())
         {
@@ -84,29 +67,45 @@ public class ScriptSyntaxAnalyser
             }
         }
 
-        foreach (SyntaxTrivia trailingTrivia in syntaxNode.GetTrailingTrivia())
+        foreach (var trailingTrivia in syntaxNode.GetTrailingTrivia())
         {
             RecursiveAddTrivia(syntaxElements, trailingTrivia);
         }
     }
 
-    private static void RecursiveAddTrivia(List<SyntaxElement> syntaxElements, SyntaxTrivia leadingTrivia)
+    /// <summary>
+    /// Recursively adds syntax trivia to the list of syntax elements.
+    /// </summary>
+    /// <param name="syntaxElements">The list of syntax elements.</param>
+    /// <param name="trivia">The syntax trivia to process.</param>
+    private static void RecursiveAddTrivia(List<SyntaxElement> syntaxElements, SyntaxTrivia trivia)
     {
-        var structure = leadingTrivia.GetStructure();
+        var structure = trivia.GetStructure();
         if (structure != null)
         {
             RecursiveAddNode(structure, syntaxElements);
         }
 
-        syntaxElements.Add(new SyntaxElement(
-            span: leadingTrivia.Span,
-            kind: leadingTrivia.Kind()));
+        syntaxElements.Add(new SyntaxElement(trivia.Span, trivia.Kind()));
     }
 
+    /// <summary>
+    /// Adds a syntax token and its trivia to the list of syntax elements.
+    /// </summary>
+    /// <param name="syntaxToken">The syntax token to process.</param>
+    /// <param name="syntaxElements">The list of syntax elements.</param>
     private static void AddToken(SyntaxToken syntaxToken, List<SyntaxElement> syntaxElements)
     {
-        syntaxElements.Add(new SyntaxElement(
-            span: syntaxToken.Span,
-            kind: syntaxToken.Kind()));
+        syntaxElements.Add(new SyntaxElement(syntaxToken.Span, syntaxToken.Kind()));
+
+        foreach (var leadingTrivia in syntaxToken.LeadingTrivia)
+        {
+            RecursiveAddTrivia(syntaxElements, leadingTrivia);
+        }
+
+        foreach (var trailingTrivia in syntaxToken.TrailingTrivia)
+        {
+            RecursiveAddTrivia(syntaxElements, trailingTrivia);
+        }
     }
 }

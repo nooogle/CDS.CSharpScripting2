@@ -111,10 +111,17 @@ namespace CDS.CSScripting2
                  options: scriptOptions);
 
             compiledScript.Compile();
-            var diagnostics = compiledScript.GetCompilation().GetDiagnostics();
+            var compilation = compiledScript.GetCompilation();
+            var diagnostics = compilation.GetDiagnostics();
+
+            // get the syntax tree and semantic model
+            var syntaxTree = compilation.SyntaxTrees.First();
+            var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
             var compilationWrapper = new CompiledScript(
                 compiledScript,
+                syntaxTree,
+                semanticModel,
                 diagnostics);
 
             return compilationWrapper;

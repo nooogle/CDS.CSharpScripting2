@@ -3,7 +3,14 @@
 class Scratch
 {
     static async Task Main(string[] args)
-    {        
+    {
+        var s =
+@"{}
+// abc
+";
+        CDS.CSScripting2.SyntaxTreeVisualizer.DisplayTree(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(s));
+
+
         CDS.CSScripting2.RuntimeEnvironmentInfo.WriteToDebug();
 
         TestMenu testMenu = new TestMenu();

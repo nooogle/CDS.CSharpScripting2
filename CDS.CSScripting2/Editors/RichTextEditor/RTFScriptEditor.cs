@@ -4,7 +4,7 @@ namespace CDS.CSScripting2.Editors.RichTextEditor;
 
 public partial class RTFScriptEditor : UserControl, IEditor
 {
-    private ProcessScriptDelegateAsync processScriptAsync;
+    private ApplyScriptDelegateAsync processScriptAsync;
     private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
     private string lastScript = "";
     private Font errorFont;
@@ -27,7 +27,7 @@ public partial class RTFScriptEditor : UserControl, IEditor
     }
 
     public void SetDelegates(
-        ProcessScriptDelegateAsync processScriptAsync,
+        ApplyScriptDelegateAsync processScriptAsync,
         GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
     {
         this.processScriptAsync = processScriptAsync;

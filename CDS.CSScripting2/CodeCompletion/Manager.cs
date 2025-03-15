@@ -12,8 +12,10 @@ public static class Manager
         int cursorPosition)
     {
         // make a new document that only goes up to the position
-        var subScriptText = scriptText.Substring(0, cursorPosition);
-        var subDocument = document.WithText(Microsoft.CodeAnalysis.Text.SourceText.From(subScriptText));
+        //var subScriptText = scriptText.Substring(0, cursorPosition);
+        //var subDocument = document.WithText(Microsoft.CodeAnalysis.Text.SourceText.From(subScriptText));
+        var subScriptText = scriptText;
+        var subDocument = document;
 
         var completionService = CompletionService.GetService(document);
 

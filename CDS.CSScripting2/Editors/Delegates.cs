@@ -13,7 +13,7 @@ public delegate void ApplySyntaxElementsDelegate(ImmutableArray<Syntax.SyntaxEle
 /// </summary>
 /// <param name="script">The script content to process.</param>
 /// <returns>A task representing the asynchronous operation.</returns>
-public delegate Task ProcessScriptDelegateAsync(string script);
+public delegate Task ApplyScriptDelegateAsync(string script);
 
 
 /// <summary>

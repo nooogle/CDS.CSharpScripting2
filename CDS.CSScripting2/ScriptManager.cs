@@ -17,33 +17,21 @@ namespace CDS.CSScripting2
         private Document document;
         private string scriptText;
         private ScriptEnvironment environment;
-        private SyntaxTree cachedSyntaxTree;
-        private SemanticModel cachedSemanticModel;
-        private Compilation compilation;
-        private ImmutableArray<Diagnostic> diagnostics;
         private SourceText scriptSourceText;
         private CompiledScript compiledScript;
 
 
         public async Task<SyntaxTree> GetSyntaxTreeAsync()
         {
-            if (cachedSyntaxTree == null)
-            {
-                cachedSyntaxTree = await document.GetSyntaxTreeAsync();
-            }
-
-            return cachedSyntaxTree;
+            await CompileAsync();
+            return compiledScript.SyntaxTree;
         }
 
 
         public async Task<SemanticModel> GetSemanticModelAsync()
         {
-            if (cachedSemanticModel == null)
-            {
-                cachedSemanticModel = await document.GetSemanticModelAsync();
-            }
-
-            return cachedSemanticModel;
+            await CompileAsync();
+            return compiledScript.SemanticModel;
         }
 
 
@@ -92,7 +80,7 @@ namespace CDS.CSScripting2
                     assemblyName: "Script",
                     language: LanguageNames.CSharp,
                     hostObjectType: environment.GlobalType,
-                    isSubmission: true)
+                    isSubmission: false)
                 .WithMetadataReferences(references)
                 .WithCompilationOptions(compilationOptions);
 
@@ -102,7 +90,7 @@ namespace CDS.CSScripting2
 
             var scriptDocumentInfo = DocumentInfo.Create(
                 DocumentId.CreateNewId(scriptProject.Id), "Script",
-                sourceCodeKind: SourceCodeKind.Script,
+                sourceCodeKind: SourceCodeKind.Regular,
                 loader: TextLoader.From(TextAndVersion.Create(SourceText.From(scriptText), VersionStamp.Create())));
 
 
@@ -138,31 +126,25 @@ namespace CDS.CSScripting2
             var task = Task.Run(() => new ScriptManager(environment));
             return await task;
         }
-
-
-        private async Task<Compilation> GetCompilationAsync()
-        {
-            if (compilation != null) { return compilation; }
-
-            compilation = await document.Project.GetCompilationAsync();
-
-            return compilation;
-        }
-
+        
 
         public async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync()
         {
-            if (diagnostics != null) { return diagnostics; }
-
-            diagnostics = (await GetCompilationAsync()).GetDiagnostics();
-            return diagnostics;
+            await CompileAsync();
+            return compiledScript.CompilationOutput.Diagnostics;
         }
 
 
 
-        public async Task<SourceText> GetScriptSourceTextAsync() => scriptSourceText ?? (scriptSourceText = await document.GetTextAsync());
+        /// <summary>
+        /// Get the source text asynchronously
+        /// </summary>
+        public async Task<SourceText> GetScriptSourceTextAsync() => scriptSourceText ??= await document.GetTextAsync();
 
 
+        /// <summary>
+        /// Compiles the script
+        /// </summary>
         public async Task CompileAsync()
         {
             if (compiledScript != null) { return; }

@@ -12,7 +12,7 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     private string lastScript = "";
 
     private ToolTipManager toolTipManager;
-    private ProcessScriptDelegateAsync processScriptAsync;
+    private ApplyScriptDelegateAsync processScriptAsync;
     private GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
 
 
@@ -44,7 +44,7 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     }
 
     public void SetDelegates(
-        ProcessScriptDelegateAsync processScriptAsync,
+        ApplyScriptDelegateAsync processScriptAsync,
         GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
     {
         this.processScriptAsync = processScriptAsync;
@@ -107,6 +107,11 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
 
     public void ApplySyntaxElements(ImmutableArray<Syntax.SyntaxElement> syntaxElements)
     {
+        // clear all styling
+        scintilla.StartStyling(0);
+        scintilla.SetStyling(scintilla.Text.Length, 0);
+
+
         foreach (var syntaxElement in syntaxElements)
         {
             if (Syntax.SyntaxKindToSimpleGenerator.Map.TryGetValue(syntaxElement.Kind, out var simpleSyntaxKind))

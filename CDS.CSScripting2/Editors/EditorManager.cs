@@ -35,7 +35,7 @@ public class EditorManager
         return completions;
     }
 
-    public async Task ProcessScriptAsync(string script)
+    public async Task ApplyScript(string script)
     {
         await CreateScriptManager();
 

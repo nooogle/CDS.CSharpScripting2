@@ -15,7 +15,7 @@ public interface IEditor
 
 
     void SetDelegates(
-        ProcessScriptDelegateAsync processScriptAsync,
+        ApplyScriptDelegateAsync processScriptAsync,
         GetAutoCompleteListDelegateAsync getAutoCompleteListAsync);
 }
 

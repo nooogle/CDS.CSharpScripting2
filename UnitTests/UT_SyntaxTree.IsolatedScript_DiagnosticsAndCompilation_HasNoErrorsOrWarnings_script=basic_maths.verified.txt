@@ -1,0 +1,8 @@
+﻿{
+  Diagnostics: null,
+  CompilationOutput: {
+    Messages: null,
+    WarningCount: 0,
+    ErrorCount: 0
+  }
+}

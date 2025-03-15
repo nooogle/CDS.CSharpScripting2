@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTest", "ConsoleTest\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFormsTest", "WinFormsTest\WinFormsTest.csproj", "{E9465659-0CB1-4E71-8E77-AA2DAA87DDE5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TempConsoleApp", "TempConsoleApp\TempConsoleApp.csproj", "{A61FD989-7987-4271-962E-63ADDA663804}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,6 +78,18 @@ Global
 		{E9465659-0CB1-4E71-8E77-AA2DAA87DDE5}.Release|ARM64.Build.0 = Release|ARM64
 		{E9465659-0CB1-4E71-8E77-AA2DAA87DDE5}.Release|x64.ActiveCfg = Release|Any CPU
 		{E9465659-0CB1-4E71-8E77-AA2DAA87DDE5}.Release|x64.Build.0 = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Debug|x64.Build.0 = Debug|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|ARM64.Build.0 = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|x64.ActiveCfg = Release|Any CPU
+		{A61FD989-7987-4271-962E-63ADDA663804}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

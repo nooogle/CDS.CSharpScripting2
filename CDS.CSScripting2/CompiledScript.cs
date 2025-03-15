@@ -21,8 +21,20 @@ namespace CDS.CSScripting2
         internal Script ActualScript { get; }
 
 
+        /// <summary>
+        /// The syntax tree for the script
+        /// </summary>
+        public SyntaxTree SyntaxTree { get; }
+
+
+        /// <summary>
+        /// The semantic model for the script
+        /// </summary>
+        public SemanticModel SemanticModel { get; }
+
+
         /// <summary>Compilation results</summary>
-        public CompilationOutput CompilationOutput { get; } 
+        public CompilationOutput CompilationOutput { get; }
 
 
         /// <summary>
@@ -30,47 +42,19 @@ namespace CDS.CSScripting2
         /// </summary>
         /// <param name="script">A compiled script</param>
         /// <param name="diagnostics">Compilation diagnostics</param>
-        internal CompiledScript(
+        public CompiledScript(
             Script script,
+            SyntaxTree syntaxTree,
+            SemanticModel semanticModel,
             ImmutableArray<Diagnostic> diagnostics)
         {
             ActualScript = script;
-            CompilationOutput = AnalyseDiagnostics(diagnostics);
-        }
+            SyntaxTree = syntaxTree;
+            SemanticModel = semanticModel;
+            CompilationOutput = new CompilationOutput(diagnostics);
 
-
-        /// <summary>
-        /// Find useful information from the compilation diagnotics
-        /// </summary>
-        private CompilationOutput AnalyseDiagnostics(ImmutableArray<Diagnostic> diagnostics)
-        {
-            List<string> output = new List<string>();
-            int warningCount = 0;
-            int errorCount = 0;
-
-
-            foreach (var diagnostic in diagnostics)
-            {
-                output.Add(diagnostic.ToString());
-
-                if (diagnostic.Severity == DiagnosticSeverity.Warning)
-                {
-                    warningCount++;
-                }
-                else if (diagnostic.Severity == DiagnosticSeverity.Error)
-                {
-                    errorCount++;
-                }
-            }
-
-
-            var compilationResults = new CompilationOutput(
-                warningCount: warningCount, 
-                errorCount: errorCount, 
-                messages: output.ToArray());
-
-
-            return compilationResults;
+            // TODO do we need to hire the compilation output or can we just put it in here?
+            // TODO we we need to hide the ActualScript from the client?
         }
     }
 }

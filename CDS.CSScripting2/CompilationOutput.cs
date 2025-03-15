@@ -1,4 +1,7 @@
-﻿namespace CDS.CSScripting2
+﻿using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
+
+namespace CDS.CSScripting2
 {
     /// <summary>
     /// Basic compilation results
@@ -8,30 +11,38 @@
         /// <summary>
         /// Compilation diagnostics
         /// </summary>
-        public string[] Messages { get; }
-
+        public ImmutableArray<string> Messages { get; }
 
         /// <summary>Number of compilation warnings</summary>
         public int WarningCount { get; }
 
-
         /// <summary>Number of compilation errors</summary>
         public int ErrorCount { get; }
 
+        /// <summary>
+        /// All diagnostics
+        /// </summary>
+        public ImmutableArray<Diagnostic> Diagnostics { get; }
 
         /// <summary>
-        /// Initialise
+        /// Initialize
         /// </summary>
-        internal CompilationOutput(
-            int warningCount, 
-            int errorCount, 
-            string[] messages)
+        /// <param name="diagnostics">The compilation diagnostics</param>
+        /// <exception cref="ArgumentNullException">Thrown when diagnostics is null</exception>
+        internal CompilationOutput(ImmutableArray<Diagnostic> diagnostics)
         {
-            WarningCount = warningCount;
-            ErrorCount = errorCount;
-            Messages = messages;
+            if (diagnostics.IsDefault)
+            {
+                throw new ArgumentNullException(nameof(diagnostics));
+            }
 
-            //Microsoft.CodeAnalysis.CSharp
+            Diagnostics = diagnostics;
+
+            var output = diagnostics.Select(d => d.ToString()).ToImmutableArray();
+            Messages = output;
+
+            WarningCount = diagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
+            ErrorCount = diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error);
         }
     }
 }

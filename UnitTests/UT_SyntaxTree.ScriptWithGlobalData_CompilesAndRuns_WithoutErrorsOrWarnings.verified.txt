@@ -1,0 +1,11 @@
+﻿{
+  Diagnostics: null,
+  CompilationOutput: {
+    Messages: null,
+    WarningCount: 0,
+    ErrorCount: 0
+  },
+  GlobalData: {
+    Animal: Donkey (modified by script)
+  }
+}

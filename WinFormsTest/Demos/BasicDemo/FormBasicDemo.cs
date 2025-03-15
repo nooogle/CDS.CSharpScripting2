@@ -41,7 +41,7 @@ public partial class FormBasicDemo : Form
             scintillaScriptEditor.ApplySyntaxElements);
 
         scintillaScriptEditor.SetDelegates(
-            editorManager.ProcessScriptAsync,
+            editorManager.ApplyScript,
             editorManager.GetAutoCompletions);
 
         scintillaScriptEditor.Script = settings.Script;
