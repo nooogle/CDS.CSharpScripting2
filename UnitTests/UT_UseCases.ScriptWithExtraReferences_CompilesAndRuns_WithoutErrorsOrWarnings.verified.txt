@@ -3,7 +3,8 @@
   CompilationOutput: {
     Messages: null,
     WarningCount: 0,
-    ErrorCount: 0
+    ErrorCount: 0,
+    Diagnostics: null
   },
   PointX: 1
 }

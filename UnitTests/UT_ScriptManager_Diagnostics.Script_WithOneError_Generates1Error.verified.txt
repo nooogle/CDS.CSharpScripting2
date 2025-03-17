@@ -16,7 +16,7 @@
         HasCompilationUnitRoot: true,
         Options: {
           LanguageVersion: CSharp13,
-          SpecifiedLanguageVersion: Default,
+          SpecifiedLanguageVersion: Latest,
           PreprocessorSymbolNames: null,
           Language: C#,
           Features: null,

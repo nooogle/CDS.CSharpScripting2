@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using CDS.CSScripting2.APIInfo;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -200,9 +201,9 @@ namespace CDS.CSScripting2
         }
 
 
-        public async Task<(DetailedTypeInfo typeInfo, IEnumerable<MethodOverloadInfo> memberInfos)> GetSuggestionsAsync(int position)
+        public async Task<APIInfo.APIInfo> GetSuggestionsAsync(int position)
         {
-            var xmlInfo = XMLHelpManager.Test(
+            var xmlInfo = APIInfoService.Get(
                 syntaxTree: await GetSyntaxTreeAsync(),
                 semanticModel: await GetSemanticModelAsync(),
                 position: position);

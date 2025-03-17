@@ -7,7 +7,7 @@ namespace DotNet6UnitTests
     public partial class UT_SyntaxTree
     {
         [TestMethod]
-        public async Task Test()
+        public async Task SyntaxNodeGenerated_FomrCommentLine_WhenCommentAtEndOfFile()
         {
             // Setup
 

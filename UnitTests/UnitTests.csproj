@@ -25,31 +25,4 @@
     <ProjectReference Include="..\CDS.CSScripting2\CDS.CSScripting2.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="UT_SyntaxTree.IsolatedScript_DiagnosticsAndCompilation_HasNoErrorsOrWarnings_script=basic_maths.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.IsolatedScript_DiagnosticsAndCompilation_HasNoErrorsOrWarnings_script=console_blank_line.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.IsolatedScript_DiagnosticsAndCompilation_HasNoErrorsOrWarnings_script=empty.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.IsolatedScript_DiagnosticsAndCompilation_HasNoErrorsOrWarnings_script=math_class.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.ScriptWithExtraReferences_CompilesAndRuns_WithoutErrorsOrWarnings.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.ScriptWithGlobalData_CompilesAndRuns_WithoutErrorsOrWarnings.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.ScriptWithOutput_Compiles_WithoutErrorsOrWarnings.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-    <None Update="UT_SyntaxTree.ScriptWithSuppliedUsing_Compiles_WithoutErrorsOrWarnings.verified.txt">
-      <DependentUpon>UT_SyntaxTree.cs</DependentUpon>
-    </None>
-  </ItemGroup>
-
 </Project>

@@ -4,15 +4,6 @@ class Scratch
 {
     static async Task Main(string[] args)
     {
-        var s =
-@"{}
-// abc
-";
-        CDS.CSScripting2.SyntaxTreeVisualizer.DisplayTree(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(s));
-
-
-        CDS.CSScripting2.RuntimeEnvironmentInfo.WriteToDebug();
-
         TestMenu testMenu = new TestMenu();
 
         testMenu.AddTest(new Demos.BasicDemo());
@@ -20,6 +11,7 @@ class Scratch
         testMenu.AddTest(new Demos.MathNetDemo());
         testMenu.AddTest(new Demos.OpenCvSharpDemo());
         testMenu.AddTest(new Demos.CompletionSuggestionsDemo());
+        testMenu.AddTest(new Demos.XMLDocDemos());
 
         await testMenu.RunAsync();
 

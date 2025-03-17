@@ -13,9 +13,9 @@ namespace DotNet6UnitTests
         {
             var scriptManager = await ScriptManager.CreateAsync();
             scriptManager = scriptManager.ApplyScript("Console");
-            (var typeInfo, var memberInfo) = await scriptManager.GetSuggestionsAsync(position: 3);
+            var xmlInfo = await scriptManager.GetSuggestionsAsync(position: 3);
 
-            await Verify(typeInfo);
+            await Verify(xmlInfo);
         }
     }
 }

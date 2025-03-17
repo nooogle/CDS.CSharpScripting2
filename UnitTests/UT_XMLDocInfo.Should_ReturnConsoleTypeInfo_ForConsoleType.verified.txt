@@ -4,6 +4,6 @@
   Accessibility: Public,
   BaseType: object,
   Interfaces: null,
-  Summary: Represents the standard input, output, and error streams for console applications. This class cannot be inherited.,
+  Summary: null,
   Remarks: null
 }
