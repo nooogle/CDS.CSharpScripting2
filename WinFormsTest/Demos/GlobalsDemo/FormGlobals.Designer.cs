@@ -67,7 +67,7 @@
             // 
             // outputPanel
             // 
-            outputPanel.AllowClickLinks = true;
+            outputPanel.AllowClickLinks2 = true;
             outputPanel.Dock = DockStyle.Fill;
             outputPanel.Location = new Point(3, 349);
             outputPanel.Name = "outputPanel";

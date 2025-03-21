@@ -13,7 +13,7 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
     /// </summary>
     [Category(UIStrings.CDSPropertyCategory)]
     [Description("True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.")]
-    public bool AllowClickLinks { get; set; } = true;
+    public bool AllowClickLinks2 { get; set; } = true;
 
 
     /// <summary>
@@ -57,7 +57,7 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
     /// </summary>
     private void richTextBox_LinkClicked(object sender, LinkClickedEventArgs e)
     {
-        if(!AllowClickLinks) { return; }
+        if(!AllowClickLinks2) { return; }
 
         try
         {
