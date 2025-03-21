@@ -1,0 +1,43 @@
+name: Build, Test & Pack
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  tags:
+    - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Run unit tests
+      run: dotnet test --no-build --configuration Release
+
+    - name: Pack NuGet package (only on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: dotnet pack --no-build --configuration Release
+
+    # # Optional NuGet push
+    # - name: Publish to NuGet (only on tag)
+    #   if: startsWith(github.ref, 'refs/tags/v')
+    #   env:
+    #     NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+    #   run: |
+    #     dotnet nuget push **/*.nupkg --source https://api.nuget.org/v3/index.json --api-key $NUGET_API_KEY

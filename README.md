@@ -1,53 +1,85 @@
-# CDS.CSharpScripting2
+﻿# CDS.CSharpScripting2
+
+![CI](https://github.com/nooogle/CDS.CSharpScripting2/actions/workflows/ci.yml/badge.svg)
 
 
-## Building and deploying
+## 🔧 Versioning & Build Process
 
-### Making changes
+This project uses Nerdbank.GitVersioning to automate version stamping based 
+on Git history and Git tags.
 
-1. Make code changes.
-1. Add unit tests and/or demo code as appropriate.
-1. Ensure that all unit tests pass.
-1. Update the versions (see below).
-1. Run the Cake script (see below).
-1. Deploy the new NuGet package to the Dropbox NuGet folder (see below).
-1. Commit to git and push.
-1. Apply tags (see below).
+### 🛠️ Building & Packaging
+To build the project and generate a NuGet package:
+
+* Use Visual Studio to build the release configuration, or
+* Run `dotnet pack -c Release`
+
+The version of the resulting package is derived from the Git state:
+
+| Git State	| Generated Version Example |
+|-----------|---------------------------|
+| Tag v2.0.2	| 2.0.2 |
+| Commit after tag v2.0.2	| 2.0.2+gabcdef |
+| Commit after minor bump to 2.1	| 2.1.1+gabcdef |
+| Tag v3.0.0	| 3.0.0 |
+
+The format follows [SemVer 2.0.0](https://semver.org/), with Git commit metadata included 
+in development builds.
+
+### 🔁 Change Types & Versioning Strategy
+
+| Change Type	|  Action Required | 
+|-------------|------------------|
+| 🐛 Bug fix / patch	| Just commit — Nerdbank will auto-bump the patch number |
+| ✨ Minor feature	| Optionally update version.json to new minor version |
+| 💥 Breaking change	| Manually update version.json to bump major version |
 
 
-### Semantic versioning
+### 📦 Releasing a New Version
 
-This project uses [Semantic Versioning](https://semver.org/). The version number is 
-in the format MAJOR.MINOR.PATCH. If an API is changed in a backwards-compatible way 
-then increment the MINOR version. If the change is not backwards-compatible then
-increment the MAJOR version. If the change is a bug fix then increment the PATCH
-version.
+(Optional) Edit version.json to bump major/minor:
 
-Update version numbers manually (or make a tool!).
-
-
-### Cake
-
-Cake is a build automation system with a C# DSL to help you write build scripts.
-
-#### Install Cake (one time only):
-
-1. Open the solution and start the Developer Command Prompt for Visual Studio.
-2. Run the following commands:
-```shell
-    dotnet new tool-manifest
-    dotnet tool install Cake.Tool
-    dotnet cake --version
+```json
+{
+  "version": "3.0"
+}
 ```
-3. Create a build script called build.cake in the root of the solution.
 
-
-#### Build using Cake
-
-Start a Developer Command Prompt for Visual Studio and navigate to the root of the solution.
-Run the following command:
+Commit your changes:
 
 ```shell
-dotnet cake
+git commit -am "Update: breaking changes for 3.0"
 ```
+
+Tag the release:
+
+```shell
+git tag v3.0.0
+git push --tags
+```
+
+Build your release package:
+```shell
+dotnet pack -c Release
+```
+
+This will generate:
+
+`CDS.CSharpScriptUtils.3.0.0.nupkg`
+
+(Optional) Push to NuGet:
+
+```shell
+dotnet nuget push bin/Release/*.nupkg --api-key YOUR_API_KEY --source https://api.nuget.org/v3/index.json
+```
+
+### 🧪 Development Builds
+
+Between releases, every commit produces a uniquely versioned dev build:
+
+* Example: `2.0.3+gabcdef`
+* These are not prerelease versions — they’re full SemVer builds with metadata
+
+This ensures you can test builds and track behavior without releasing official versions until you're ready.
+
 

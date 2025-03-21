@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0FBF656C-4F85-4021-B3E6-E8BF9BB88211}"
 	ProjectSection(SolutionItems) = preProject
 		build.cake = build.cake
+		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\copilot-instructions.md = .github\copilot-instructions.md
 		README.md = README.md
 		version.json = version.json
