@@ -5,22 +5,32 @@ namespace ConsoleTest.Demos;
 /// <summary>
 /// Demonstrates a basic function where the script itself contains all the inputs and returns an output.
 /// </summary>
-class BasicDemo : IDemo
+class BasicDemo
 {
     /// <summary>
     /// Gets the name of the demo.
     /// </summary>
-    public string Name => "Basic function";
+    public static string Name => "Basic function";
 
     /// <summary>
     /// Gets the description of the demo.
     /// </summary>
-    public string Description => "A basic test where the script itself contains all the inputs and returns an output";
+    public static string Description => "A basic test where the script itself contains all the inputs and returns an output";
+
 
     /// <summary>
     /// Runs the demo.
     /// </summary>
-    public async Task Run()
+    public static void Run()
+    {
+        new BasicDemo().RunAsync().Wait();
+    }
+
+
+    /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    private async Task RunAsync()
     {
         // Setup
         var logger = new TimedConsoleLogger();

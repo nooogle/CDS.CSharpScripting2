@@ -2,22 +2,31 @@
 
 namespace ConsoleTest.Demos;
 
-class CompletionSuggestionsDemo : IDemo
+class CompletionSuggestionsDemo
 {
     /// <summary>
     /// Gets the name of the demo.
     /// </summary>
-    public string Name => "Completion suggestions";
+    public static string Name => "Completion suggestions";
 
     /// <summary>
     /// Gets the description of the demo.
     /// </summary>
-    public string Description => "TODO";
+    public static string Description => "TODO";
 
     /// <summary>
     /// Runs the demo.
     /// </summary>
-    public async Task Run()
+    public static void Run()
+    {
+        var demo = new CompletionSuggestionsDemo();
+        demo.RunAsync().Wait();
+    }
+
+    /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    private async Task RunAsync()
     {
         // Setup
         var logger = new TimedConsoleLogger();

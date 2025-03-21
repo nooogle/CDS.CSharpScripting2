@@ -6,7 +6,7 @@ namespace ConsoleTest.Demos;
 /// <summary>
 /// Shared data demo
 /// </summary>
-public class SharedDataDemo : IDemo
+public class SharedDataDemo
 {
     /// <summary>
     /// Shared data object
@@ -21,21 +21,31 @@ public class SharedDataDemo : IDemo
     /// <summary>
     /// Name of the demo
     /// </summary>
-    public string Name => "Shared data";
+    public static string Name => "Shared data";
 
 
     /// <summary>
     /// Description of the demo
     /// </summary>
-    public string Description => "A basic test where the script is given access to shared data for the inputs and outputs. It is also " +
+    public static string Description => "A basic test where the script is given access to shared data for the inputs and outputs. It is also " +
         "called multiple times. Compilication only occurs the first time the script is called. The compiled script is then reused for " +
         "successive calls.";
 
 
     /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    public static void Run()
+    {
+        var demo = new SharedDataDemo();
+        demo.RunAsync().Wait();
+    }
+
+
+    /// <summary>
     /// Run the demo
     /// </summary>
-    public async Task Run()
+    private async Task RunAsync()
     {
         // Create a timing logger, the shared data object and the script.
         var logger = new TimedConsoleLogger();

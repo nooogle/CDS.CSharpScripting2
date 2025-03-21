@@ -1,21 +1,20 @@
-﻿namespace ConsoleTest;
+﻿using CDS.CLIMenus.Basic;
+
+namespace ConsoleTest;
 
 class Scratch
 {
-    static async Task Main(string[] args)
+    static void Main()
     {
-        TestMenu testMenu = new TestMenu();
-
-        testMenu.AddTest(new Demos.BasicDemo());
-        testMenu.AddTest(new Demos.SharedDataDemo());
-        testMenu.AddTest(new Demos.MathNetDemo());
-        testMenu.AddTest(new Demos.OpenCvSharpDemo());
-        testMenu.AddTest(new Demos.CompletionSuggestionsDemo());
-        testMenu.AddTest(new Demos.XMLDocDemos());
-
-        await testMenu.RunAsync();
-
-        //await OpenCVSharpTests.Test.Run();
+        new MenuBuilder("Main menu")
+            .AddItem(Demos.BasicDemo.Name, Demos.BasicDemo.Description, Demos.BasicDemo.Run)
+            .AddItem(Demos.SharedDataDemo.Name, Demos.SharedDataDemo.Description, Demos.SharedDataDemo.Run)
+            .AddItem(Demos.MathNetDemo.Name, Demos.MathNetDemo.Description, Demos.MathNetDemo.Run)
+            .AddItem(Demos.OpenCvSharpDemo.Name, Demos.OpenCvSharpDemo.Description, Demos.OpenCvSharpDemo.Run)
+            .AddItem(Demos.CompletionSuggestionsDemo.Name, Demos.CompletionSuggestionsDemo.Description, Demos.CompletionSuggestionsDemo.Run)
+            .AddItem(Demos.XMLDocDemos.Name, Demos.XMLDocDemos.Description, Demos.XMLDocDemos.Run)
+            .Build()
+            .Run();
 
         //try
         //{

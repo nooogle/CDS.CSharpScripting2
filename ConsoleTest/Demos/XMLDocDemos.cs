@@ -5,22 +5,31 @@ namespace ConsoleTest.Demos;
 /// <summary>
 /// Demonstrates how to get XML documentation for types, args, etc.
 /// </summary>
-class XMLDocDemos : IDemo
+class XMLDocDemos
 {
     /// <summary>
     /// Gets the name of the demo.
     /// </summary>
-    public string Name => "XML documentation";
+    public static string Name => "XML documentation";
 
     /// <summary>
     /// Gets the description of the demo.
     /// </summary>
-    public string Description => "Demonstrates how to get XML documentation for types, args, etc.";
+    public static string Description => "Demonstrates how to get XML documentation for types, args, etc.";
 
     /// <summary>
     /// Runs the demo.
     /// </summary>
-    public async Task Run()
+    public static void Run()
+    {
+        var demo = new XMLDocDemos();
+        demo.RunAsync().Wait();
+    }
+
+    /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    private async Task RunAsync()
     {
         // Setup
         var logger = new TimedConsoleLogger();

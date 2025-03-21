@@ -7,7 +7,7 @@ namespace ConsoleTest.Demos;
 /// <summary>
 /// Shared data demo
 /// </summary>
-public class OpenCvSharpDemo : IDemo
+public class OpenCvSharpDemo
 {
     /// <summary>
     /// Shared data object
@@ -22,19 +22,28 @@ public class OpenCvSharpDemo : IDemo
     /// <summary>
     /// Name of the demo
     /// </summary>
-    public string Name => "OpenCvSharp demo";
+    public static string Name => "OpenCvSharp demo";
 
 
     /// <summary>
     /// Description of the demo
     /// </summary>
-    public string Description => "Demonstrates using OpenCvSharp in a script";
+    public static string Description => "Demonstrates using OpenCvSharp in a script";
+
+    /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    public static void Run()
+    {
+        var demo = new OpenCvSharpDemo();
+        demo.RunAsync().Wait();
+    }
 
 
     /// <summary>
     /// Run the demo
     /// </summary>
-    public async Task Run()
+    private async Task RunAsync()
     {
         // Create a timing logger and prepare the shared data
         var logger = new TimedConsoleLogger();

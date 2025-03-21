@@ -6,7 +6,7 @@ namespace ConsoleTest.Demos;
 /// <summary>
 /// Shared data demo
 /// </summary>
-public class MathNetDemo : IDemo
+public class MathNetDemo
 {
     /// <summary>
     /// Shared data object
@@ -20,21 +20,30 @@ public class MathNetDemo : IDemo
     /// <summary>
     /// Name of the demo
     /// </summary>
-    public string Name => "MathNet demo";
+    public static string Name => "MathNet demo";
 
 
     /// <summary>
     /// Description of the demo
     /// </summary>
-    public string Description =>
+    public static string Description =>
         "Demonstrates how to provide a script with access to shared data and additional libraries. " +
         "For this example, we calculate the gamma of a value using MathNet.Numerics.";
+
+    /// <summary>
+    /// Runs the demo.
+    /// </summary>
+    public static void Run()
+    {
+        var demo = new MathNetDemo();
+        demo.RunAsync().Wait();
+    }
 
 
     /// <summary>
     /// Run the demo
     /// </summary>
-    public async Task Run()
+    private async Task RunAsync()
     {
         // Create a timing logger, the shared data object
         var logger = new TimedConsoleLogger();
