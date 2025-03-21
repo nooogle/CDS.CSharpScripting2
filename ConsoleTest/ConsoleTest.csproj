@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSScripting2\CDS.CSScripting2.csproj" />
+    <ProjectReference Include="..\CDS.CSharpScriptUtils\CDS.CSharpScriptUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using CDS.CSScripting2;
+﻿using CDS.CSharpScriptUtils;
 using OpenCvSharp;
 
 namespace ConsoleTest.Demos;

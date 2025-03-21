@@ -8,7 +8,7 @@ namespace WinFormsTest.Demos.BasicDemo;
 public partial class FormBasicDemo : Form
 {
     private readonly Settings settings;
-    private CDS.CSScripting2.Editors.EditorManager? editorManager;
+    private CDS.CSharpScriptUtils.Editors.EditorManager? editorManager;
     private bool isRunningOrCompilingSentry;
 
     /// <summary>
@@ -35,8 +35,8 @@ public partial class FormBasicDemo : Form
     /// </summary>
     private void InitialiseEditor()
     {
-        editorManager = new CDS.CSScripting2.Editors.EditorManager(
-            environment: CDS.CSScripting2.ScriptEnvironment.Default,
+        editorManager = new CDS.CSharpScriptUtils.Editors.EditorManager(
+            environment: CDS.CSharpScriptUtils.ScriptEnvironment.Default,
             scintillaScriptEditor.ApplyDiagnostics,
             scintillaScriptEditor.ApplySyntaxElements);
 
@@ -104,7 +104,7 @@ public partial class FormBasicDemo : Form
 
         await PerformScriptManagerActions(async () =>
         {
-            using var consoleHook = new CDS.CSScripting2.ConsoleOutputHook(outputPanel.Append);
+            using var consoleHook = new CDS.CSharpScriptUtils.ConsoleOutputHook(outputPanel.Append);
             await editorManager.RunAsync();
         });
     }

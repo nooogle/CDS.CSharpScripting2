@@ -1,9 +1,1177 @@
 ﻿{
-  Name: Console,
-  Namespace: System,
-  Accessibility: Public,
-  BaseType: object,
-  Interfaces: null,
-  Summary: null,
-  Remarks: null
+  TypeInfo: {
+    Name: Console,
+    Namespace: System,
+    Accessibility: Public,
+    BaseType: object,
+    Interfaces: null,
+    Summary: null,
+    Remarks: null
+  },
+  MemberInfos: [
+    {
+      Name: ReadKey,
+      Signature: System.Console.ReadKey(),
+      ReturnType: System.ConsoleKeyInfo,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: ReadKey,
+      Signature: System.Console.ReadKey(bool),
+      ReturnType: System.ConsoleKeyInfo,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: intercept,
+          Type: bool,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: ResetColor,
+      Signature: System.Console.ResetColor(),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: SetBufferSize,
+      Signature: System.Console.SetBufferSize(int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: width,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: height,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: SetWindowPosition,
+      Signature: System.Console.SetWindowPosition(int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: left,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: top,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: SetWindowSize,
+      Signature: System.Console.SetWindowSize(int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: width,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: height,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: GetCursorPosition,
+      Signature: System.Console.GetCursorPosition(),
+      ReturnType: (int Left, int Top),
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: Beep,
+      Signature: System.Console.Beep(),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: Beep,
+      Signature: System.Console.Beep(int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: frequency,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: duration,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: MoveBufferArea,
+      Signature: System.Console.MoveBufferArea(int, int, int, int, int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: sourceLeft,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceTop,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceWidth,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceHeight,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: targetLeft,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: targetTop,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: MoveBufferArea,
+      Signature: System.Console.MoveBufferArea(int, int, int, int, int, int, char, System.ConsoleColor, System.ConsoleColor),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: sourceLeft,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceTop,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceWidth,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceHeight,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: targetLeft,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: targetTop,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: sourceChar,
+          Type: char,
+          Documentation: null
+        },
+        {
+          Name: sourceForeColor,
+          Type: System.ConsoleColor,
+          Documentation: null
+        },
+        {
+          Name: sourceBackColor,
+          Type: System.ConsoleColor,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Clear,
+      Signature: System.Console.Clear(),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: SetCursorPosition,
+      Signature: System.Console.SetCursorPosition(int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: left,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: top,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: OpenStandardInput,
+      Signature: System.Console.OpenStandardInput(),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: OpenStandardInput,
+      Signature: System.Console.OpenStandardInput(int),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: bufferSize,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: OpenStandardOutput,
+      Signature: System.Console.OpenStandardOutput(),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: OpenStandardOutput,
+      Signature: System.Console.OpenStandardOutput(int),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: bufferSize,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: OpenStandardError,
+      Signature: System.Console.OpenStandardError(),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: OpenStandardError,
+      Signature: System.Console.OpenStandardError(int),
+      ReturnType: System.IO.Stream,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: bufferSize,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: SetIn,
+      Signature: System.Console.SetIn(System.IO.TextReader),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: newIn,
+          Type: System.IO.TextReader,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: SetOut,
+      Signature: System.Console.SetOut(System.IO.TextWriter),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: newOut,
+          Type: System.IO.TextWriter,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: SetError,
+      Signature: System.Console.SetError(System.IO.TextWriter),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: newError,
+          Type: System.IO.TextWriter,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Read,
+      Signature: System.Console.Read(),
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: ReadLine,
+      Signature: System.Console.ReadLine(),
+      ReturnType: string?,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(bool),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: bool,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(char),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: char,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(char[]?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[]?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(char[], int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[],
+          Documentation: null
+        },
+        {
+          Name: index,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: count,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(decimal),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: decimal,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(double),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: double,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(float),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: float,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(uint),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: uint,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(long),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: long,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(ulong),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: ulong,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(string?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: string?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(string, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(string, object?, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(string, object?, object?, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg2,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Signature: System.Console.WriteLine(string, params object?[]?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg,
+          Type: object?[]?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(string, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(string, object?, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(string, object?, object?, object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: null
+        },
+        {
+          Name: arg2,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(string, params object?[]?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: null
+        },
+        {
+          Name: arg,
+          Type: object?[]?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(bool),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: bool,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(char),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: char,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(char[]?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[]?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(char[], int, int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[],
+          Documentation: null
+        },
+        {
+          Name: index,
+          Type: int,
+          Documentation: null
+        },
+        {
+          Name: count,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(double),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: double,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(decimal),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: decimal,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(float),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: float,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(int),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: int,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(uint),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: uint,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(long),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: long,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(ulong),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: ulong,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(object?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: object?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: Write,
+      Signature: System.Console.Write(string?),
+      ReturnType: void,
+      Summary: null,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: string?,
+          Documentation: null
+        }
+      ]
+    },
+    {
+      Name: In,
+      Signature: System.Console.In,
+      ReturnType: System.IO.TextReader,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: InputEncoding,
+      Signature: System.Console.InputEncoding,
+      ReturnType: System.Text.Encoding,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: OutputEncoding,
+      Signature: System.Console.OutputEncoding,
+      ReturnType: System.Text.Encoding,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: KeyAvailable,
+      Signature: System.Console.KeyAvailable,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: Out,
+      Signature: System.Console.Out,
+      ReturnType: System.IO.TextWriter,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: Error,
+      Signature: System.Console.Error,
+      ReturnType: System.IO.TextWriter,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: IsInputRedirected,
+      Signature: System.Console.IsInputRedirected,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: IsOutputRedirected,
+      Signature: System.Console.IsOutputRedirected,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: IsErrorRedirected,
+      Signature: System.Console.IsErrorRedirected,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CursorSize,
+      Signature: System.Console.CursorSize,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: NumberLock,
+      Signature: System.Console.NumberLock,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CapsLock,
+      Signature: System.Console.CapsLock,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: BackgroundColor,
+      Signature: System.Console.BackgroundColor,
+      ReturnType: System.ConsoleColor,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: ForegroundColor,
+      Signature: System.Console.ForegroundColor,
+      ReturnType: System.ConsoleColor,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: BufferWidth,
+      Signature: System.Console.BufferWidth,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: BufferHeight,
+      Signature: System.Console.BufferHeight,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WindowLeft,
+      Signature: System.Console.WindowLeft,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WindowTop,
+      Signature: System.Console.WindowTop,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WindowWidth,
+      Signature: System.Console.WindowWidth,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WindowHeight,
+      Signature: System.Console.WindowHeight,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: LargestWindowWidth,
+      Signature: System.Console.LargestWindowWidth,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: LargestWindowHeight,
+      Signature: System.Console.LargestWindowHeight,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CursorVisible,
+      Signature: System.Console.CursorVisible,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CursorLeft,
+      Signature: System.Console.CursorLeft,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CursorTop,
+      Signature: System.Console.CursorTop,
+      ReturnType: int,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: Title,
+      Signature: System.Console.Title,
+      ReturnType: string,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: TreatControlCAsInput,
+      Signature: System.Console.TreatControlCAsInput,
+      ReturnType: bool,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: CancelKeyPress,
+      Signature: System.Console.CancelKeyPress,
+      ReturnType: System.ConsoleCancelEventHandler?,
+      Summary: null,
+      Remarks: null,
+      Parameters: null
+    }
+  ]
 }

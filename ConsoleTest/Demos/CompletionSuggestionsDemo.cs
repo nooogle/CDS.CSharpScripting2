@@ -1,4 +1,4 @@
-﻿using CDS.CSScripting2;
+﻿using CDS.CSharpScriptUtils;
 
 namespace ConsoleTest.Demos;
 

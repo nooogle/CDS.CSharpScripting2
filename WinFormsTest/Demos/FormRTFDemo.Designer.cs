@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             tableLayoutPanel1 = new TableLayoutPanel();
-            rtfScriptEditor = new CDS.CSScripting2.Editors.RichTextEditor.RTFScriptEditor();
+            rtfScriptEditor = new CDS.CSharpScriptUtils.Editors.RichTextEditor.RTFScriptEditor();
             btnCompile = new Button();
             btnRun = new Button();
-            outputPanel = new CDS.CSScripting2.OutputPanels.RTFOutputPanel();
+            outputPanel = new CDS.CSharpScriptUtils.OutputPanels.RTFOutputPanel();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -108,7 +108,7 @@
         private TableLayoutPanel tableLayoutPanel1;
         private Button btnCompile;
         private Button btnRun;
-        private CDS.CSScripting2.Editors.RichTextEditor.RTFScriptEditor rtfScriptEditor;
-        private CDS.CSScripting2.OutputPanels.RTFOutputPanel outputPanel;
+        private CDS.CSharpScriptUtils.Editors.RichTextEditor.RTFScriptEditor rtfScriptEditor;
+        private CDS.CSharpScriptUtils.OutputPanels.RTFOutputPanel outputPanel;
     }
 }

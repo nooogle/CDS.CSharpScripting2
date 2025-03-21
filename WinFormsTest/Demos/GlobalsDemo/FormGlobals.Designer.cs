@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             tableLayoutPanel1 = new TableLayoutPanel();
-            scintillaScriptEditor = new CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor();
-            outputPanel = new CDS.CSScripting2.OutputPanels.RTFOutputPanel();
+            scintillaScriptEditor = new CDS.CSharpScriptUtils.Editors.ScintillaEditor.ScintillaScriptEditor();
+            outputPanel = new CDS.CSharpScriptUtils.OutputPanels.RTFOutputPanel();
             btnCompile = new Button();
             btnRun = new Button();
             groupBoxScript = new GroupBox();
@@ -147,7 +147,7 @@
         private GroupBox groupBoxScript;
         private PropertyGrid propertyGrid1;
         private GroupBox groupBox1;
-        private CDS.CSScripting2.Editors.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
-        private CDS.CSScripting2.OutputPanels.RTFOutputPanel outputPanel;
+        private CDS.CSharpScriptUtils.Editors.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
+        private CDS.CSharpScriptUtils.OutputPanels.RTFOutputPanel outputPanel;
     }
 }
