@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            demosTreeView = new DemosTreeView();
+            demosTreeView = new CDS.WinFormsMenus.Basic.MenuTree();
             systemInfoPanel1 = new RuntimeEnvironmentInfoPanel();
             SuspendLayout();
             // 
@@ -63,7 +63,7 @@
 
         #endregion
 
-        private DemosTreeView demosTreeView;
+        private CDS.WinFormsMenus.Basic.MenuTree demosTreeView;
         private RuntimeEnvironmentInfoPanel systemInfoPanel1;
     }
 }
