@@ -11,12 +11,11 @@ public static class Manager
         Microsoft.CodeAnalysis.Document document, 
         int cursorPosition)
     {
-        // make a new document that only goes up to the position
+        // make a new document that only goes up to the cursor position
         //var subScriptText = scriptText.Substring(0, cursorPosition);
         //var subDocument = document.WithText(Microsoft.CodeAnalysis.Text.SourceText.From(subScriptText));
-        var subScriptText = scriptText;
-        var subDocument = document;
 
+        //var completionService = CompletionService.GetService(subDocument);
         var completionService = CompletionService.GetService(document);
 
         var defaultEmptyResult = ImmutableArray<CompletionItem>.Empty;
@@ -24,9 +23,14 @@ public static class Manager
         try
         {
 
+            //var completionList = await completionService.GetCompletionsAsync(
+            //    subDocument, 
+            //    cursorPosition, 
+            //    cancellationToken: default);
+
             var completionList = await completionService.GetCompletionsAsync(
-                subDocument, 
-                cursorPosition, 
+                document,
+                cursorPosition,
                 cancellationToken: default);
 
             if (completionList == null || completionList.ItemsList.Count == 0)
@@ -36,9 +40,14 @@ public static class Manager
 
             Mode completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
             
+            //var spanText = GetSpanTextForCodeCompletion(
+            //    scriptText: subScriptText,
+            //    completionMode, 
+            //    completionList.ItemsList[0]);
+
             var spanText = GetSpanTextForCodeCompletion(
-                scriptText: subScriptText,
-                completionMode, 
+                scriptText: scriptText,
+                completionMode,
                 completionList.ItemsList[0]);
 
             var filteredItems = FilterCompletionItems(completionList.ItemsList.ToImmutableArray(), completionMode, spanText);

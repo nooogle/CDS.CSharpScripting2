@@ -18,15 +18,19 @@ namespace CDS.CSharpScriptUtils
 
         public async Task<SyntaxTree> GetSyntaxTreeAsync()
         {
-            await CompileAsync();
-            return compiledScript.SyntaxTree;
+            return await document.GetSyntaxTreeAsync();
+
+            //await CompileAsync();
+            //return compiledScript.SyntaxTree;
         }
 
 
         public async Task<SemanticModel> GetSemanticModelAsync()
         {
-            await CompileAsync();
-            return compiledScript.SemanticModel;
+            return await document.GetSemanticModelAsync();
+
+            //await CompileAsync();
+            //return compiledScript.SemanticModel;
         }
 
 
@@ -56,15 +60,14 @@ namespace CDS.CSharpScriptUtils
 
             if (!ScriptEnvironment.IsNetFramework)
             {
-                MetadataReference metadataRefRuntime = MetadataReference.CreateFromFile(System.Reflection.Assembly.Load("System.Runtime").Location);
-
+                MetadataReference metadataRefRuntime = GetMetadataReferenceForRuntime();
                 references.Add(metadataRefRuntime);
             }
 
 
             var compilationOptions = new CSharpCompilationOptions(
-               OutputKind.DynamicallyLinkedLibrary,
-               usings: environment.NamespaceNames);
+                OutputKind.DynamicallyLinkedLibrary,
+                usings: environment.NamespaceNames);
 
             var scriptProjectInfo =
                 ProjectInfo
@@ -82,14 +85,49 @@ namespace CDS.CSharpScriptUtils
             var workspace = new AdhocWorkspace();
             var scriptProject = workspace.AddProject(scriptProjectInfo);
 
-
             var scriptDocumentInfo = DocumentInfo.Create(
                 DocumentId.CreateNewId(scriptProject.Id), "Script",
-                sourceCodeKind: SourceCodeKind.Regular,
+                sourceCodeKind: SourceCodeKind.Script,
                 loader: TextLoader.From(TextAndVersion.Create(SourceText.From(scriptText), VersionStamp.Create())));
 
 
             document = workspace.AddDocument(scriptDocumentInfo);
+
+            //{
+            //    var semanticModel = document.GetSemanticModelAsync().Result;
+            //    var syntaxTree = document.GetSyntaxTreeAsync().Result;
+
+            //    var root = syntaxTree.GetRoot();
+
+            //    var identifier = root
+            //        .DescendantNodes()
+            //        .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax>()
+            //        .First(id => id.Identifier.Text == "Pow");
+
+            //    var symbolInfo = semanticModel.GetSymbolInfo(identifier);
+            //    var symbol = symbolInfo.Symbol;
+            //    string xmlDocumentation = symbol.GetDocumentationCommentXml() ?? string.Empty;
+
+            //    System.Diagnostics.Debug.WriteLine("XML Documentation: " + xmlDocumentation);
+            //}
+
+            //{
+            //    var semanticModel2 = GetSemanticModelAsync().Result;
+            //    var syntaxTree2 = GetSyntaxTreeAsync().Result;
+
+            //    var root = syntaxTree2.GetRoot();
+
+            //    var identifier = root
+            //        .DescendantNodes()
+            //        .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax>()
+            //        .First(id => id.Identifier.Text == "Pow");
+
+            //    var symbolInfo = semanticModel2.GetSymbolInfo(identifier);
+            //    var symbol = symbolInfo.Symbol;
+            //    string xmlDocumentation = symbol.GetDocumentationCommentXml() ?? string.Empty;
+
+            //    System.Diagnostics.Debug.WriteLine("XML Documentation: " + xmlDocumentation);
+            //}
         }
 
         private ScriptManager(Document scriptDocument, string scriptText, ScriptEnvironment environment)
@@ -121,7 +159,7 @@ namespace CDS.CSharpScriptUtils
             var task = Task.Run(() => new ScriptManager(environment));
             return await task;
         }
-        
+
 
         public async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync()
         {
@@ -146,7 +184,7 @@ namespace CDS.CSharpScriptUtils
 
             SourceText scriptSourceText = await GetScriptSourceTextAsync();
             string script = scriptSourceText.ToString();
-            
+
             compiledScript = ScriptCompiler.Compile<object>(
                 script,
                 namespaces: environment.NamespaceNames,
@@ -195,7 +233,7 @@ namespace CDS.CSharpScriptUtils
         }
 
 
-        public async Task<APIInfo.APIInfo> GetSuggestionsAsync(int position)
+        public async Task<APIInfo.APIInfoResult> GetSuggestionsAsync(int position)
         {
             var xmlInfo = APIInfo.APIInfoService.Get(
                 syntaxTree: await GetSyntaxTreeAsync(),
@@ -205,15 +243,17 @@ namespace CDS.CSharpScriptUtils
 
             return xmlInfo;
         }
-        
-        private MetadataReference GetMetadataReference(Assembly assembly)
+
+        private static MetadataReference GetMetadataReference(Type type)
+        {
+            return GetMetadataReference(type.Assembly);
+        }
+
+        private static MetadataReference GetMetadataReference(Assembly assembly)
         {
             string xmlPath = GetXmlDocumentationPath(assembly.Location);
 
-            DocumentationProvider documentationProvider =
-                File.Exists(xmlPath) ?
-                XmlDocumentationProvider.CreateFromFile(xmlPath) :
-                DocumentationProvider.Default;
+            DocumentationProvider documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
 
             var metadataReference = MetadataReference.CreateFromFile(
                 path: assembly.Location,
@@ -222,10 +262,18 @@ namespace CDS.CSharpScriptUtils
             return metadataReference;
         }
 
-
-        private MetadataReference GetMetadataReference(Type type)
+        private static MetadataReference GetMetadataReferenceForRuntime()
         {
-            return GetMetadataReference(type.Assembly);
+            string xmlPath = TryFindXMLForXXX("System.Runtime.xml");
+            string assemblyPath = Path.Combine(Path.GetDirectoryName(xmlPath), "System.Runtime.dll");
+
+            DocumentationProvider documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
+
+            var metadataReference = MetadataReference.CreateFromFile(
+                path: assemblyPath,
+                documentation: documentationProvider);
+
+            return metadataReference;
         }
 
 
@@ -243,6 +291,14 @@ namespace CDS.CSharpScriptUtils
 
             var xmlFileName = $"{assemblyName}.xml";
 
+            var xxx = TryFindXMLForXXX(xmlFileName);
+
+            return xxx ?? xmlPath;
+        }
+
+
+        private static string? TryFindXMLForXXX(string xmlFileName)
+        {
             var programFilesPaths = new List<string>
             {
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
@@ -279,61 +335,8 @@ namespace CDS.CSharpScriptUtils
                         }
                     }
                 }
-
-
-                // .NET Framework paths
-                foreach (var netFrameworkVersion in new[] { "v4.8.1", "v4.8", "v4.7.2" })
-                {
-                    possiblePaths.Add(Path.Combine(programFilesPath, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework", netFrameworkVersion, $"{assemblyName}.xml"));
-                }
             }
 
-
-
-            //foreach (var programFilesPath in programFilesPaths)
-            //{
-            //    // .NET Packs
-            //    var packsRoot = Path.Combine(
-            //        programFilesPath,
-            //        "dotnet",
-            //        "packs",
-            //        "Microsoft.NETCore.App.Ref");
-
-            //    if (Directory.Exists(packsRoot))
-            //    {
-            //        var packsSubFolders = Directory.GetDirectories(packsRoot);
-
-            //        foreach (var packSubFolder in packsSubFolders)
-            //        {
-            //            var refFolder = Path.Combine(packSubFolder, "ref");
-            //            if (!Directory.Exists(refFolder))
-            //            {
-            //                continue;
-            //            }
-
-            //            foreach (var xmlFolder in Directory.GetDirectories(refFolder).Where(f => Path.GetFileNameWithoutExtension(f).StartsWith("net")))
-            //            {
-            //                possiblePaths.Add(Path.Combine(xmlFolder, xmlFileName));
-            //            }
-            //        }
-            //    }
-
-            //    possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "shared", "Microsoft.NETCore.App", "5.0.0", $"{assemblyName}.xml"));
-
-            //    possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "shared", "Microsoft.NETCore.App", "8.0.10", $"{assemblyName}.xml"));
-
-            //    // .NET Framework paths
-            //    foreach (var netFrameworkVersion in new[] { "v4.8.1", "v4.8", "v4.7.2" })
-            //    {
-            //        possiblePaths.Add(Path.Combine(programFilesPath, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework", netFrameworkVersion, $"{assemblyName}.xml"));
-            //    }
-
-            //    // Add more versions if needed
-            //    foreach (var netCoreVersion in new[] { "3.1.0", "3.0.0", "2.2.0", "2.1.0" })
-            //    {
-            //        possiblePaths.Add(Path.Combine(programFilesPath, "dotnet", "packs", "Microsoft.NETCore.App.Ref", netCoreVersion, "ref", $"netcoreapp{netCoreVersion}", $"{assemblyName}.xml"));
-            //    }
-            //}
 
             foreach (var path in possiblePaths)
             {
@@ -343,7 +346,7 @@ namespace CDS.CSharpScriptUtils
                 }
             }
 
-            return xmlPath; // Return the original path if no fallback found
+            return null;
         }
     }
 }

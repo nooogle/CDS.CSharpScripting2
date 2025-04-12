@@ -2,6 +2,8 @@
 
 namespace ConsoleTest.Demos;
 
+
+
 /// <summary>
 /// Demonstrates how to get XML documentation for types, args, etc.
 /// </summary>
@@ -45,14 +47,14 @@ class XMLDocDemos
     private static async Task<ScriptManager> Demo1(TimedConsoleLogger logger, ScriptManager scriptManager)
     {
         var script = "Math.Pow(";
-        var cursorPosition = script.Length;
+        var cursorPosition = script.Length - 1;
         scriptManager = await FindInfoForScript(logger, scriptManager, script, cursorPosition);
         return scriptManager;
     }
 
     private static async Task<ScriptManager> Demo2(TimedConsoleLogger logger, ScriptManager scriptManager)
     {
-        var script = "Math.PI";
+        var script = "Console.WriteLine";
         var cursorPosition = script.Length - 1;
         scriptManager = await FindInfoForScript(logger, scriptManager, script, cursorPosition);
         return scriptManager;

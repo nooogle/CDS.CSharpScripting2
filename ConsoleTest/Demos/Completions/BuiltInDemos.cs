@@ -1,8 +1,8 @@
 ﻿using CDS.CSharpScriptUtils;
 
-namespace ConsoleTest.Demos;
+namespace ConsoleTest.Demos.Completions;
 
-class CompletionSuggestionsDemo
+class BuiltInDemos
 {
     /// <summary>
     /// Gets the name of the demo.
@@ -19,15 +19,20 @@ class CompletionSuggestionsDemo
     /// </summary>
     public static void Run()
     {
-        var demo = new CompletionSuggestionsDemo();
+        var demo = new BuiltInDemos();
         demo.RunAsync().Wait();
     }
 
     /// <summary>
     /// Runs the demo.
     /// </summary>
-    private async Task RunAsync()
+    public async Task RunAsync()
     {
+        // Setup screen for demo
+        Console.Clear();
+        Console.WriteLine("Code completions demo");
+        Console.WriteLine("=====================\n");
+
         // Setup
         var logger = new TimedConsoleLogger();
 
@@ -80,6 +85,10 @@ class CompletionSuggestionsDemo
             scriptManager,
             "System.Cons     int x = 10;",
             cursorPosition: 11);
+
+        // All done
+        Console.WriteLine("All done - press any key to exit");
+        Console.ReadKey();
     }
 
 

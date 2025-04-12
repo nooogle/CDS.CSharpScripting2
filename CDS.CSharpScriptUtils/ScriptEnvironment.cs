@@ -45,11 +45,14 @@ public class ScriptEnvironment
 
         var defaultReferences = new[]
         {
-            typeof(object).Assembly,
+            //typeof(object).Assembly,
             typeof(Console).Assembly,
         }.ToImmutableList();
 
-        defaultInstance = new ScriptEnvironment(defaultNamespaces, defaultReferences, null);
+        defaultInstance = new ScriptEnvironment(
+            namespaceNames: defaultNamespaces, 
+            references: defaultReferences, 
+            globalType: null);
     }
 
     private ScriptEnvironment(ImmutableList<string> namespaceNames, ImmutableList<Assembly> references, Type globalType)
