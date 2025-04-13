@@ -2,45 +2,61 @@ name: Build, Test & Pack
 
 on:
   push:
-    branches: [ master ]
     tags:
-      - 'v*'
-  pull_request:
-    branches: [ master ]
+      - 'v*' # Trigger on version tags like v1.0, v2.3.4
 
 jobs:
-  build:
+  build_test_pack:
     runs-on: windows-latest
 
     steps:
     - name: Checkout code (full history + tags)
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         fetch-tags: true
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
+    # Add .NET Framework 4.8 setup
+    - name: Setup .NET Framework 4.8 Developer Pack
+      run: |
+        choco install netfx-4.8-devpack -y
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.sln') }}-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-${{ hashFiles('**/*.sln') }}-
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore --verbosity normal
 
     - name: Build solution
       run: dotnet build --no-restore --configuration Release
 
     - name: Run unit tests
-      run: dotnet test --no-build --configuration Release
+      run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./test-results
 
-    - name: Pack NuGet package (only on tag)
+    - name: Pack projects (only on tag pushes)
       if: startsWith(github.ref, 'refs/tags/v')
-      run: dotnet pack --no-build --configuration Release
+      run: dotnet pack --no-build --configuration Release --output ./artifacts/packages
 
-    # # Optional NuGet push
-    # - name: Publish to NuGet (only on tag)
-    #   if: startsWith(github.ref, 'refs/tags/v')
-    #   env:
-    #     NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-    #   run: |
-    #     dotnet nuget push **/*.nupkg --source https://api.nuget.org/v3/index.json --api-key $NUGET_API_KEY
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ runner.os }}
+        path: ./test-results/**/*.trx
+
+    - name: Upload NuGet Packages (only on tag pushes)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./artifacts/packages/**/*.nupkg
