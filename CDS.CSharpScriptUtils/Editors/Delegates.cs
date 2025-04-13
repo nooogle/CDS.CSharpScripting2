@@ -28,3 +28,4 @@ public delegate Task ApplyScriptDelegateAsync(string script);
 public delegate Task<IEnumerable<CompletionItem>> GetAutoCompleteListDelegateAsync(int cursorPosition);
 
 
+public delegate Task<APIInfo.IAPIInfoResult> GetAPIInfoDelegateAsync(int cursorPosition);

@@ -27,7 +27,8 @@ public partial class FormRTFDemo : Form
 
         rtfScriptEditor.SetDelegates(
             editorManager.ApplyScript,
-            editorManager.GetAutoCompletions);
+            editorManager.GetAutoCompletions,
+            editorManager.GetAPIInfo);
 
         rtfScriptEditor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
     }

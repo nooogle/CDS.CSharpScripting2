@@ -36,8 +36,9 @@ public partial class FormGlobals : Form
             scintillaScriptEditor.ApplySyntaxElements);
 
         scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript, 
-            editorManager.GetAutoCompletions);
+            editorManager.ApplyScript,
+            editorManager.GetAutoCompletions,
+            editorManager.GetAPIInfo);
 
         scintillaScriptEditor.Script = settings.Script;
     }

@@ -1,11 +1,6 @@
 ﻿namespace CDS.CSharpScriptUtils.Editors;
 
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 public class ToolTipManager
@@ -24,57 +19,101 @@ public class ToolTipManager
     }
 
 
-    public void HandleMouseMove(
-        System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics,
-        int characterPosition)
+    public void ShowAPIInfo(CDS.CSharpScriptUtils.APIInfo.IAPIInfoResult aPIInfo, Point position)
     {
-        if (diagnostics.Length == 0) { return; }
+        if (aPIInfo == null) { return; }
 
-        Microsoft.CodeAnalysis.Diagnostic diagnosticForTooltip = null;
-
-        foreach (var diagnostic in diagnostics)
+        if(aPIInfo?.TypeInfo?.Summary != null)
         {
-            var span = diagnostic.Location.SourceSpan;
-            if (span.Length == 0)
-            {
-                span = new Microsoft.CodeAnalysis.Text.TextSpan(span.Start - 1, 1);
-            }
-
-            if (span.Contains(characterPosition))
-            {
-                diagnosticForTooltip = diagnostic;
-                break;
-            }
-        }
-
-        if (diagnosticForTooltip == null)
-        {
-            currentToolTipDiagnostic = null;
+            toolTip.ToolTipIcon = ToolTipIcon.Info;
+            toolTip.ToolTipTitle = aPIInfo.TypeInfo.Name;
+            toolTip.SetToolTip(editor, aPIInfo.TypeInfo.Summary);
+            
+            toolTip.Show(aPIInfo.TypeInfo.Summary, editor, position);
         }
         else
         {
-            if (currentToolTipDiagnostic != diagnosticForTooltip)
-            {
-                currentToolTipDiagnostic = diagnosticForTooltip;
-
-                if (diagnosticForTooltip.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
-                {
-                    toolTip.ToolTipIcon = ToolTipIcon.Error;
-                    toolTip.ToolTipTitle = $"Error {diagnosticForTooltip.Id}";
-                }
-                else
-                {
-                    toolTip.ToolTipIcon = ToolTipIcon.Warning;
-                    toolTip.ToolTipTitle = $"Warning {diagnosticForTooltip.Id} (level {diagnosticForTooltip.WarningLevel})";
-                }
-
-                toolTip.SetToolTip(editor, diagnosticForTooltip.GetMessage());
-            }
+            toolTip.SetToolTip(editor, "");
         }
 
-        if (currentToolTipDiagnostic == null)
+    }
+
+
+    public void HandleMouseMove(
+        System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics,
+        int characterPosition,
+        APIInfo.IAPIInfoResult apiInfo)
+    {
+        Microsoft.CodeAnalysis.Diagnostic diagnosticForTooltip = null;
+
+        if (apiInfo?.TypeInfo?.Summary != null) 
         {
-            toolTip.SetToolTip(editor, "");
+            toolTip.ToolTipIcon = ToolTipIcon.Info;
+            toolTip.ToolTipTitle = apiInfo.TypeInfo.Name;
+
+            StringBuilder sb = new();
+            sb.AppendLine(apiInfo.TypeInfo.Summary);
+
+            if (apiInfo.MemberInfos.Any())
+            {
+                var firstMember = apiInfo.MemberInfos.First();
+                sb.Append($"Member: {firstMember.Name}");
+
+                int numOverloads = apiInfo.MemberInfos.Count();
+                if (numOverloads > 1)
+                {
+                    sb.Append($" (overloads: {numOverloads})");
+                }
+            }
+
+            toolTip.SetToolTip(editor, sb.ToString());
+        }
+        else
+        {
+            foreach (var diagnostic in diagnostics)
+            {
+                var span = diagnostic.Location.SourceSpan;
+                if (span.Length == 0)
+                {
+                    span = new Microsoft.CodeAnalysis.Text.TextSpan(span.Start - 1, 1);
+                }
+
+                if (span.Contains(characterPosition))
+                {
+                    diagnosticForTooltip = diagnostic;
+                    break;
+                }
+            }
+
+            if (diagnosticForTooltip == null)
+            {
+                currentToolTipDiagnostic = null;
+            }
+            else
+            {
+                if (currentToolTipDiagnostic != diagnosticForTooltip)
+                {
+                    currentToolTipDiagnostic = diagnosticForTooltip;
+
+                    if (diagnosticForTooltip.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+                    {
+                        toolTip.ToolTipIcon = ToolTipIcon.Error;
+                        toolTip.ToolTipTitle = $"Error {diagnosticForTooltip.Id}";
+                    }
+                    else
+                    {
+                        toolTip.ToolTipIcon = ToolTipIcon.Warning;
+                        toolTip.ToolTipTitle = $"Warning {diagnosticForTooltip.Id} (level {diagnosticForTooltip.WarningLevel})";
+                    }
+
+                    toolTip.SetToolTip(editor, diagnosticForTooltip.GetMessage());
+                }
+            }
+
+            if (currentToolTipDiagnostic == null)
+            {
+                toolTip.SetToolTip(editor, "");
+            }
         }
     }
 }

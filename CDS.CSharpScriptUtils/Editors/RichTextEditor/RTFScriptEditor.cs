@@ -11,6 +11,8 @@ public partial class RTFScriptEditor : UserControl, IEditor
     private ToolTipManager toolTipManager;
     private int programmaticTextChangeSentryDepth = 0;
     private GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
+    private GetAPIInfoDelegateAsync getAPIInfoAsync;
+
 
     public string Script
     {
@@ -28,10 +30,12 @@ public partial class RTFScriptEditor : UserControl, IEditor
 
     public void SetDelegates(
         ApplyScriptDelegateAsync processScriptAsync,
-        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
+        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync,
+        GetAPIInfoDelegateAsync getAPIInfoAsync)
     {
         this.processScriptAsync = processScriptAsync;
         this.getAutoCompleteListAsync = getAutoCompleteListAsync;
+        this.getAPIInfoAsync = getAPIInfoAsync;
     }
 
 
@@ -87,12 +91,13 @@ public partial class RTFScriptEditor : UserControl, IEditor
 
     }
 
-    private void richTextBox_MouseMove(object sender, MouseEventArgs e)
+    private async void richTextBox_MouseMove(object sender, MouseEventArgs e)
     {
         var charIndex = richTextBox.GetCharIndexFromPosition(e.Location);
 
         toolTipManager.HandleMouseMove(
             diagnostics: lastDiagnostics,
+            apiInfo: null,
             characterPosition: charIndex);
     }
 

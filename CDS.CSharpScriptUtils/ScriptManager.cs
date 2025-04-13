@@ -233,6 +233,7 @@ namespace CDS.CSharpScriptUtils
         }
 
 
+        // TODO rename to GetAPIInfo or similar?
         public async Task<APIInfo.APIInfoResult> GetSuggestionsAsync(int position)
         {
             var xmlInfo = APIInfo.APIInfoService.Get(
@@ -297,7 +298,7 @@ namespace CDS.CSharpScriptUtils
         }
 
 
-        private static string? TryFindXMLForXXX(string xmlFileName)
+        private static string TryFindXMLForXXX(string xmlFileName)
         {
             var programFilesPaths = new List<string>
             {

@@ -35,6 +35,13 @@ public class EditorManager
         return completions;
     }
 
+    public async Task<APIInfo.IAPIInfoResult> GetAPIInfo(int cursorPosition)
+    {
+        await CreateScriptManager();
+        var apiInfo = await scriptManager.GetSuggestionsAsync(cursorPosition);
+        return apiInfo;
+    }
+
     public async Task ApplyScript(string script)
     {
         await CreateScriptManager();

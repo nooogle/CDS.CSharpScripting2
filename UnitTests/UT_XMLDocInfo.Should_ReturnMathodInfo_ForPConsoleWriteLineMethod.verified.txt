@@ -1,0 +1,323 @@
+﻿{
+  TypeInfo: {
+    Name: Console,
+    Namespace: System,
+    Accessibility: Public,
+    BaseType: object,
+    Interfaces: null,
+    Summary: Represents the standard input, output, and error streams for console applications. This class cannot be inherited.,
+    Remarks: null,
+    TypeKind: Class
+  },
+  MemberInfos: [
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(),
+      ReturnType: void,
+      Summary: Writes the current line terminator to the standard output stream.,
+      Remarks: null,
+      Parameters: null
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(bool value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified Boolean value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: bool,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(char value),
+      ReturnType: void,
+      Summary: Writes the specified Unicode character, followed by the current line terminator, value to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: char,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(char[]? buffer),
+      ReturnType: void,
+      Summary: Writes the specified array of Unicode characters, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[]?,
+          Documentation: A Unicode character array.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(char[] buffer, int index, int count),
+      ReturnType: void,
+      Summary: Writes the specified subarray of Unicode characters, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: buffer,
+          Type: char[],
+          Documentation: An array of Unicode characters.
+        },
+        {
+          Name: index,
+          Type: int,
+          Documentation: The starting position in <paramref name="buffer" />.
+        },
+        {
+          Name: count,
+          Type: int,
+          Documentation: The number of characters to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(decimal value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified <see cref="T:System.Decimal" /> value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: decimal,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(double value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified double-precision floating-point value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: double,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(float value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified single-precision floating-point value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: float,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(int value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified 32-bit signed integer value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: int,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(uint value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified 32-bit unsigned integer value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: uint,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(long value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified 64-bit signed integer value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: long,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(ulong value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified 64-bit unsigned integer value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: ulong,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(object? value),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified object, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: object?,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(string? value),
+      ReturnType: void,
+      Summary: Writes the specified string value, followed by the current line terminator, to the standard output stream.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: value,
+          Type: string?,
+          Documentation: The value to write.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(string format, object? arg0),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified object, followed by the current line terminator, to the standard output stream using the specified format information.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: A composite format string.
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: An object to write using <paramref name="format" />.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(string format, object? arg0, object? arg1),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified objects, followed by the current line terminator, to the standard output stream using the specified format information.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: A composite format string.
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: The first object to write using <paramref name="format" />.
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: The second object to write using <paramref name="format" />.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(string format, object? arg0, object? arg1, object? arg2),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified objects, followed by the current line terminator, to the standard output stream using the specified format information.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: A composite format string.
+        },
+        {
+          Name: arg0,
+          Type: object?,
+          Documentation: The first object to write using <paramref name="format" />.
+        },
+        {
+          Name: arg1,
+          Type: object?,
+          Documentation: The second object to write using <paramref name="format" />.
+        },
+        {
+          Name: arg2,
+          Type: object?,
+          Documentation: The third object to write using <paramref name="format" />.
+        }
+      ]
+    },
+    {
+      Name: WriteLine,
+      Kind: Ordinary,
+      Signature: static void WriteLine(string format, params object?[]? arg),
+      ReturnType: void,
+      Summary: Writes the text representation of the specified array of objects, followed by the current line terminator, to the standard output stream using the specified format information.,
+      Remarks: null,
+      Parameters: [
+        {
+          Name: format,
+          Type: string,
+          Documentation: A composite format string.
+        },
+        {
+          Name: arg,
+          Type: object?[]?,
+          Documentation: An array of objects to write using <paramref name="format" />.
+        }
+      ]
+    }
+  ]
+}

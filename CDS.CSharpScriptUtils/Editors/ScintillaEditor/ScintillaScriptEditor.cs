@@ -14,6 +14,8 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
     private ToolTipManager toolTipManager;
     private ApplyScriptDelegateAsync processScriptAsync;
     private GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
+    private GetAPIInfoDelegateAsync getAPIInfoAsync;
+
 
 
     public ScintillaScriptEditor()
@@ -45,11 +47,14 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
 
     public void SetDelegates(
         ApplyScriptDelegateAsync processScriptAsync,
-        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync)
+        GetAutoCompleteListDelegateAsync getAutoCompleteListAsync,
+        GetAPIInfoDelegateAsync getAPIInfoAsync)
     {
         this.processScriptAsync = processScriptAsync;
         this.getAutoCompleteListAsync = getAutoCompleteListAsync;
+        this.getAPIInfoAsync = getAPIInfoAsync;
     }
+
 
 
     private void InitialiseEditor()
@@ -160,12 +165,18 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         scintilla.IndicatorFillRange(position: start, length: length);
     }
 
-    private void scintilla_MouseMove(object sender, MouseEventArgs e)
+    private async void scintilla_MouseMove(object sender, MouseEventArgs e)
     {
         var characterPosition = scintilla.CharPositionFromPointClose(e.Location.X, e.Location.Y);
 
+        var apiInfo = 
+            characterPosition >= 0 ?
+            await getAPIInfoAsync(characterPosition) :
+            null;
+
         toolTipManager.HandleMouseMove(
             diagnostics: lastDiagnostics,
+            apiInfo: apiInfo,
             characterPosition: characterPosition);
     }
 
@@ -208,7 +219,17 @@ public partial class ScintillaScriptEditor : UserControl, IEditor
         {
             await TryRunAutoComplete();
         }
+        else if (e.KeyCode == Keys.F1)
+        {
+            int pos = scintilla.CurrentPosition;
 
+            Point point = new Point(
+                x: scintilla.PointXFromPosition(pos),
+                y: scintilla.PointYFromPosition(pos));
+
+            var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
+            toolTipManager.ShowAPIInfo(apiInfo, position: point);
+        }
     }
 
     private async Task TryRunAutoComplete()

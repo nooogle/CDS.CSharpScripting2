@@ -42,7 +42,8 @@ public partial class FormBasicDemo : Form
 
         scintillaScriptEditor.SetDelegates(
             editorManager.ApplyScript,
-            editorManager.GetAutoCompletions);
+            editorManager.GetAutoCompletions,
+            editorManager.GetAPIInfo);
 
         scintillaScriptEditor.Script = settings.Script;
     }
