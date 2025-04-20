@@ -50,5 +50,10 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Editors\RichTextEditor\" />
+    <Folder Include="OutputPanels\" />
+  </ItemGroup>
   
 </Project>

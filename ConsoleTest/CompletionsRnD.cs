@@ -18,9 +18,9 @@ class CompletionsRnD
     private static async Task ViaScriptManager()
     {
         var env =
-            CDS.CSharpScriptUtils.ScriptEnvironment.Default;
+            CDS.CSharpScript2.ScriptEnvironment.Default;
 
-        var scriptManager = await CDS.CSharpScriptUtils.ScriptManager.CreateAsync(env);
+        var scriptManager = await CDS.CSharpScript2.ScriptManager.CreateAsync(env);
 
         scriptManager = scriptManager.ApplyScript("System.Math.Pow(1, 2)");
 

@@ -6,7 +6,7 @@ namespace WinFormsTest.Demos.GlobalsDemo;
 public partial class FormGlobals : Form
 {
     private Settings settings;
-    private CDS.CSharpScriptUtils.Editors.EditorManager? editorManager;
+    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
     private SharedData sharedData = new SharedData();
     private bool isRunningOrCompilingSentry = false;
 
@@ -26,11 +26,11 @@ public partial class FormGlobals : Form
     private void InitialiseEditor()
     {
         var env =
-            CDS.CSharpScriptUtils.ScriptEnvironment.Default
+            CDS.CSharpScript2.ScriptEnvironment.Default
             .WithDrawingReferences()
             .WithGlobalType(typeof(SharedData));
 
-        editorManager = new CDS.CSharpScriptUtils.Editors.EditorManager(
+        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
             environment: env,
             scintillaScriptEditor.ApplyDiagnostics,
             scintillaScriptEditor.ApplySyntaxElements);
@@ -74,7 +74,7 @@ public partial class FormGlobals : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScriptUtils.ConsoleOutputHook(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
 
         await PerformScriptManagerActions(async () =>
         {

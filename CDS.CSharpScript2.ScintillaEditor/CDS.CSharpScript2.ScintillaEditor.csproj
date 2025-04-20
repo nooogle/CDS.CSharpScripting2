@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows10.0.17763.0;net48</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageIcon>script.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <Title>C# Scripting: Scintillia editor</Title>
+    <Description>Scintilla editor for C# script editing</Description>
+    <Authors>Jon Shadforth</Authors>
+    <Company>Carpe Diem Systems</Company>
+    <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
+    <Platforms>AnyCPU;ARM64;x64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Update="ScintillaScriptEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="RTFOutputPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+   <PackageReference Include="Scintilla5.NET" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="System.Resources.Extensions" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="script.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
+  </ItemGroup>
+
+</Project>

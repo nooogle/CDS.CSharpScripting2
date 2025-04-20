@@ -1,4 +1,4 @@
-using CDS.CSharpScriptUtils;
+using CDS.CSharpScript2;
 
 namespace DotNet6UnitTests
 {
@@ -21,7 +21,7 @@ namespace DotNet6UnitTests
 
             // Check diagnostics
             var syntaxTree = await scriptManager.GetSyntaxTreeAsync();
-            var syntaxElements = CDS.CSharpScriptUtils.Editors.Syntax.ScriptSyntaxAnalyser.Go(syntaxTree);
+            var syntaxElements = CDS.CSharpScript2.Editors.Syntax.ScriptSyntaxAnalyser.Go(syntaxTree);
 
 
             // Bundle data for the verification review

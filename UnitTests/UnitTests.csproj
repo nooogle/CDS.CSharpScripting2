@@ -7,6 +7,7 @@
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <Platforms>AnyCPU;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,11 +19,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Verify.MSTest" Version="28.16.0" />
+    <PackageReference Include="Verify.MSTest" Version="29.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSharpScriptUtils\CDS.CSharpScriptUtils.csproj" />
+    <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
   </ItemGroup>
 
 </Project>

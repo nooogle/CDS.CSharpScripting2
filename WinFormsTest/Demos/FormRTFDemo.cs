@@ -4,7 +4,7 @@ namespace WinFormsTest.Demos;
 
 public partial class FormRTFDemo : Form
 {
-    private CDS.CSharpScriptUtils.Editors.EditorManager? editorManager;
+    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
 
     public FormRTFDemo()
     {
@@ -20,8 +20,8 @@ public partial class FormRTFDemo : Form
 
     private void InitialiseEditor()
     {
-        editorManager = new CDS.CSharpScriptUtils.Editors.EditorManager(
-            environment: CDS.CSharpScriptUtils.ScriptEnvironment.Default,
+        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
+            environment: CDS.CSharpScript2.ScriptEnvironment.Default,
             rtfScriptEditor.ApplyDiagnostics,
             rtfScriptEditor.ApplySyntaxElements);
 

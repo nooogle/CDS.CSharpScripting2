@@ -8,6 +8,7 @@
     <Platforms>AnyCPU;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <LangVersion>latest</LangVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
@@ -16,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CDS.CLIMenus" Version="2.0.0" />
+    <PackageReference Include="CDS.CLIMenus" Version="2.0.3" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.13.0" />
@@ -26,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSharpScriptUtils\CDS.CSharpScriptUtils.csproj" />
+    <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
