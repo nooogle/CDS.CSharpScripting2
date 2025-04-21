@@ -1,9 +1,7 @@
-﻿
-namespace CDS.CSharpScript2.APIInfo
+﻿namespace CDS.CSharpScript2.APIInfo;
+
+public interface IAPIInfoResult
 {
-    public interface IAPIInfoResult
-    {
-        IEnumerable<MemberDetailsInfo> MemberInfos { get; }
-        DetailedTypeInfo TypeInfo { get; }
-    }
+    IEnumerable<MemberDetailsInfo> MemberInfos { get; }
+    DetailedTypeInfo TypeInfo { get; }
 }

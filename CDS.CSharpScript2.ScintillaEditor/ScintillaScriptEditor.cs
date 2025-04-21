@@ -11,18 +11,19 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
     private const int scintillaWarningIndicatorIndex = 4;
     private string lastScript = "";
 
-    private ToolTipManager toolTipManager;
+    private ToolTipDiagnostics diagnosticsToolTipManager;
     private Editors.ApplyScriptDelegateAsync processScriptAsync;
     private Editors.GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
     private Editors.GetAPIInfoDelegateAsync getAPIInfoAsync;
 
+    private FormAPIInfo apiInfoForm = new FormAPIInfo();
 
 
     public ScintillaScriptEditor()
     {
         InitializeComponent();
 
-        toolTipManager = new ToolTipManager(scintilla, toolTip);
+        diagnosticsToolTipManager = new ToolTipDiagnostics(scintilla, toolTip);
 
         syntaxKindToScintillaStyle = new Dictionary<Editors.Syntax.SimpleSyntaxKind, int>
         {
@@ -169,14 +170,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
     {
         var characterPosition = scintilla.CharPositionFromPointClose(e.Location.X, e.Location.Y);
 
-        var apiInfo = 
-            characterPosition >= 0 ?
-            await getAPIInfoAsync(characterPosition) :
-            null;
+        //APIInfo.IAPIInfoResult apiInfo = null;
+        ////characterPosition >= 0 ?
+        ////await getAPIInfoAsync(characterPosition) :
+        ////null;
 
-        toolTipManager.HandleMouseMove(
+        diagnosticsToolTipManager.HandleMouseMove(
             diagnostics: lastDiagnostics,
-            apiInfo: apiInfo,
             characterPosition: characterPosition);
     }
 
@@ -213,6 +213,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         HandleTextChanged();
     }
 
+
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Space && e.Control)
@@ -228,7 +229,19 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
                 y: scintilla.PointYFromPosition(pos));
 
             var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
-            toolTipManager.ShowAPIInfo(apiInfo, position: point);
+            
+
+            apiInfoForm.ShowAPIInfo(parent: this, location: point, apiInfo: apiInfo);
+        }
+        else if (e.KeyCode == Keys.Escape)
+        {
+            scintilla.AutoCCancel();
+            apiInfoForm.Hide();
+            //diagnosticsToolTipManager.ShowAPIInfo(null, position: new Point(0, 0));
+        }
+        else if (e.KeyCode == Keys.Right)
+        {
+            //diagnosticsToolTipManager.OnRightArrowKeyPressed();
         }
     }
 
