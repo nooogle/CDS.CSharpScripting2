@@ -1,4 +1,5 @@
 using CDS.CSharpScript2;
+using Newtonsoft.Json; // Added this line
 
 namespace DotNet6UnitTests;
 
@@ -47,16 +48,20 @@ public partial class UT_XMLDocInfo
     }
 
     /// <summary>
-    /// Check we get information about all the overloads of Console.WriteLine
+    /// Check we get information about a NiuGet pacakage class method.
     /// </summary>
+    /// <remarks>
+    /// This relies on the Newtonsoft.Json.XML documentation file being 
+    /// available at runtime in the unit test bin folder.
+    /// </remarks>
     [TestMethod]
     public async Task Should_ReturnAllOverloadedMethods_ForNewtonsoftMethod()
     {
         var environment =
             ScriptEnvironment
             .Default
-            .WithAdditionalNamespaceType(typeof(Newtonsoft.Json.JsonConvert))
-            .WithAdditionalReferenceName("Newtonsoft.Json");
+            .WithAdditionalNamespaceType(typeof(JsonConvert))
+            .WithAdditionalReferenceName(typeof(JsonConvert).Assembly!.FullName!);
 
         var script = @"Newtonsoft.Json.JsonConvert.SerializeObject(new object());";
         var scriptManager = await ScriptManager.CreateAsync(environment);

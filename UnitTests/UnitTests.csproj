@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <Platforms>AnyCPU;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <GeneratePathProperty>true</GeneratePathProperty>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,11 +20,19 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" GeneratePathProperty="true" />
     <PackageReference Include="Verify.MSTest" Version="29.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
   </ItemGroup>
+
+  <!-- Explicitly copy the Newtonsft XML documentation file -->
+  <Target Name="CopyXmlDocumentation" AfterTargets="Build">
+    <Copy SourceFiles="$(PkgNewtonsoft_Json)\lib\netstandard2.0\Newtonsoft.Json.xml" 
+          DestinationFolder="$(OutputPath)" 
+          Condition="Exists('$(PkgNewtonsoft_Json)\lib\netstandard2.0\Newtonsoft.Json.xml')" />
+  </Target>
 
 </Project>

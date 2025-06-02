@@ -48,7 +48,7 @@
             tableLayoutPanel1.RowCount = 2;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(916, 500);
+            tableLayoutPanel1.Size = new Size(599, 397);
             tableLayoutPanel1.TabIndex = 2;
             // 
             // scintillaScriptEditor
@@ -57,16 +57,16 @@
             scintillaScriptEditor.Location = new Point(3, 3);
             scintillaScriptEditor.Name = "scintillaScriptEditor";
             scintillaScriptEditor.Script = "";
-            scintillaScriptEditor.Size = new Size(910, 327);
+            scintillaScriptEditor.Size = new Size(593, 258);
             scintillaScriptEditor.TabIndex = 5;
             // 
             // outputPanel
             // 
             outputPanel.AllowClickLinks2 = true;
             outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 336);
+            outputPanel.Location = new Point(3, 267);
             outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(910, 161);
+            outputPanel.Size = new Size(593, 127);
             outputPanel.TabIndex = 6;
             // 
             // btnCompile
@@ -93,7 +93,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(943, 568);
+            ClientSize = new Size(626, 465);
             Controls.Add(btnRun);
             Controls.Add(btnCompile);
             Controls.Add(tableLayoutPanel1);
