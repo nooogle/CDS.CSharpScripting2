@@ -1,9 +1,3 @@
-﻿{ }
+﻿System.Math.Pow
 
-
-
-
-//public record Person(string FirstName, string LastName)
-//{
-//    public string FullName => $"{FirstName} {LastName}";
-//}
+//Newtonsoft.Json.JsonConvert.SerializeObject(new object());

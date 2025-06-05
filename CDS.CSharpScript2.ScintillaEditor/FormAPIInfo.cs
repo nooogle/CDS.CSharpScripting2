@@ -144,6 +144,8 @@ public partial class FormAPIInfo : Form
         {
             node.Nodes.Add(new TreeNode($"Remarks: {typeInfo.Remarks}"));
         }
+
+        treeView.Nodes.Add(node);
     }
 
     private void FormAPIInfo_KeyDown(object sender, KeyEventArgs e)

@@ -7,6 +7,22 @@ namespace DotNet6UnitTests;
 public partial class UT_XMLDocInfo
 {
     /// <summary>
+    /// Check we get a XML documentation for 'System.Math.Pow'
+    /// </summary>
+    /// <remarks>
+    /// This code was not working if a bracket was not present after the method name.
+    /// </remarks>
+    [TestMethod]
+    public async Task Should_Return_XMLDocumentation_ForSystemMathPow()
+    {
+        var scriptManager = await ScriptManager.CreateAsync();
+        scriptManager = scriptManager.ApplyScript("System.Math.Pow");
+        var xmlDocumentation = await scriptManager.GetSuggestionsAsync(scriptManager.ScriptText.Length - 1);
+        await Verify(xmlDocumentation);
+    }
+
+
+    /// <summary>
     /// Check we get some type information when hovering over 'Console'
     /// </summary>
     [TestMethod]
@@ -71,6 +87,43 @@ public partial class UT_XMLDocInfo
         var compilationOutput = await scriptManager.GetCompilationOutputAsync();
 
         var xmlInfo = await scriptManager.GetSuggestionsAsync(script.IndexOf("SerializeObject") + 2);
+
+        var assertionInfo = new
+        {
+            compilationOutput,
+            xmlInfo,
+        };
+
+        await Verify(assertionInfo);
+    }
+
+
+    /// <summary>
+    /// Check we get information about a NuGet pacakage class method.
+    /// </summary>
+    /// <remarks>
+    /// This relies on the Newtonsoft.Json.XML documentation file being 
+    /// available at runtime in the unit test bin folder.
+    /// </remarks>
+    [TestMethod]
+    public async Task Should_ReturnAllOverloadedMethods_ForOpenCvSharpClone()
+    {
+        var environment =
+            ScriptEnvironment
+            .Default
+            .WithAdditionalNamespaceForType<OpenCvSharp.Mat>()
+            .WithAdditionalReferenceForType<OpenCvSharp.Mat>();
+
+        //new OpenCvSharp.Mat().Clone();
+
+        var script = @"new Mat().Clone();";
+        var scriptManager = await ScriptManager.CreateAsync(environment);
+        scriptManager = scriptManager.ApplyScript(script);
+
+        await scriptManager.CompileAsync();
+        var compilationOutput = await scriptManager.GetCompilationOutputAsync();
+
+        var xmlInfo = await scriptManager.GetSuggestionsAsync(script.IndexOf("Clone") + 2);
 
         var assertionInfo = new
         {
