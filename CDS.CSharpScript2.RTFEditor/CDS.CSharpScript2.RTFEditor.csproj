@@ -27,7 +27,7 @@
 
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="System.Resources.Extensions" Version="9.0.5" />
+    <PackageReference Include="System.Resources.Extensions" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
