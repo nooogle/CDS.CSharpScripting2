@@ -64,7 +64,7 @@ public partial class FormOpenCvSharpDemo : Form
         editorManager = new CDS.CSharpScript2.Editors.EditorManager(
             environment: env,
             scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplySyntaxElements);
+            scintillaScriptEditor.ApplyClassifications);
 
         scintillaScriptEditor.SetDelegates(
             editorManager.ApplyScript,
@@ -148,7 +148,8 @@ public partial class FormOpenCvSharpDemo : Form
         {
             await PerformScriptManagerActions(async () =>
             {
-                var compilationOutput = await editorManager!.CompileAsync();
+                await editorManager!.CompileAsync();
+                var compilationOutput = (await editorManager.GetCompiledScriptAsync()).CompilationOutput;
 
                 outputPanel.AppendLine("Compilation complete");
 

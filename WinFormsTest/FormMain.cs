@@ -46,6 +46,20 @@ public partial class FormMain: Form
             parent: this,
             createForm: () => new Demos.FormRTFDemo());
 
+        otherGroup.AddDemo(
+            name: "Syntax tree view",
+            tooltip:
+                "TBD",
+            parent: this,
+            createForm: () => new Demos.SyntaxTreeViewDemo.FormTreeView(settingsManager.Settings.Demos.TreeViewDemo));
+
+        otherGroup.AddDemo(
+            name: "Classified spans demo",
+            tooltip:
+                "TBD",
+            parent: this,
+            createForm: () => new Demos.ClassifiedSpansDemo.FormDemo(settingsManager.Settings.Demos.ClassifiedSpansDemo));
+
         demosTreeView.ExpandAllGroups();
     }
 

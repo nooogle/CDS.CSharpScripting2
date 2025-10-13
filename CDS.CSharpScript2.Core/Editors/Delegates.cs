@@ -1,11 +1,12 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Completion;
 using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.Editors;
 
 public delegate void ApplyDiagnosticsDelegate(ImmutableArray<Diagnostic> diagnostics);
-public delegate void ApplySyntaxElementsDelegate(ImmutableArray<Syntax.SyntaxElement> syntaxElements);
+public delegate void ApplyClassificationsDelegate(IReadOnlyList<ClassifiedSpan> classifications);
 
 
 /// <summary>

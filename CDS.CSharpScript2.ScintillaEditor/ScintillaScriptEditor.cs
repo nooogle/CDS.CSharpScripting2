@@ -1,14 +1,16 @@
-﻿using System.Collections.Immutable;
+﻿using Microsoft.CodeAnalysis.Classification;
+using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
 public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 {
-    private ImmutableDictionary<Editors.Syntax.SimpleSyntaxKind, int> syntaxKindToScintillaStyle;
+    private ImmutableDictionary<string, int> classificationKindToScintillaStyle;
     private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
 
     private const int scintillaErrorIndicatorIndex = 3;
     private const int scintillaWarningIndicatorIndex = 4;
+    private const int scintillaHighlightIndicatorIndex = 5;
     private string lastScript = "";
 
     private ToolTipDiagnostics diagnosticsToolTipManager;
@@ -18,6 +20,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
     private FormAPIInfo apiInfoForm = new FormAPIInfo();
 
+    private Editors.Coloriser _coloriser = new();
+
+    [CDSCategory()]
+    public event EventHandler OnScriptChanged;
+
 
     public ScintillaScriptEditor()
     {
@@ -25,13 +32,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         diagnosticsToolTipManager = new ToolTipDiagnostics(scintilla, toolTip);
 
-        syntaxKindToScintillaStyle = new Dictionary<Editors.Syntax.SimpleSyntaxKind, int>
+        var classificationKindToScintillaStyleBuilder = new Dictionary<string, int>();
+        var coloriserNames = _coloriser.ClassificationNames;
+
+        for (int styleIndex = 1; styleIndex <= coloriserNames.Length; styleIndex++)
         {
-            [Editors.Syntax.SimpleSyntaxKind.Keyword] = 1,
-            [Editors.Syntax.SimpleSyntaxKind.Argument] = 2,
-            [Editors.Syntax.SimpleSyntaxKind.Commment] = 3,
-            [Editors.Syntax.SimpleSyntaxKind.XMLDocumentationComment] = 4,
-        }.ToImmutableDictionary();
+            classificationKindToScintillaStyleBuilder[coloriserNames[styleIndex - 1]] = styleIndex;
+        }
+
+        classificationKindToScintillaStyle = classificationKindToScintillaStyleBuilder.ToImmutableDictionary();
 
         InitialiseEditor();
     }
@@ -43,8 +52,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         if (lastScript != Script)
         {
             PerformLiveCompilationOfChangedScript();
+
+            OnScriptChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+
+
 
     public void SetDelegates(
         Editors.ApplyScriptDelegateAsync processScriptAsync,
@@ -60,24 +74,32 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
     private void InitialiseEditor()
     {
-        //scintilla.Styles[ScintillaNET.Style.Default].Font = "Courier New";
-        //scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
-
+        scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Mono";
+        scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
+        scintilla.StyleClearAll(); // This propagates the default style to all styles
 
 
         //scintilla.Lexer = ScintillaNET.Lexer.Null;
         scintilla.MouseDwellTime = 500;
 
-        scintilla.Styles[syntaxKindToScintillaStyle[Editors.Syntax.SimpleSyntaxKind.Keyword]].ForeColor = Color.Blue;
-        scintilla.Styles[syntaxKindToScintillaStyle[Editors.Syntax.SimpleSyntaxKind.Argument]].ForeColor = Color.Red;
-        scintilla.Styles[syntaxKindToScintillaStyle[Editors.Syntax.SimpleSyntaxKind.Commment]].ForeColor = Color.Green;
-        scintilla.Styles[syntaxKindToScintillaStyle[Editors.Syntax.SimpleSyntaxKind.XMLDocumentationComment]].ForeColor = Color.Gray;
+        foreach (var classificationName in classificationKindToScintillaStyle.Keys)
+        {
+            var styleIndex = classificationKindToScintillaStyle[classificationName];
+            var colorScheme = _coloriser.FromClassificationName(classificationName);
+            scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
+            scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
+            scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
+            scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
+        }
 
         scintilla.Indicators[scintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
         scintilla.Indicators[scintillaErrorIndicatorIndex].ForeColor = Color.Red;
 
         scintilla.Indicators[scintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
         scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
+
+        scintilla.Indicators[scintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+        //scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
     }
 
     public string Script
@@ -93,6 +115,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         if (DesignMode) { return; }
 
         timerChangeMonitor.Start();
+
+        // turn on line numbers
+        scintilla.Margins[0].Width = 30;
+
     }
 
 
@@ -111,19 +137,19 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
     }
 
 
-    public void ApplySyntaxElements(ImmutableArray<Editors.Syntax.SyntaxElement> syntaxElements)
+    public void ApplyClassifications(IReadOnlyList<ClassifiedSpan> classifications)
     {
         // clear all styling
         scintilla.StartStyling(0);
         scintilla.SetStyling(scintilla.Text.Length, 0);
 
 
-        foreach (var syntaxElement in syntaxElements)
+        foreach (var classification in classifications)
         {
-            if (Editors.Syntax.SyntaxKindToSimpleGenerator.Map.TryGetValue(syntaxElement.Kind, out var simpleSyntaxKind))
+            if (classificationKindToScintillaStyle.TryGetValue(classification.ClassificationType, out var styleIndex))
             {
-                scintilla.StartStyling(syntaxElement.Span.Start);
-                scintilla.SetStyling(syntaxElement.Span.Length, syntaxKindToScintillaStyle[simpleSyntaxKind]);
+                scintilla.StartStyling(classification.TextSpan.Start);
+                scintilla.SetStyling(classification.TextSpan.Length, styleIndex);
             }
         }
     }
@@ -144,6 +170,16 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         scintilla.IndicatorCurrent = scintillaWarningIndicatorIndex;
         scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+    }
+
+
+    public void HighlightText(int start, int length)
+    {
+        ClearHighlightText();
+
+        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorFillRange(position: start, length: length);
+        scintilla.ScrollCaret();
     }
 
 
@@ -274,5 +310,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         // show an autocomplete list
         scintilla.AutoCShow(word.Length, scintillaCompletionList);
+    }
+
+    public void ClearHighlightText()
+    {
+        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
     }
 }

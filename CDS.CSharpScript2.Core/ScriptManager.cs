@@ -16,6 +16,12 @@ namespace CDS.CSharpScript2
         private CompiledScript compiledScript;
 
 
+        public async Task<CompiledScript> GetCompiledScriptAsync()
+        {
+            await CompileAsync();
+            return compiledScript;
+        }
+
         public async Task<SyntaxTree> GetSyntaxTreeAsync()
         {
             return await document.GetSyntaxTreeAsync();
@@ -145,6 +151,35 @@ namespace CDS.CSharpScript2
         }
 
 
+        public async Task<IReadOnlyList<Microsoft.CodeAnalysis.Classification.ClassifiedSpan>> GetClassifications(
+            CancellationToken ct = default)
+        {
+            return await GetClassifications(0, scriptText.Length, ct);
+        }
+
+
+        public async Task<IReadOnlyList<Microsoft.CodeAnalysis.Classification.ClassifiedSpan>> GetClassifications(
+            int spanStart,
+            int spanLength,
+            CancellationToken ct = default)
+        {
+            var span = new TextSpan(spanStart, spanLength);
+
+            // get the workspace
+            var spans = 
+                await Microsoft
+                .CodeAnalysis
+                .Classification
+                .Classifier
+                .GetClassifiedSpansAsync(document, 
+                span, 
+                ct).ConfigureAwait(false);
+
+            return spans.ToList();
+
+        }
+
+
         public async Task<ScriptManager> ApplyScriptAsync(string script)
         {
             return await Task.FromResult(ApplyScript(script));
@@ -190,6 +225,9 @@ namespace CDS.CSharpScript2
                 namespaces: environment.NamespaceNames,
                 references: environment.References,
                 typeOfGlobals: environment.GlobalType);
+
+            var classifiedSpans = await GetClassifications();
+            compiledScript = compiledScript.WithClassifiedSpans(classifiedSpans);
         }
 
 

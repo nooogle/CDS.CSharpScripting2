@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Microsoft.CodeAnalysis.Classification;
+using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.RTFEditor;
 
@@ -12,6 +13,7 @@ public partial class RTFScriptEditor : UserControl, Editors.IEditor
     private int programmaticTextChangeSentryDepth = 0;
     private Editors.GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
     private Editors.GetAPIInfoDelegateAsync getAPIInfoAsync;
+    private Editors.Coloriser _coloriser = new Editors.Coloriser();
 
 
     public string Script
@@ -63,17 +65,19 @@ public partial class RTFScriptEditor : UserControl, Editors.IEditor
         richTextBox.SelectionFont = errorFont;
     }
 
-    public void ApplySyntaxElements(ImmutableArray<Editors.Syntax.SyntaxElement> syntaxElements)
+    public void ApplyClassifications(IReadOnlyList<ClassifiedSpan> classifications)
     {
         programmaticTextChangeSentryDepth++;
 
-        foreach (var syntaxElement in syntaxElements)
+        foreach (var classification in classifications)
         {
-            if (Editors.Syntax.SyntaxKindToSimpleGenerator.Map.TryGetValue(syntaxElement.Kind, out var simpleSyntaxKind))
-            {
-                richTextBox.Select(start: syntaxElement.Span.Start, length: syntaxElement.Span.Length);
-                richTextBox.SelectionBackColor = Color.Yellow;
-            }
+            var colorScheme = _coloriser.FromClassificationName(classification.ClassificationType);
+            
+            richTextBox.Select(
+                start: classification.TextSpan.Start, 
+                length: classification.TextSpan.Length);
+            
+            richTextBox.SelectionBackColor = colorScheme.Background;
         }
 
         programmaticTextChangeSentryDepth--;

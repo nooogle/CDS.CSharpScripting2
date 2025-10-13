@@ -7,25 +7,39 @@ public class EditorManager
 {
     private ScriptManager scriptManager;
     private ApplyDiagnosticsDelegate applyDiagnostics;
-    private ApplySyntaxElementsDelegate applySyntaxElements;
+    private ApplyClassificationsDelegate _applyClassifications;
     private ScriptEnvironment environment;
+    private CompiledScript? compiledScript;
+
+    public bool IsReady => compiledScript != null;
 
     public EditorManager(
         ScriptEnvironment environment,
         ApplyDiagnosticsDelegate applyDiagnostics, 
-        ApplySyntaxElementsDelegate applySyntaxElements)
+        ApplyClassificationsDelegate applyClassifications)
     {
         this.applyDiagnostics = applyDiagnostics;
-        this.applySyntaxElements = applySyntaxElements;
+        this._applyClassifications = applyClassifications;
         this.environment = environment;
     }
 
-    public async Task<CompilationOutput> CompileAsync()
+    public async Task<CompiledScript> GetCompiledScriptAsync()
+    {
+        await CompileAsync();
+
+        if (compiledScript == null)
+        {
+            throw new Exception("No compiled script available");
+        }
+
+        return compiledScript;
+    }
+
+    public async Task CompileAsync()
     {
         await CreateScriptManager();
         await scriptManager.CompileAsync();
-        var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-        return compilationOutput;
+        compiledScript = await scriptManager.GetCompiledScriptAsync();
     }
 
     public async Task<IEnumerable<Microsoft.CodeAnalysis.Completion.CompletionItem>> GetAutoCompletions(int cursorPosition)
@@ -47,14 +61,26 @@ public class EditorManager
         await CreateScriptManager();
 
         scriptManager = await scriptManager.ApplyScriptAsync(script);
-        await scriptManager.CompileAsync();
+        await CompileAsync();
 
         var syntaxTree = await scriptManager.GetSyntaxTreeAsync();
-        var syntaxElements = Syntax.ScriptSyntaxAnalyser.Go(syntaxTree);
+        //var syntaxElements = Syntax.ScriptSyntaxAnalyser.Go(syntaxTree);
+        var classifications = await scriptManager.GetClassifications();
 
         var diagnostics = await scriptManager.GetDiagnosticsAsync();
         applyDiagnostics(diagnostics);
-        applySyntaxElements(syntaxElements);
+        _applyClassifications(classifications);
+    }
+
+
+    public async Task<Microsoft.CodeAnalysis.SyntaxTree> GetSyntaxTree()
+    {
+        if (scriptManager == null)
+        {
+            throw new InvalidOperationException("ScriptManager is not initialized. Call ApplyScriptAsync first.");
+        }
+
+        return await scriptManager.GetSyntaxTreeAsync();
     }
 
     public async Task RunAsync()

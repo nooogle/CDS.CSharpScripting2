@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Scripting;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -8,11 +9,6 @@ namespace CDS.CSharpScript2
     /// <summary>
     /// Utility to wrap a compiled script. 
     /// </summary>
-    /// <remarks>
-    /// To reduce the need for client applications to have to reference the Microsoft
-    /// scripting libraries we hide the compiled script in this wrapper. Only the
-    /// core library can (and needs) access to this data.
-    /// </remarks>
     public class CompiledScript
     {
         /// <summary>
@@ -37,6 +33,9 @@ namespace CDS.CSharpScript2
         public CompilationOutput CompilationOutput { get; }
 
 
+        public IReadOnlyList<ClassifiedSpan> ClassifiedSpans { get; private set; } = new List<ClassifiedSpan>();
+
+
         /// <summary>
         /// Initialise
         /// </summary>
@@ -55,6 +54,13 @@ namespace CDS.CSharpScript2
 
             // TODO do we need to hire the compilation output or can we just put it in here?
             // TODO we we need to hide the ActualScript from the client?
+        }
+
+        public CompiledScript WithClassifiedSpans(IReadOnlyList<ClassifiedSpan> classifiedSpans)
+        {
+            var copy = (CompiledScript)this.MemberwiseClone();
+            copy.ClassifiedSpans = classifiedSpans;
+            return copy;
         }
     }
 }

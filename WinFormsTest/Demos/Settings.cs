@@ -9,6 +9,11 @@ class Settings
 
     public GlobalsDemo.Settings GlobalsDemo { get; set; } = new GlobalsDemo.Settings();
 
-
     public OpenCvSharpDemo.Settings OpenCvSharpDemo { get; set; } = new OpenCvSharpDemo.Settings();
+
+
+    public SyntaxTreeViewDemo.Settings TreeViewDemo { get; set; } = new ();
+
+
+    public ClassifiedSpansDemo.Settings ClassifiedSpansDemo { get; set; } = new ();
 }

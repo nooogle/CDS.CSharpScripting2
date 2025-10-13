@@ -38,7 +38,7 @@ public partial class FormBasicDemo : Form
         editorManager = new CDS.CSharpScript2.Editors.EditorManager(
             environment: CDS.CSharpScript2.ScriptEnvironment.Default,
             scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplySyntaxElements);
+            scintillaScriptEditor.ApplyClassifications);
 
         scintillaScriptEditor.SetDelegates(
             editorManager.ApplyScript,
@@ -123,7 +123,9 @@ public partial class FormBasicDemo : Form
 
         await PerformScriptManagerActions(async () =>
         {
-            var compilationOutput = await editorManager.CompileAsync();
+            await editorManager.CompileAsync();
+            var compilationOutput = (await editorManager.GetCompiledScriptAsync()).CompilationOutput;
+
 
             outputPanel.AppendLine("Compilation complete");
 

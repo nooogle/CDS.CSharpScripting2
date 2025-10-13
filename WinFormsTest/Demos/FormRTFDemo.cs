@@ -23,7 +23,7 @@ public partial class FormRTFDemo : Form
         editorManager = new CDS.CSharpScript2.Editors.EditorManager(
             environment: CDS.CSharpScript2.ScriptEnvironment.Default,
             rtfScriptEditor.ApplyDiagnostics,
-            rtfScriptEditor.ApplySyntaxElements);
+            rtfScriptEditor.ApplyClassifications);
 
         rtfScriptEditor.SetDelegates(
             editorManager.ApplyScript,
@@ -44,7 +44,9 @@ public partial class FormRTFDemo : Form
         Enabled = false;
         outputPanel.Clear();
 
-        var compilationOutput = await editorManager!.CompileAsync();
+        await editorManager!.CompileAsync();
+        var compilationOutput = (await editorManager.GetCompiledScriptAsync()).CompilationOutput;
+
 
         foreach (var message in compilationOutput.Messages)
         {
