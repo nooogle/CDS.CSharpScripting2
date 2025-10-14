@@ -95,9 +95,11 @@ public partial class FormDemo : Form
         if (listViewInfo.SelectedItems.Count > 0)
         {
             var selectedItem = listViewInfo.SelectedItems[0];
-            if (selectedItem.Tag is ClassifiedSpan classifiedSpan)
+            if (selectedItem.Tag is CDS.CSharpScript2.Classification.ClassifiedSymbol classifiedSymbol)
             {
-                scintillaScriptEditor.HighlightText(classifiedSpan.TextSpan.Start, classifiedSpan.TextSpan.Length);
+                scintillaScriptEditor.HighlightText(
+                    classifiedSymbol.SpanStart, 
+                    classifiedSymbol.SpanLength);
             }
         }
     }

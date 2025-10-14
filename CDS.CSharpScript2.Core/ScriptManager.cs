@@ -175,7 +175,10 @@ namespace CDS.CSharpScript2
                 span,
                 ct).ConfigureAwait(false);
 
+            var ignoreList = Microsoft.CodeAnalysis.Classification.ClassificationTypeNames.AdditiveTypeNames;
+
             var mappedSpans = spans
+                .Where(s => ignoreList.Contains(s.ClassificationType) == false)
                 .Select(s =>
                 {
                     if (_classificationMapper.Map.TryGetValue(s.ClassificationType, out var symbolClassification))
