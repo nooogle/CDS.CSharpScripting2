@@ -13,7 +13,8 @@ public partial class RTFScriptEditor : UserControl, Editors.IEditor
     private int programmaticTextChangeSentryDepth = 0;
     private Editors.GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
     private Editors.GetAPIInfoDelegateAsync getAPIInfoAsync;
-    private Editors.Coloriser _coloriser = new Editors.Coloriser();
+
+    private Classification.Coloriser _coloriser = new();
 
 
     public string Script
@@ -65,17 +66,17 @@ public partial class RTFScriptEditor : UserControl, Editors.IEditor
         richTextBox.SelectionFont = errorFont;
     }
 
-    public void ApplyClassifications(IReadOnlyList<ClassifiedSpan> classifications)
+    public void ApplyClassifications(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
     {
         programmaticTextChangeSentryDepth++;
 
         foreach (var classification in classifications)
         {
-            var colorScheme = _coloriser.FromClassificationName(classification.ClassificationType);
+            var colorScheme = _coloriser.FromClassificationName(classification.Classification);
             
             richTextBox.Select(
-                start: classification.TextSpan.Start, 
-                length: classification.TextSpan.Length);
+                start: classification.SpanStart, 
+                length: classification.SpanLength);
             
             richTextBox.SelectionBackColor = colorScheme.Background;
         }

@@ -1,57 +1,64 @@
-# Instructions for GitHub Copilot
+# GitHub Copilot Coding Guidelines
 
-Please generate C# code that adheres to the following practices:
+These concise rules align with current Microsoft/.NET coding conventions for C# (targeting .NET 8).
 
-1. **Code Formatting**:
-   - Follow .NET conventions:
-     - Use `PascalCase` for public and protected members, including methods, properties, and constants.
-     - Use `camelCase` for private fields, parameters, and local variables.
-     - Place braces on a new line, following the standard .NET formatting rules.
-     - Don't use underscores in identifiers.
-     - Always use curly braces for control flow statements, even when the body is empty or contains a single statement.
-   - Use `var` when the type is obvious from the right side of the assignment, explicit type otherwise.
-   - Use expression-bodied members for simple methods and properties to improve readability.
+## 1. Formatting & Style
+- Use Allman braces (opening brace on a new line).
+- Prefer file-scoped namespaces (`namespace X;`).
+- Use `var` when the type is obvious from the right side; otherwise use the explicit type.
+- Enable nullable reference types and annotate accordingly.
+- Use expression-bodied members for simple members when it improves readability.
+- Prefer single-line using statements.
 
-2. **Commenting**:
-   - Use XML documentation comments (`///`) for all public methods, properties, and classes.
-   - Keep comments meaningful and avoid boilerplate XML documentation.
-   - Provide inline comments for complex logic or where clarity is needed.
+## 2. Naming
+- PascalCase: public/protected types, members, methods, properties, constants, and enums.
+- Private fields: `_camelCase` (use `s_camelCase` for `static` and `t_camelCase` for `[ThreadStatic]`).
+- Locals and parameters: `camelCase`.
+- Interfaces: `I` prefix (e.g., `IRepository`).
+- Generic type parameters: `T`, `TKey`, `TValue`, etc.
+- Events: event handlers follow `(object sender, EventArgs e)`; methods that raise events use `On<EventName>()`.
 
-3. **Naming**:
-   - Prefer descriptive and meaningful names for variables, methods, and classes.
-   - Avoid abbreviations unless they are commonly understood (e.g., `Http`, `Xml`).
-   - Use prefixes like `I` for interfaces (e.g., `IRepository`).
+## 3. Documentation & Comments
+- XML-doc all public APIs (types, properties, and methods). Keep comments meaningful and non-boilerplate.
+- Add brief inline comments only for non-obvious logic or business rules.
 
-4. **Exception Handling**:
-   - Include `try-catch` blocks for any code that interacts with external systems (e.g., file I/O, HTTP requests).
-   - Provide detailed exception messages and rethrow exceptions only when necessary.
+## 4. Exceptions
+- Validate inputs with guard clauses; throw specific exceptions (`ArgumentNullException`, `ArgumentOutOfRangeException`, etc.).
+- Use `throw;` to rethrow without losing the stack trace.
+- Do not swallow exceptions; include helpful messages.
 
-5. **Async Programming**:
-   - Use `async` and `await` for all asynchronous operations.
-   - Ensure methods that return tasks follow the naming convention of ending with "Async" (e.g., `GetDataAsync`).
-   - Avoid `async void` methods except for event handlers.
+## 5. Async
+- Use `async`/`await`; methods returning tasks end with `Async`.
+- Avoid `async void` except for event handlers.
+- Include `CancellationToken` for long-running or I/O-bound operations.
+- In library code, use `ConfigureAwait(false)`.
 
-6. **Creating new code**:
-   - When asked to work on a method just show the updated method, don't regenerate the entire class.
+## 6. Organization
+- One public type per file; filename matches the type.
+- Organize namespaces to match folder structure.
+- Group and sort `using` directives alphabetically.
 
-7. **Unit Testing**:
-   - Write unit tests using MSTest for all public methods.
-   - Include Arrange, Act, Bundle, Verify comments in test methods for clarity.
-   - Bundle key inputs and outputs into an anonymous object for verification.
-   - Use the Verify method instead of Assert for verifications.
-   - Use the 'partial' modifier on the test class.
+## 7. LINQ & Collections
+- Prefer LINQ for readability; method syntax for common operations.
+- Be aware of deferred execution and allocate appropriately (`IEnumerable<T>`, `IReadOnlyList<T>`, etc.).
 
-8. **LINQ Usage**:
-   - Use LINQ for collection filtering and transformation, prioritizing readability and maintainability.
+## 8. Testing
+- Use MSTest with FluentAssertions.
+- Follow Arrange-Act-Assert; use descriptive test names and `[TestCategory]`.
+- Test positive and negative scenarios.
 
-9. **Patterns and Practices**:
-   - Use the `using` statement for disposable resources.
-   - Implement `IDisposable` correctly in classes that manage unmanaged resources.
-   - Prefer dependency injection over static classes where practical.
-   - Avoid default parameter values in favor of method overloads.
+## 9. Patterns & Best Practices
+- Resource management: `using` for disposables; implement `IDisposable`/`IAsyncDisposable` correctly when needed.
+- Dependency management: prefer DI and constructor injection; program to interfaces.
+- Method design: single responsibility; avoid default parameter values in public APIs prefer overloads.
+- Performance: use `StringBuilder` for many concatenations; consider `Span<T>`/`Memory<T>` in perf-critical paths.
 
-10. **File Structure**:
-    - Place each class in its own file.
-    - Organize namespaces to match the folder structure.
+## 10. Security & Validation
+- Validate inputs; avoid exposing sensitive data in exceptions.
+- Use parameterized queries and appropriate encodings for I/O and persistence.
 
-Please ensure the generated code follows these guidelines and includes examples of good practices whenever applicable.
+## 11. Modern C# Features
+- Use pattern matching and switch expressions when clearer.
+- Consider records for immutable models and init-only properties.
+- Use primary constructors and collection expressions where beneficial.
+- Use raw string literals for multi-line strings.

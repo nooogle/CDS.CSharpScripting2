@@ -14,7 +14,7 @@ namespace CDS.CSharpScript2
         private ScriptEnvironment environment;
         private SourceText scriptSourceText;
         private CompiledScript compiledScript;
-
+        private Classification.ClassificationMapper _classificationMapper = new();
 
         public async Task<CompiledScript> GetCompiledScriptAsync()
         {
@@ -151,14 +151,14 @@ namespace CDS.CSharpScript2
         }
 
 
-        public async Task<IReadOnlyList<Microsoft.CodeAnalysis.Classification.ClassifiedSpan>> GetClassifications(
+        public async Task<IReadOnlyList<Classification.ClassifiedSymbol>> GetClassifications(
             CancellationToken ct = default)
         {
             return await GetClassifications(0, scriptText.Length, ct);
         }
 
 
-        public async Task<IReadOnlyList<Microsoft.CodeAnalysis.Classification.ClassifiedSpan>> GetClassifications(
+        public async Task<IReadOnlyList<Classification.ClassifiedSymbol>> GetClassifications(
             int spanStart,
             int spanLength,
             CancellationToken ct = default)
@@ -166,16 +166,30 @@ namespace CDS.CSharpScript2
             var span = new TextSpan(spanStart, spanLength);
 
             // get the workspace
-            var spans = 
+            var spans =
                 await Microsoft
                 .CodeAnalysis
                 .Classification
                 .Classifier
-                .GetClassifiedSpansAsync(document, 
-                span, 
+                .GetClassifiedSpansAsync(document,
+                span,
                 ct).ConfigureAwait(false);
 
-            return spans.ToList();
+            var mappedSpans = spans
+                .Select(s =>
+                {
+                    if (_classificationMapper.Map.TryGetValue(s.ClassificationType, out var symbolClassification))
+                    {
+                        return new Classification.ClassifiedSymbol(s.TextSpan.Start, s.TextSpan.Length, symbolClassification);
+                    }
+                    else
+                    {
+                        return new Classification.ClassifiedSymbol(s.TextSpan.Start, s.TextSpan.Length, Classification.SymbolClassification.Keyword);
+                    }
+                })
+                .ToList();
+
+            return mappedSpans;
 
         }
 

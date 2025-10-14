@@ -5,7 +5,7 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 
 public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 {
-    private ImmutableDictionary<string, int> classificationKindToScintillaStyle;
+    private ImmutableDictionary<Classification.SymbolClassification, int> classificationKindToScintillaStyle;
     private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
 
     private const int scintillaErrorIndicatorIndex = 3;
@@ -20,7 +20,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
     private FormAPIInfo apiInfoForm = new FormAPIInfo();
 
-    private Editors.Coloriser _coloriser = new();
+
+    private Classification.Coloriser _coloriser = new();
 
     [CDSCategory()]
     public event EventHandler OnScriptChanged;
@@ -32,8 +33,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         diagnosticsToolTipManager = new ToolTipDiagnostics(scintilla, toolTip);
 
-        var classificationKindToScintillaStyleBuilder = new Dictionary<string, int>();
-        var coloriserNames = _coloriser.ClassificationNames;
+        var classificationKindToScintillaStyleBuilder = new Dictionary<Classification.SymbolClassification, int>();
+        var coloriserNames = (Classification.SymbolClassification[])Enum.GetValues(typeof(Classification.SymbolClassification));
 
         for (int styleIndex = 1; styleIndex <= coloriserNames.Length; styleIndex++)
         {
@@ -89,7 +90,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
             scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
             scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
-            scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
+            scintilla.Styles[styleIndex].Italic = colorScheme. Italics;
         }
 
         scintilla.Indicators[scintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
@@ -116,9 +117,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         timerChangeMonitor.Start();
 
-        // turn on line numbers
-        scintilla.Margins[0].Width = 30;
+        // Set up line numbers margin (margin 0)
+        scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
+        scintilla.Margins[0].Width = 40;  // Width for the line numbers
 
+        // Create a spacing margin (margin 1) for gap between numbers and text
+        scintilla.Margins[1].Type = ScintillaNET.MarginType.Symbol;
+        scintilla.Margins[1].Width = 8;  // Gap width in pixels
+        scintilla.Margins[1].Sensitive = false;
+        scintilla.Margins[1].Mask = 0;  // No markers
     }
 
 
@@ -137,7 +144,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
     }
 
 
-    public void ApplyClassifications(IReadOnlyList<ClassifiedSpan> classifications)
+    public void ApplyClassifications(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
     {
         // clear all styling
         scintilla.StartStyling(0);
@@ -146,10 +153,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
         foreach (var classification in classifications)
         {
-            if (classificationKindToScintillaStyle.TryGetValue(classification.ClassificationType, out var styleIndex))
+            if (classificationKindToScintillaStyle.TryGetValue(classification.Classification, out var styleIndex))
             {
-                scintilla.StartStyling(classification.TextSpan.Start);
-                scintilla.SetStyling(classification.TextSpan.Length, styleIndex);
+                scintilla.StartStyling(classification.SpanStart);
+                scintilla.SetStyling(classification.SpanLength, styleIndex);
             }
         }
     }

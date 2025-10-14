@@ -33,7 +33,7 @@ namespace CDS.CSharpScript2
         public CompilationOutput CompilationOutput { get; }
 
 
-        public IReadOnlyList<ClassifiedSpan> ClassifiedSpans { get; private set; } = new List<ClassifiedSpan>();
+        public IReadOnlyList<Classification.ClassifiedSymbol> ClassifiedSpans { get; private set; } = new List<Classification.ClassifiedSymbol>();
 
 
         /// <summary>
@@ -56,7 +56,8 @@ namespace CDS.CSharpScript2
             // TODO we we need to hide the ActualScript from the client?
         }
 
-        public CompiledScript WithClassifiedSpans(IReadOnlyList<ClassifiedSpan> classifiedSpans)
+        public CompiledScript WithClassifiedSpans(
+            IReadOnlyList<Classification.ClassifiedSymbol> classifiedSpans)
         {
             var copy = (CompiledScript)this.MemberwiseClone();
             copy.ClassifiedSpans = classifiedSpans;

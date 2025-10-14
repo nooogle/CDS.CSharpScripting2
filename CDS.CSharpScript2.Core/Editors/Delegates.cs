@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace CDS.CSharpScript2.Editors;
 
 public delegate void ApplyDiagnosticsDelegate(ImmutableArray<Diagnostic> diagnostics);
-public delegate void ApplyClassificationsDelegate(IReadOnlyList<ClassifiedSpan> classifications);
+public delegate void ApplyClassificationsDelegate(IReadOnlyList<Classification.ClassifiedSymbol> classifications);
 
 
 /// <summary>

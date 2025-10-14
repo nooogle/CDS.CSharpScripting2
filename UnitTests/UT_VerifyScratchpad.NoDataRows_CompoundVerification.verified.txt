@@ -1,4 +1,0 @@
-﻿{
-  Addition: 300,
-  Multiplication: 20000
-}

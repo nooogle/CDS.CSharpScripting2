@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Humanizer;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.CSharp;
 using System.ComponentModel;
@@ -72,13 +73,14 @@ public partial class FormDemo : Form
 
         foreach (var classifiedSpan in classifiedSpans)
         {
-            var spanText = compiledScript.SyntaxTree.GetText().GetSubText(classifiedSpan.TextSpan).ToString();
+            var span = new Microsoft.CodeAnalysis.Text.TextSpan(classifiedSpan.SpanStart, classifiedSpan.SpanLength);
+            var spanText = compiledScript.SyntaxTree.GetText().GetSubText(span).ToString();
 
             var listItem = new ListViewItem(new string[]
             {
-                classifiedSpan.ClassificationType,
-                classifiedSpan.TextSpan.Start.ToString(),
-                classifiedSpan.TextSpan.Length.ToString(),
+                classifiedSpan.Classification.Humanize(),
+                classifiedSpan.SpanStart.ToString(),
+                classifiedSpan.SpanLength.ToString(),
                 spanText
             });
 

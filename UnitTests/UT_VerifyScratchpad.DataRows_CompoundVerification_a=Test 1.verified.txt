@@ -1,4 +1,0 @@
-﻿{
-  Addition: 3,
-  Multiplication: 2
-}
