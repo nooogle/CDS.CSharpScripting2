@@ -50,6 +50,7 @@
             scintilla.AutoCCompleted += scintilla_AutoCCompleted;
             scintilla.CharAdded += scintilla_CharAdded;
             scintilla.Delete += scintilla_Delete;
+            scintilla.DwellStart += scintilla_DwellStart;
             scintilla.KeyDown += scintilla_KeyDown;
             scintilla.MouseMove += scintilla_MouseMove;
             // 

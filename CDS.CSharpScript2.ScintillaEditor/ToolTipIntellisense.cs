@@ -24,7 +24,7 @@
 //    {
 //        //if (apiInfo == null) { return; }
 
-        
+
 
 //        bool didShow = false;
 
@@ -38,7 +38,7 @@
 //                StringBuilder sb = new();
 //                sb.AppendLine(apiInfo.TypeInfo.Summary);
 
-//                if(apiInfo.MemberInfos.Any())
+//                if (apiInfo.MemberInfos.Any())
 //                {
 //                    var firstMember = apiInfo.MemberInfos.First();
 //                    sb.Append($"Member: {firstMember.Name}");
@@ -56,7 +56,7 @@
 //            }
 //        }
 
-//        if(!didShow)
+//        if (!didShow)
 //        {
 //            toolTip.Hide(editor);
 //            //toolTip.SetToolTip(editor, "");
@@ -71,7 +71,7 @@
 //    {
 //        Microsoft.CodeAnalysis.Diagnostic diagnosticForTooltip = null;
 
-//        if (apiInfo?.TypeInfo?.Summary != null) 
+//        if (apiInfo?.TypeInfo?.Summary != null)
 //        {
 //            toolTip.ToolTipIcon = ToolTipIcon.Info;
 //            toolTip.ToolTipTitle = apiInfo.TypeInfo.Name;

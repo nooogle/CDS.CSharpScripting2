@@ -90,7 +90,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
             scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
             scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
-            scintilla.Styles[styleIndex].Italic = colorScheme. Italics;
+            scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
         }
 
         scintilla.Indicators[scintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
@@ -272,7 +272,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
                 y: scintilla.PointYFromPosition(pos));
 
             var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
-            
+
 
             apiInfoForm.ShowAPIInfo(parent: this, location: point, apiInfo: apiInfo);
         }
@@ -309,10 +309,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         var roslynCompletionList = await getAutoCompleteListAsync(currentPosition);
 
         // Convert the list to a string
-        var scintillaCompletionList = 
+        var scintillaCompletionList =
             string
             .Join(
-                scintilla.AutoCSeparator.ToString(), 
+                scintilla.AutoCSeparator.ToString(),
                 roslynCompletionList.Select(c => c.DisplayText));
 
         // show an autocomplete list
@@ -323,5 +323,18 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
     {
         scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
         scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+    }
+
+    private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
+    {
+        int pos = e.Position;
+        if(pos < 0) { return; }
+
+        Point point = new Point(
+            x: scintilla.PointXFromPosition(pos),
+            y: scintilla.PointYFromPosition(pos));
+
+        //var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
+
     }
 }

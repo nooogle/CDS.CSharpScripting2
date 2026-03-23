@@ -30,12 +30,14 @@
         {
             demosTreeView = new CDS.WinFormsMenus.Basic.MenuTree();
             systemInfoPanel1 = new RuntimeEnvironmentInfoPanel();
+            button1 = new Button();
             SuspendLayout();
             // 
             // demosTreeView
             // 
             demosTreeView.Dock = DockStyle.Fill;
             demosTreeView.Location = new Point(0, 56);
+            demosTreeView.Margin = new Padding(2, 1, 2, 1);
             demosTreeView.Name = "demosTreeView";
             demosTreeView.Size = new Size(800, 394);
             demosTreeView.TabIndex = 0;
@@ -49,11 +51,22 @@
             systemInfoPanel1.Size = new Size(800, 56);
             systemInfoPanel1.TabIndex = 1;
             // 
+            // button1
+            // 
+            button1.Location = new Point(43, 12);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 2;
+            button1.Text = "button1";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(button1);
             Controls.Add(demosTreeView);
             Controls.Add(systemInfoPanel1);
             Name = "FormMain";
@@ -65,5 +78,6 @@
 
         private CDS.WinFormsMenus.Basic.MenuTree demosTreeView;
         private RuntimeEnvironmentInfoPanel systemInfoPanel1;
+        private Button button1;
     }
 }
