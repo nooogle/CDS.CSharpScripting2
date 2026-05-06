@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Classification;
 using System.Collections.Immutable;
+using System.ComponentModel;
 
 namespace CDS.CSharpScript2.RTFEditor;
 
@@ -17,6 +18,7 @@ public partial class RTFScriptEditor : UserControl, Editors.IEditor
     private Classification.Coloriser _coloriser = new();
 
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Script
     {
         get => richTextBox.Text;

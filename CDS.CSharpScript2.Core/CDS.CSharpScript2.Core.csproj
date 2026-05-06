@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net8.0;net48</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <RootNamespace>CDS.CSharpScript2</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>true</ImplicitUsings>

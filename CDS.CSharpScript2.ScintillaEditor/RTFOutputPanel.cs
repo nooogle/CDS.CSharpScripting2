@@ -15,6 +15,7 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
     /// </summary>
     [Category(UIStrings.CDSPropertyCategory)]
     [Description("True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowClickLinks2 { get; set; } = true;
 
 

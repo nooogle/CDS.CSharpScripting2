@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Classification;
 using System.Collections.Immutable;
+using System.ComponentModel;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
@@ -103,6 +104,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         //scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Script
     {
         get => scintilla.Text;
