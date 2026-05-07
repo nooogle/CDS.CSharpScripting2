@@ -281,7 +281,7 @@ namespace CDS.CSharpScript2
 
         public async Task<ImmutableArray<CompletionItem>> GetCompletionSuggestionsAsync(int position)
         {
-            return await CodeCompletion.Manager.Get(
+            return await CodeCompletion.Manager.GetAsync(
                     scriptText: scriptText,
                     document: document,
                     cursorPosition: position);

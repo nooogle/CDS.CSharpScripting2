@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33213.308
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11723.231 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0FBF656C-4F85-4021-B3E6-E8BF9BB88211}"
 	ProjectSection(SolutionItems) = preProject
@@ -25,6 +25,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDS.CSharpScript2.ScintillaEditor", "CDS.CSharpScript2.ScintillaEditor\CDS.CSharpScript2.ScintillaEditor.csproj", "{5E3C6DC7-859E-4EA2-B1CA-CE995306981D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDS.CSharpScript2.RTFEditor", "CDS.CSharpScript2.RTFEditor\CDS.CSharpScript2.RTFEditor.csproj", "{41A33DFD-3DBA-45C6-BAF3-119D04D4893C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{26818507-81F8-4BE2-9CDD-1B5FB82EAE7B}"
+	ProjectSection(SolutionItems) = preProject
+		architecture.md = architecture.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -123,6 +128,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{26818507-81F8-4BE2-9CDD-1B5FB82EAE7B} = {0FBF656C-4F85-4021-B3E6-E8BF9BB88211}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2028B5B2-9F97-49B9-8501-46FA166D0CD6}

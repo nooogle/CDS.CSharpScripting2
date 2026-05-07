@@ -1,54 +1,45 @@
-﻿using Microsoft.CodeAnalysis.Completion;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
 
 namespace CDS.CSharpScript2.CodeCompletion;
 
-
 public static class Manager
 {
-    public static async Task<ImmutableArray<CompletionItem>> Get(
+    public static async Task<ImmutableArray<CompletionItem>> GetAsync(
         string scriptText, 
-        Microsoft.CodeAnalysis.Document document, 
+        Document document, 
         int cursorPosition)
     {
-        // make a new document that only goes up to the cursor position
-        //var subScriptText = scriptText.Substring(0, cursorPosition);
-        //var subDocument = document.WithText(Microsoft.CodeAnalysis.Text.SourceText.From(subScriptText));
-
-        //var completionService = CompletionService.GetService(subDocument);
         var completionService = CompletionService.GetService(document);
-
-        var defaultEmptyResult = ImmutableArray<CompletionItem>.Empty;
+        if (completionService == null)
+        {
+            return ImmutableArray<CompletionItem>.Empty;
+        }
 
         try
         {
-
-            //var completionList = await completionService.GetCompletionsAsync(
-            //    subDocument, 
-            //    cursorPosition, 
-            //    cancellationToken: default);
-
             var completionList = await completionService.GetCompletionsAsync(
                 document,
                 cursorPosition,
-                cancellationToken: default);
+                cancellationToken: default).ConfigureAwait(false);
 
             if (completionList == null || completionList.ItemsList.Count == 0)
             {
-                return defaultEmptyResult;
+                return ImmutableArray<CompletionItem>.Empty;
             }
 
             Mode completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
             
-            //var spanText = GetSpanTextForCodeCompletion(
-            //    scriptText: subScriptText,
-            //    completionMode, 
-            //    completionList.ItemsList[0]);
-
             var spanText = GetSpanTextForCodeCompletion(
                 scriptText: scriptText,
-                completionMode,
-                completionList.ItemsList[0]);
+                mode: completionMode,
+                firstItem: completionList.ItemsList[0]);
 
             var filteredItems = FilterCompletionItems(completionList.ItemsList.ToImmutableArray(), completionMode, spanText);
 
@@ -59,11 +50,10 @@ public static class Manager
         catch (Exception ex)
         {
             // TODO understand why this is happening
-            System.Diagnostics.Debug.WriteLine($"Exception in GetCompletionSuggestionsAsync: {ex.Message}");
-            return defaultEmptyResult;
+            Debug.WriteLine($"Exception in GetCompletionSuggestionsAsync: {ex.Message}");
+            return ImmutableArray<CompletionItem>.Empty;
         }
     }
-
 
     private static Mode DetermineCompletionMode(CompletionItem firstItem)
     {
@@ -83,7 +73,6 @@ public static class Manager
         }
     }
 
-
     private static string GetSpanTextForCodeCompletion(
         string scriptText,
         Mode mode, 
@@ -94,7 +83,6 @@ public static class Manager
             : scriptText.Substring(firstItem.Span.Start, firstItem.Span.Length);
     }
 
-
     private static List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, Mode mode, string spanText)
     {
         if (mode != Mode.MatchingFirstTwoOrMoreOnly)
@@ -104,7 +92,6 @@ public static class Manager
 
         return items.Where(item => item.DisplayText.StartsWith(spanText, StringComparison.OrdinalIgnoreCase)).ToList();
     }
-
 
     private static void SortCompletionItems(List<CompletionItem> items, Mode mode, string spanText)
     {

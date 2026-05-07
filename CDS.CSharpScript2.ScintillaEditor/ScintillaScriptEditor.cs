@@ -6,6 +6,7 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 
 public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 {
+    private const string CDSCategory = "CDS";
     private ImmutableDictionary<Classification.SymbolClassification, int> classificationKindToScintillaStyle;
     private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
 
@@ -24,7 +25,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
 
     private Classification.Coloriser _coloriser = new();
 
-    [CDSCategory()]
+    [Category(CDSCategory)]
     public event EventHandler OnScriptChanged;
 
 

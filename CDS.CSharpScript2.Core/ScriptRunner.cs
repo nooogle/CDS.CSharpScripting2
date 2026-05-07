@@ -5,7 +5,7 @@ namespace CDS.CSharpScript2
     /// <summary>
     /// Run compiled scripts
     /// </summary>
-    public static class ScriptRunner
+    internal static class ScriptRunner
     {
         /// <summary>
         /// Run the compiled script

@@ -35,6 +35,7 @@ public partial class FormRTFDemo : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
+        using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
         await editorManager!.RunAsync();
     }
 

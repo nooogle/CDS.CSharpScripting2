@@ -2,6 +2,6 @@
 
 public interface IAPIInfoResult
 {
-    IEnumerable<MemberDetailsInfo> MemberInfos { get; }
-    DetailedTypeInfo TypeInfo { get; }
+    IEnumerable<MemberDetailsInfo>? MemberInfos { get; }
+    DetailedTypeInfo? TypeInfo { get; }
 }

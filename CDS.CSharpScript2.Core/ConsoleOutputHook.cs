@@ -1,64 +1,59 @@
-﻿namespace CDS.CSharpScript2;
+﻿using System.Text;
+
+namespace CDS.CSharpScript2;
 
 /// <summary>
 /// Hooks the console output and redirects strings to a client-supplied
 /// handler.
 /// </summary>
-public class ConsoleOutputHook : TextWriter, IDisposable
+public class ConsoleOutputHook : TextWriter
 {
-    private Action<string> writeString;
-    private TextWriter defaultConsoleOut;
-
+    private readonly Action<string?> _writeString;
+    private readonly TextWriter _defaultConsoleOut;
 
     /// <summary>
     /// Initialise
     /// </summary>
     /// <param name="writeString">Callback to handle a new string</param>
-    public ConsoleOutputHook(Action<string> writeString)
+    public ConsoleOutputHook(Action<string?> writeString)
     {
-        this.writeString = writeString;
-        defaultConsoleOut = Console.Out;
+        _writeString = writeString ?? throw new ArgumentNullException(nameof(writeString));
+        _defaultConsoleOut = Console.Out;
         Console.SetOut(this);
     }
-
 
     ///<inheritdoc/>
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            Console.SetOut(defaultConsoleOut);
+            Console.SetOut(_defaultConsoleOut);
         }
 
         base.Dispose(disposing);
     }
 
-
     ///<inheritdoc/>
     public override void Write(char value)
     {
-        writeString(value.ToString());
+        _writeString(value.ToString());
     }
-
 
     ///<inheritdoc/>
-    public override void Write(string value)
+    public override void Write(string? value)
     {
-        writeString(value);
+        _writeString(value);
     }
-
 
     ///<inheritdoc/>
-    public override void Write(char[] buffer, int index, int count)
+    public override void Write(char[]? buffer, int index, int count)
     {
-        writeString(new string(buffer, index, count));
+        if (buffer != null)
+        {
+            _writeString(new string(buffer, index, count));
+        }
     }
-
 
     /// <inheritdoc/>
-    public override System.Text.Encoding Encoding
-    {
-        // Required overload but not obviously used in this project
-        get { return System.Text.Encoding.Unicode; }
-    }
+    public override Encoding Encoding => Encoding.Unicode;
 }

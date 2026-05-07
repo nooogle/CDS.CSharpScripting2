@@ -26,7 +26,7 @@ public static class TypeInfoBuilder
             SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
     );
 
-    public static MemberDetailsInfo CreateInfoForSymbol(ISymbol symbol)
+    public static MemberDetailsInfo? CreateInfoForSymbol(ISymbol? symbol)
     {
         if (symbol == null) return null;
         if (symbol.IsImplicitlyDeclared && !(symbol is IMethodSymbol m && m.MethodKind == MethodKind.Constructor))
@@ -54,7 +54,7 @@ public static class TypeInfoBuilder
         }
     }
 
-    public static ITypeSymbol GetSymbolType(ISymbol symbol)
+    public static ITypeSymbol? GetSymbolType(ISymbol? symbol)
     {
         return symbol switch
         {
@@ -67,7 +67,7 @@ public static class TypeInfoBuilder
         };
     }
 
-    public static DetailedTypeInfo GetDetailedTypeInfo(ITypeSymbol typeSymbol)
+    public static DetailedTypeInfo? GetDetailedTypeInfo(ITypeSymbol? typeSymbol)
     {
         if (typeSymbol is IArrayTypeSymbol)
         {
@@ -96,7 +96,7 @@ public static class TypeInfoBuilder
         };
     }
 
-    private static MemberDetailsInfo CreateMethodInfo(IMethodSymbol method)
+    private static MemberDetailsInfo? CreateMethodInfo(IMethodSymbol? method)
     {
         if (method == null) return null;
         var docs = DocumentationParser.Parse(method);
@@ -118,7 +118,7 @@ public static class TypeInfoBuilder
         return info;
     }
 
-    private static MemberDetailsInfo CreatePropertyInfo(IPropertySymbol property)
+    private static MemberDetailsInfo? CreatePropertyInfo(IPropertySymbol? property)
     {
         if (property == null) return null;
         var docs = DocumentationParser.Parse(property);
@@ -143,7 +143,7 @@ public static class TypeInfoBuilder
         return info;
     }
 
-    private static MemberDetailsInfo CreateFieldInfo(IFieldSymbol field)
+    private static MemberDetailsInfo? CreateFieldInfo(IFieldSymbol? field)
     {
         if (field == null) return null;
         var docs = DocumentationParser.Parse(field);
@@ -163,7 +163,7 @@ public static class TypeInfoBuilder
         return info;
     }
 
-    private static MemberDetailsInfo CreateEventInfo(IEventSymbol evt)
+    private static MemberDetailsInfo? CreateEventInfo(IEventSymbol? evt)
     {
         if (evt == null) return null;
         var docs = DocumentationParser.Parse(evt);
@@ -178,10 +178,10 @@ public static class TypeInfoBuilder
         };
     }
 
-    private static MemberDetailsInfo CreateParameterStandaloneInfo(IParameterSymbol parameter)
+    private static MemberDetailsInfo? CreateParameterStandaloneInfo(IParameterSymbol? parameter)
     {
         if (parameter == null) return null;
-        string paramDoc = null;
+        string? paramDoc = null;
         if (parameter.ContainingSymbol != null)
         {
             var docs = DocumentationParser.Parse(parameter.ContainingSymbol);
@@ -197,7 +197,7 @@ public static class TypeInfoBuilder
         };
     }
 
-    private static MemberDetailsInfo CreateLocalInfo(ILocalSymbol local)
+    private static MemberDetailsInfo? CreateLocalInfo(ILocalSymbol? local)
     {
         if (local == null) return null;
         return new MemberDetailsInfo
@@ -209,10 +209,10 @@ public static class TypeInfoBuilder
         };
     }
 
-    private static MemberDetailsInfo CreateTypeParameterInfo(ITypeParameterSymbol typeParam)
+    private static MemberDetailsInfo? CreateTypeParameterInfo(ITypeParameterSymbol? typeParam)
     {
         if (typeParam == null) return null;
-        string typeParamDoc = null;
+        string? typeParamDoc = null;
         if (typeParam.ContainingSymbol != null)
         {
             var docs = DocumentationParser.Parse(typeParam.ContainingSymbol);

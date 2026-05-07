@@ -10,7 +10,7 @@ namespace CDS.CSharpScript2
     /// <summary>
     /// Script compilationn support
     /// </summary>
-    public static class ScriptCompiler
+    internal static class ScriptCompiler
     {
         /// <summary>
         /// Compile a C# script that doesn't return any data.

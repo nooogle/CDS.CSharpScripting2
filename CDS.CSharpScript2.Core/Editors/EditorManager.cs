@@ -1,7 +1,4 @@
-﻿
-
-
-namespace CDS.CSharpScript2.Editors;
+﻿namespace CDS.CSharpScript2.Editors;
 
 public class EditorManager
 {
