@@ -23,6 +23,6 @@ public partial class RuntimeEnvironmentInfoPanel : UserControl
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        labelSystemInfo.Text = CDS.CSharpScript2.RuntimeEnvironmentInfo.Get();
+        labelSystemInfo.Text = TestUtils.RuntimeEnvironmentInfo.Get();
     }
 }

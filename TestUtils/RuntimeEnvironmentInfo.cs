@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CDS.CSharpScript2;
+namespace TestUtils;
 
 /// <summary>
 /// Provides information about the system and application.

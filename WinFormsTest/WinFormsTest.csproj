@@ -35,6 +35,7 @@
     <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
     <ProjectReference Include="..\CDS.CSharpScript2.RTFEditor\CDS.CSharpScript2.RTFEditor.csproj" />
     <ProjectReference Include="..\CDS.CSharpScript2.ScintillaEditor\CDS.CSharpScript2.ScintillaEditor.csproj" />
+    <ProjectReference Include="..\TestUtils\TestUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>
