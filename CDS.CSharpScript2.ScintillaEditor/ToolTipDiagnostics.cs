@@ -27,15 +27,13 @@ public class ToolTipDiagnostics
         foreach (var diagnostic in diagnostics)
         {
             var span = diagnostic.Location.SourceSpan;
-            if (span.Length == 0)
+            if (span.Length > 0)
             {
-                span = new Microsoft.CodeAnalysis.Text.TextSpan(span.Start - 1, 1);
-            }
-
-            if (span.Contains(characterPosition))
-            {
-                diagnosticForTooltip = diagnostic;
-                break;
+                if (span.Contains(characterPosition))
+                {
+                    diagnosticForTooltip = diagnostic;
+                    break;
+                }
             }
         }
 

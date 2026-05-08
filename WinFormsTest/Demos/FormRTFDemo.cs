@@ -1,11 +1,7 @@
-using System.Diagnostics;
-
 namespace WinFormsTest.Demos;
 
 public partial class FormRTFDemo : Form
 {
-    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
-
     public FormRTFDemo()
     {
         InitializeComponent();
@@ -14,50 +10,30 @@ public partial class FormRTFDemo : Form
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseEditor();
-    }
 
-
-    private void InitialiseEditor()
-    {
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: CDS.CSharpScript2.ScriptEnvironment.Default,
-            rtfScriptEditor.ApplyDiagnostics,
-            rtfScriptEditor.ApplyClassifications);
-
-        rtfScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        rtfScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
         rtfScriptEditor.Script = @"System.Drawing.Point p = System.Drawing.Point.Empty;";
     }
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
-        await editorManager!.RunAsync();
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+        var compiled = await rtfScriptEditor.CompileAsync();
+        await compiled.RunAsync();
     }
-
 
     private async void btnCompile_Click(object sender, EventArgs e)
     {
         Enabled = false;
         outputPanel.Clear();
 
-        await editorManager!.CompileAsync();
-        var executable = await editorManager.GetCompiledScriptAsync();
-        var compilationOutput = executable.CompilationOutput;
+        var compiled = await rtfScriptEditor.CompileAsync();
+        var output = compiled.CompilationOutput;
 
-
-        foreach (var message in compilationOutput.Messages)
-        {
+        foreach (var message in output.Messages)
             outputPanel.AppendLine(message);
-        }
 
-        outputPanel.AppendLine(
-            $"{compilationOutput.WarningCount} warnings and " +
-            $"{compilationOutput.ErrorCount} errors.");
+        outputPanel.AppendLine($"{output.WarningCount} warnings and {output.ErrorCount} errors.");
 
         Enabled = true;
     }

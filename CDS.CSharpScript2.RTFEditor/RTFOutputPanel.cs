@@ -6,7 +6,7 @@ namespace CDS.CSharpScript2.RTFEditor;
 /// A rich text format output panel that displays text with formatting capabilities.
 /// Implements the <see cref="IOutputPanel"/> interface for consistent output handling.
 /// </summary>
-public partial class RTFOutputPanel : UserControl, OutputPanels.IOutputPanel
+public partial class RTFOutputPanel : UserControl, Output.IOutputPanel
 {
     private const string CDSCategory = "CDS";
 

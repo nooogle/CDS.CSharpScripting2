@@ -1,4 +1,4 @@
-﻿using CDS.CSharpScript2.OutputPanels;
+﻿using CDS.CSharpScript2.Output;
 using System.ComponentModel;
 
 namespace CDS.CSharpScript2.ScintillaEditor;

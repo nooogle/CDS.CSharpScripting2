@@ -40,7 +40,6 @@
             scintillaScriptEditor.Script = "";
             scintillaScriptEditor.Size = new Size(609, 161);
             scintillaScriptEditor.TabIndex = 6;
-            scintillaScriptEditor.OnScriptChanged += scintillaScriptEditor_OnScriptChanged;
             // 
             // treeView1
             // 

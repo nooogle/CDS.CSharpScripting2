@@ -7,7 +7,11 @@
       "Bash(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\\" -Recurse -File | Select-Object FullName)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\" -Directory | ForEach-Object { $_.Name })",
       "Bash(Remove-Item \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\ScriptManager.cs\")",
-      "Bash(dotnet test *)"
+      "Bash(dotnet test *)",
+      "Bash(grep -E \"\\(Core|RTFEditor|ScintillaEditor\\)$\")",
+      "Bash(dotnet build *)",
+      "Bash(Select-String -Pattern \"\\(error|Error|warning CS\\)\")",
+      "Bash(Select-String -NotMatch \"warning CS\")"
     ]
   }
 }

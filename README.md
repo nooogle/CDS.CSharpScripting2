@@ -83,3 +83,6 @@ Between releases, every commit produces a uniquely versioned dev build:
 This ensures you can test builds and track behavior without releasing official versions until you're ready.
 
 
+## Attributuions
+
+Uicons by <a href="https://www.flaticon.com/uicons">Flaticon</a>

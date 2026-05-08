@@ -53,7 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSharpScript2.Core\CDS.CSharpScript2.Core.csproj" />
+    <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
   </ItemGroup>
 
 </Project>

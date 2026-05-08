@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace CDS.CSharpScript2;
+namespace TestUtils;
 
 
 /// <summary>
@@ -49,7 +49,7 @@ public static class SyntaxTreeVisualizer
         {
             if (child.IsNode)
             {
-                DisplayNode(child.AsNode(), newIndent);
+                DisplayNode(child.AsNode()!, newIndent);
             }
             else
             {
@@ -82,7 +82,7 @@ public static class SyntaxTreeVisualizer
         // Display structured trivia if present
         if (trivia.HasStructure)
         {
-            DisplayNode(trivia.GetStructure(), indent + "·");
+            DisplayNode(trivia.GetStructure()!, indent + "·");
         }
         else if (!string.IsNullOrWhiteSpace(trivia.ToString()))
         {

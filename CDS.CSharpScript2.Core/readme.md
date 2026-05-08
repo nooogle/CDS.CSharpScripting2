@@ -17,6 +17,3 @@ CDS.CSharpScriptUtils is a .NET Standard 2.0 compatible scripting library that s
 
 You can install the package via NuGet:
 
-## Attributuions
-
-Uicons by <a href="https://www.flaticon.com/uicons">Flaticon</a>

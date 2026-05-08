@@ -5,10 +5,9 @@ namespace WinFormsTest.Demos.GlobalsDemo;
 
 public partial class FormGlobals : Form
 {
-    private Settings settings;
-    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
-    private SharedData sharedData = new SharedData();
-    private bool isRunningOrCompilingSentry = false;
+    private readonly Settings settings;
+    private readonly SharedData sharedData = new SharedData();
+    private bool isRunningOrCompilingSentry;
 
     public FormGlobals(Settings settings)
     {
@@ -19,28 +18,15 @@ public partial class FormGlobals : Form
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseEditor();
-        propertyGrid1.SelectedObject = sharedData;
-    }
 
-    private void InitialiseEditor()
-    {
-        var env =
-            CDS.CSharpScript2.ScriptEnvironment.Default
+        var env = CDS.CSharpScript2.ScriptEnvironment.Default
             .WithDrawingReferences()
             .WithGlobalType(typeof(SharedData));
 
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: env,
-            scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplyClassifications);
-
-        scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        scintillaScriptEditor.Environment = env;
         scintillaScriptEditor.Script = settings.Script;
+
+        propertyGrid1.SelectedObject = sharedData;
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -54,9 +40,10 @@ public partial class FormGlobals : Form
         base.OnClosing(e);
         settings.Script = scintillaScriptEditor.Script;
     }
-    private async Task PerformScriptManagerActions(Func<Task> action)
+
+    private async Task PerformScriptAction(Func<Task> action)
     {
-        if (isRunningOrCompilingSentry) { return; }
+        if (isRunningOrCompilingSentry) return;
 
         groupBoxScript.Enabled = false;
         isRunningOrCompilingSentry = true;
@@ -74,11 +61,12 @@ public partial class FormGlobals : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
 
-        await PerformScriptManagerActions(async () =>
+        await PerformScriptAction(async () =>
         {
-            await editorManager!.RunAsync(sharedData);
+            var compiled = await scintillaScriptEditor.CompileAsync();
+            await compiled.RunAsync(sharedData);
         });
 
         propertyGrid1.Refresh();
@@ -86,21 +74,18 @@ public partial class FormGlobals : Form
 
     private async void btnCompile_Click(object sender, EventArgs e)
     {
-        await PerformScriptManagerActions(async () =>
+        await PerformScriptAction(async () =>
         {
-            await editorManager!.CompileAsync();
-            var executable = await editorManager.GetCompiledScriptAsync();
-            var compilationOutput = executable.CompilationOutput;
+            var compiled = await scintillaScriptEditor.CompileAsync();
+            var output = compiled.CompilationOutput;
 
             outputPanel.AppendLine("Compilation complete");
 
-            foreach (var message in compilationOutput.Messages)
-            {
+            foreach (var message in output.Messages)
                 outputPanel.AppendLine(message);
-            }
 
-            outputPanel.AppendLine($"\t{compilationOutput.WarningCount} warnings");
-            outputPanel.AppendLine($"\t{compilationOutput.ErrorCount} errors");
+            outputPanel.AppendLine($"\t{output.WarningCount} warnings");
+            outputPanel.AppendLine($"\t{output.ErrorCount} errors");
         });
     }
 }

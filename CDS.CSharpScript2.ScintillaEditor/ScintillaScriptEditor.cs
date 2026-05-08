@@ -1,93 +1,118 @@
-﻿using Microsoft.CodeAnalysis.Classification;
+using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.ComponentModel;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
-public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
+public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 {
     private const string CDSCategory = "CDS";
-    private ImmutableDictionary<Classification.SymbolClassification, int> classificationKindToScintillaStyle;
-    private ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> lastDiagnostics = [];
 
     private const int scintillaErrorIndicatorIndex = 3;
     private const int scintillaWarningIndicatorIndex = 4;
     private const int scintillaHighlightIndicatorIndex = 5;
-    private string lastScript = "";
 
-    private ToolTipDiagnostics diagnosticsToolTipManager;
-    private Editors.ApplyScriptDelegateAsync processScriptAsync;
-    private Editors.GetAutoCompleteListDelegateAsync getAutoCompleteListAsync;
-    private Editors.GetAPIInfoDelegateAsync getAPIInfoAsync;
+    private ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
+    private ImmutableArray<Diagnostic> _currentDiagnostics = [];
+    private ExecutableScript? _currentCompiledScript;
+    private Editors.EditorManager? _manager;
+    private ScriptEnvironment? _environment;
+    private string _lastScript = "";
 
-    private FormAPIInfo apiInfoForm = new FormAPIInfo();
-
-
+    private ToolTipDiagnostics _diagnosticsToolTipManager;
+    private FormAPIInfo _apiInfoForm = new FormAPIInfo();
     private Classification.Coloriser _coloriser = new();
 
-    [Category(CDSCategory)]
-    public event EventHandler OnScriptChanged;
+    // ── IScriptEditor ────────────────────────────────────────────────────────
 
+    [Category(CDSCategory)]
+    public event EventHandler<Editors.DiagnosticsUpdatedEventArgs>? DiagnosticsUpdated;
+
+    [Category(CDSCategory)]
+    public event EventHandler? ScriptChanged;
+
+    public Editors.EditorManager? Manager => _manager;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ScriptEnvironment? Environment
+    {
+        get => _environment;
+        set
+        {
+            _environment = value;
+            _manager = value is null ? null : new Editors.EditorManager(value);
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public string Script
+    {
+        get => scintilla.Text;
+        set => scintilla.Text = value;
+    }
+
+    public bool HasErrors =>
+        _currentDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
+
+    public IReadOnlyList<Diagnostic> CurrentDiagnostics => _currentDiagnostics;
+
+    public ExecutableScript? CurrentCompiledScript => _currentCompiledScript;
+
+    public async Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken = default)
+    {
+        if (_manager is null)
+            throw new InvalidOperationException($"{nameof(Environment)} must be set before compiling.");
+
+        _currentCompiledScript = await _manager.CompileAsync(cancellationToken).ConfigureAwait(false);
+        return _currentCompiledScript;
+    }
+
+    // ── Construction ─────────────────────────────────────────────────────────
 
     public ScintillaScriptEditor()
     {
         InitializeComponent();
 
-        diagnosticsToolTipManager = new ToolTipDiagnostics(scintilla, toolTip);
+        _diagnosticsToolTipManager = new ToolTipDiagnostics(scintilla, toolTip);
 
-        var classificationKindToScintillaStyleBuilder = new Dictionary<Classification.SymbolClassification, int>();
-        var coloriserNames = (Classification.SymbolClassification[])Enum.GetValues(typeof(Classification.SymbolClassification));
+        var builder = new Dictionary<Classification.SymbolClassification, int>();
+        var names = (Classification.SymbolClassification[])Enum.GetValues(typeof(Classification.SymbolClassification));
 
-        for (int styleIndex = 1; styleIndex <= coloriserNames.Length; styleIndex++)
-        {
-            classificationKindToScintillaStyleBuilder[coloriserNames[styleIndex - 1]] = styleIndex;
-        }
+        for (int i = 1; i <= names.Length; i++)
+            builder[names[i - 1]] = i;
 
-        classificationKindToScintillaStyle = classificationKindToScintillaStyleBuilder.ToImmutableDictionary();
+        _classificationKindToScintillaStyle = builder.ToImmutableDictionary();
 
-        InitialiseEditor();
+        InitialiseScintilla();
     }
 
-    private void timerChangeMonitor_Tick(object sender, EventArgs e)
+    protected override void OnLoad(EventArgs e)
     {
-        timerChangeMonitor.Stop();
+        base.OnLoad(e);
 
-        if (lastScript != Script)
-        {
-            PerformLiveCompilationOfChangedScript();
+        if (DesignMode) return;
 
-            OnScriptChanged?.Invoke(this, EventArgs.Empty);
-        }
+        timerChangeMonitor.Start();
+
+        scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
+        scintilla.Margins[0].Width = 40;
+
+        scintilla.Margins[1].Type = ScintillaNET.MarginType.Symbol;
+        scintilla.Margins[1].Width = 8;
+        scintilla.Margins[1].Sensitive = false;
+        scintilla.Margins[1].Mask = 0;
     }
 
-
-
-
-    public void SetDelegates(
-        Editors.ApplyScriptDelegateAsync processScriptAsync,
-        Editors.GetAutoCompleteListDelegateAsync getAutoCompleteListAsync,
-        Editors.GetAPIInfoDelegateAsync getAPIInfoAsync)
-    {
-        this.processScriptAsync = processScriptAsync;
-        this.getAutoCompleteListAsync = getAutoCompleteListAsync;
-        this.getAPIInfoAsync = getAPIInfoAsync;
-    }
-
-
-
-    private void InitialiseEditor()
+    private void InitialiseScintilla()
     {
         scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Mono";
         scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
-        scintilla.StyleClearAll(); // This propagates the default style to all styles
+        scintilla.StyleClearAll();
 
-
-        //scintilla.Lexer = ScintillaNET.Lexer.Null;
         scintilla.MouseDwellTime = 500;
 
-        foreach (var classificationName in classificationKindToScintillaStyle.Keys)
+        foreach (var (classificationName, styleIndex) in _classificationKindToScintillaStyle)
         {
-            var styleIndex = classificationKindToScintillaStyle[classificationName];
             var colorScheme = _coloriser.FromClassificationName(classificationName);
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
             scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
@@ -102,103 +127,64 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
 
         scintilla.Indicators[scintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
-        //scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
     }
 
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-    public string Script
+    // ── Internal analysis cycle ───────────────────────────────────────────────
+
+    private void HandleTextChanged()
     {
-        get => scintilla.Text;
-        set => scintilla.Text = value;
-    }
+        _currentDiagnostics = [];
+        _currentCompiledScript = null;
 
-    protected override void OnLoad(EventArgs e)
-    {
-        base.OnLoad(e);
-
-        if (DesignMode) { return; }
-
+        timerChangeMonitor.Stop();
         timerChangeMonitor.Start();
-
-        // Set up line numbers margin (margin 0)
-        scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
-        scintilla.Margins[0].Width = 40;  // Width for the line numbers
-
-        // Create a spacing margin (margin 1) for gap between numbers and text
-        scintilla.Margins[1].Type = ScintillaNET.MarginType.Symbol;
-        scintilla.Margins[1].Width = 8;  // Gap width in pixels
-        scintilla.Margins[1].Sensitive = false;
-        scintilla.Margins[1].Mask = 0;  // No markers
     }
 
-
-    public void ApplyDiagnostics(ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics)
+    private void timerChangeMonitor_Tick(object sender, EventArgs e)
     {
-        lastDiagnostics = diagnostics;
+        timerChangeMonitor.Stop();
 
+        if (_lastScript != Script)
+            PerformLiveAnalysis();
+    }
+
+    private async void PerformLiveAnalysis()
+    {
+        if (_manager is null) return;
+
+        ClearWarningAndErrorIndicators();
+
+        await _manager.ApplyScript(Script);
+
+        // Continuation is back on the UI thread (async void captures SynchronizationContext;
+        // no ConfigureAwait(false) on the outer await above).
+        _currentDiagnostics = _manager.LastDiagnostics;
+        _lastScript = Script;
+
+        ApplyDiagnosticsToEditor(_currentDiagnostics);
+        ApplyClassificationsToEditor(_manager.LastClassifications);
+
+        DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
+        ScriptChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    // ── Visual feedback ───────────────────────────────────────────────────────
+
+    private void ApplyDiagnosticsToEditor(ImmutableArray<Diagnostic> diagnostics)
+    {
         foreach (var diagnostic in diagnostics)
         {
-            if ((diagnostic.DefaultSeverity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error) ||
-                (diagnostic.DefaultSeverity == Microsoft.CodeAnalysis.DiagnosticSeverity.Warning))
-            {
-                ApplyErrorOrWarningStyle(diagnostic);
-            }
+            if (diagnostic.DefaultSeverity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
+                MarkDiagnosticInEditor(diagnostic);
         }
     }
 
-
-    public void ApplyClassifications(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
-    {
-        // clear all styling
-        scintilla.StartStyling(0);
-        scintilla.SetStyling(scintilla.Text.Length, 0);
-
-
-        foreach (var classification in classifications)
-        {
-            if (classificationKindToScintillaStyle.TryGetValue(classification.Classification, out var styleIndex))
-            {
-                scintilla.StartStyling(classification.SpanStart);
-                scintilla.SetStyling(classification.SpanLength, styleIndex);
-            }
-        }
-    }
-
-
-    private async void PerformLiveCompilationOfChangedScript()
-    {
-        ClearWarningAndErrorIndicators();
-        await processScriptAsync?.Invoke(Script);
-        lastScript = Script;
-    }
-
-
-    private void ClearWarningAndErrorIndicators()
-    {
-        scintilla.IndicatorCurrent = scintillaErrorIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
-
-        scintilla.IndicatorCurrent = scintillaWarningIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
-    }
-
-
-    public void HighlightText(int start, int length)
-    {
-        ClearHighlightText();
-
-        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
-        scintilla.IndicatorFillRange(position: start, length: length);
-        scintilla.ScrollCaret();
-    }
-
-
-    private void ApplyErrorOrWarningStyle(Microsoft.CodeAnalysis.Diagnostic diagnostic)
+    private void MarkDiagnosticInEditor(Diagnostic diagnostic)
     {
         scintilla.IndicatorCurrent =
-            (diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error) ?
-            scintillaErrorIndicatorIndex :
-            scintillaWarningIndicatorIndex;
+            diagnostic.Severity == DiagnosticSeverity.Error
+            ? scintillaErrorIndicatorIndex
+            : scintillaWarningIndicatorIndex;
 
         var start = diagnostic.Location.SourceSpan.Start;
         var length = diagnostic.Location.SourceSpan.Length;
@@ -212,53 +198,67 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         scintilla.IndicatorFillRange(position: start, length: length);
     }
 
-    private async void scintilla_MouseMove(object sender, MouseEventArgs e)
+    private void ApplyClassificationsToEditor(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
+    {
+        scintilla.StartStyling(0);
+        scintilla.SetStyling(scintilla.Text.Length, 0);
+
+        foreach (var classification in classifications)
+        {
+            if (_classificationKindToScintillaStyle.TryGetValue(classification.Classification, out var styleIndex))
+            {
+                scintilla.StartStyling(classification.SpanStart);
+                scintilla.SetStyling(classification.SpanLength, styleIndex);
+            }
+        }
+    }
+
+    private void ClearWarningAndErrorIndicators()
+    {
+        scintilla.IndicatorCurrent = scintillaErrorIndicatorIndex;
+        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+
+        scintilla.IndicatorCurrent = scintillaWarningIndicatorIndex;
+        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+    }
+
+    // ── Highlight API (public — used by ClassifiedSpans and SyntaxTree demos) ─
+
+    public void HighlightText(int start, int length)
+    {
+        ClearHighlightText();
+        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorFillRange(position: start, length: length);
+        scintilla.ScrollCaret();
+    }
+
+    public void ClearHighlightText()
+    {
+        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+    }
+
+    // ── Scintilla event handlers ──────────────────────────────────────────────
+
+    private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e) =>
+        HandleTextChanged();
+
+    private void scintilla_Delete(object sender, ScintillaNET.ModificationEventArgs e) =>
+        HandleTextChanged();
+
+    private void scintilla_MouseMove(object sender, MouseEventArgs e)
     {
         var characterPosition = scintilla.CharPositionFromPointClose(e.Location.X, e.Location.Y);
 
-        //APIInfo.IAPIInfoResult apiInfo = null;
-        ////characterPosition >= 0 ?
-        ////await getAPIInfoAsync(characterPosition) :
-        ////null;
-
-        diagnosticsToolTipManager.HandleMouseMove(
-            diagnostics: lastDiagnostics,
+        _diagnosticsToolTipManager.HandleMouseMove(
+            diagnostics: _currentDiagnostics,
             characterPosition: characterPosition);
     }
 
-    private void scintilla_AutoCCancelled(object sender, EventArgs e)
+    private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
     {
-
+        // Reserved for future hover-based API info
     }
-
-    private void scintilla_AutoCCharDeleted(object sender, EventArgs e)
-    {
-
-    }
-
-    private void scintilla_AutoCCompleted(object sender, ScintillaNET.AutoCSelectionEventArgs e)
-    {
-
-    }
-
-    private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e)
-    {
-        HandleTextChanged();
-    }
-
-    private void HandleTextChanged()
-    {
-        lastDiagnostics = ImmutableArray<Microsoft.CodeAnalysis.Diagnostic>.Empty;
-
-        timerChangeMonitor.Stop();
-        timerChangeMonitor.Start();
-    }
-
-    private void scintilla_Delete(object sender, ScintillaNET.ModificationEventArgs e)
-    {
-        HandleTextChanged();
-    }
-
 
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {
@@ -268,76 +268,47 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IEditor
         }
         else if (e.KeyCode == Keys.F1)
         {
-            int pos = scintilla.CurrentPosition;
+            if (_manager is null) return;
 
-            Point point = new Point(
+            int pos = scintilla.CurrentPosition;
+            var point = new Point(
                 x: scintilla.PointXFromPosition(pos),
                 y: scintilla.PointYFromPosition(pos));
 
-            var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
-
-
-            apiInfoForm.ShowAPIInfo(parent: this, location: point, apiInfo: apiInfo);
+            var apiInfo = await _manager.GetAPIInfo(scintilla.CurrentPosition);
+            _apiInfoForm.ShowAPIInfo(parent: this, location: point, apiInfo: apiInfo);
         }
         else if (e.KeyCode == Keys.Escape)
         {
             scintilla.AutoCCancel();
-            apiInfoForm.Hide();
-            //diagnosticsToolTipManager.ShowAPIInfo(null, position: new Point(0, 0));
-        }
-        else if (e.KeyCode == Keys.Right)
-        {
-            //diagnosticsToolTipManager.OnRightArrowKeyPressed();
+            _apiInfoForm.Hide();
         }
     }
 
     private async Task TryRunAutoComplete()
     {
-        // Do we have a handler for this?
-        if (getAutoCompleteListAsync == null) { return; }
+        if (_manager is null) return;
 
-        // Cancel any existing autocomplete
         scintilla.AutoCCancel();
 
-        // Make sure the current script has been sent to the script processor
-        PerformLiveCompilationOfChangedScript();
+        // Flush any pending change before requesting completions
+        PerformLiveAnalysis();
 
-        // Get the word fragment at the caret position
         int currentPosition = scintilla.CurrentPosition;
         int wordStartPosition = scintilla.WordStartPosition(position: currentPosition, onlyWordCharacters: true);
         int lenEntered = currentPosition - wordStartPosition;
         string word = scintilla.GetTextRange(wordStartPosition, length: lenEntered);
 
-        // Get the autocomplete list
-        var roslynCompletionList = await getAutoCompleteListAsync(currentPosition);
+        var completions = await _manager.GetAutoCompletions(currentPosition);
 
-        // Convert the list to a string
-        var scintillaCompletionList =
-            string
-            .Join(
-                scintilla.AutoCSeparator.ToString(),
-                roslynCompletionList.Select(c => c.DisplayText));
+        var completionList = string.Join(
+            scintilla.AutoCSeparator.ToString(),
+            completions.Select(c => c.DisplayText));
 
-        // show an autocomplete list
-        scintilla.AutoCShow(word.Length, scintillaCompletionList);
+        scintilla.AutoCShow(word.Length, completionList);
     }
 
-    public void ClearHighlightText()
-    {
-        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
-    }
-
-    private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
-    {
-        int pos = e.Position;
-        if(pos < 0) { return; }
-
-        Point point = new Point(
-            x: scintilla.PointXFromPosition(pos),
-            y: scintilla.PointYFromPosition(pos));
-
-        //var apiInfo = await getAPIInfoAsync(scintilla.CurrentPosition);
-
-    }
+    private void scintilla_AutoCCancelled(object sender, EventArgs e) { }
+    private void scintilla_AutoCCharDeleted(object sender, EventArgs e) { }
+    private void scintilla_AutoCCompleted(object sender, ScintillaNET.AutoCSelectionEventArgs e) { }
 }

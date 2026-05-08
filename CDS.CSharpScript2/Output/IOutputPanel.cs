@@ -1,4 +1,4 @@
-﻿namespace CDS.CSharpScript2.OutputPanels;
+﻿namespace CDS.CSharpScript2.Output;
 
 
 /// <summary>

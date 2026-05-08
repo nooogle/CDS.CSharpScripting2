@@ -6,7 +6,6 @@ namespace WinFormsTest.Demos.SyntaxTreeViewDemo;
 
 public partial class FormTreeView : Form
 {
-    private CDS.CSharpScript2.Editors.EditorManager editorManager;
     private readonly Settings settings;
     private SemanticModel? _semanticModel;
 
@@ -19,22 +18,10 @@ public partial class FormTreeView : Form
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseScript();
-    }
 
-    private void InitialiseScript()
-    {
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: CDS.CSharpScript2.ScriptEnvironment.Default,
-            scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplyClassifications);
-
-        scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
         scintillaScriptEditor.Script = settings.Script;
+        scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshTree();
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -43,22 +30,16 @@ public partial class FormTreeView : Form
         settings.Script = scintillaScriptEditor.Script;
     }
 
-    private async void scintillaScriptEditor_OnScriptChanged(object sender, EventArgs e)
-    {
-        await RefreshTree();
-    }
-
+    // ScriptChanged fires after analysis completes, so Manager is ready immediately.
     private async Task RefreshTree()
     {
-        while (!editorManager.IsReady)
-        {
-            await Task.Delay(250);
-        }
+        var manager = scintillaScriptEditor.Manager;
+        if (manager is null) return;
 
-        var syntaxTree = await editorManager.GetSyntaxTreeAsync();
-        _semanticModel = await editorManager.GetSemanticModelAsync();
+        var syntaxTree = await manager.GetSyntaxTreeAsync();
+        _semanticModel = await manager.GetSemanticModelAsync();
 
-        if (syntaxTree == null) return;
+        if (syntaxTree is null) return;
 
         var root = syntaxTree.GetRoot();
 
@@ -76,7 +57,7 @@ public partial class FormTreeView : Form
             var childNode = new TreeNode(GetSyntaxNodeInfo(child)) { Tag = child };
             treeNode.Nodes.Add(childNode);
             if (child.IsNode)
-                PopulateTreeView(child.AsNode(), childNode);
+                PopulateTreeView(child.AsNode()!, childNode);
         }
     }
 
@@ -85,7 +66,7 @@ public partial class FormTreeView : Form
         if (node.IsToken) return $"{node.Kind()} (token)";
 
         var syntaxNode = (SyntaxNode)node;
-        if (_semanticModel == null) return $"{node.Kind()} (Unresolved)";
+        if (_semanticModel is null) return $"{node.Kind()} (Unresolved)";
 
         var symbolInfo = _semanticModel.GetSymbolInfo(syntaxNode);
         var symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault();
@@ -94,9 +75,9 @@ public partial class FormTreeView : Form
         return $"{node.Kind()} ({Classify(symbol, typeInfo)})";
     }
 
-    static string Classify(ISymbol? symbol, TypeInfo typeInfo)
+    private static string Classify(ISymbol? symbol, TypeInfo typeInfo)
     {
-        if (symbol == null) return "Unresolved";
+        if (symbol is null) return "Unresolved";
 
         return symbol switch
         {

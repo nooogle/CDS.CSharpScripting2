@@ -8,7 +8,6 @@ namespace WinFormsTest.Demos.BasicDemo;
 public partial class FormBasicDemo : Form
 {
     private readonly Settings settings;
-    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
     private bool isRunningOrCompilingSentry;
 
     /// <summary>
@@ -27,24 +26,8 @@ public partial class FormBasicDemo : Form
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseEditor();
-    }
 
-    /// <summary>
-    /// Sets up the script editor and its associated manager.
-    /// </summary>
-    private void InitialiseEditor()
-    {
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: CDS.CSharpScript2.ScriptEnvironment.Default,
-            scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplyClassifications);
-
-        scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
         scintillaScriptEditor.Script = settings.Script;
     }
 
@@ -66,20 +49,14 @@ public partial class FormBasicDemo : Form
     /// <summary>
     /// Executes a script manager action with proper state handling.
     /// </summary>
-    /// <param name="action">The async action to perform.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    private async Task PerformScriptManagerActions(Func<Task> action)
+    private async Task PerformScriptAction(Func<Task> action)
     {
-        if (isRunningOrCompilingSentry)
-        {
-            return;
-        }
+        if (isRunningOrCompilingSentry) return;
 
         try
         {
             isRunningOrCompilingSentry = true;
             outputPanel.Clear();
-
             await action();
         }
         catch (Exception ex)
@@ -93,20 +70,15 @@ public partial class FormBasicDemo : Form
     }
 
     /// <summary>
-    /// Handles the Run button click event to execute the script.
+    /// Handles the Run button click event to compile and execute the script.
     /// </summary>
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        if (editorManager == null)
+        await PerformScriptAction(async () =>
         {
-            outputPanel.AppendLine("Error: Editor not initialized");
-            return;
-        }
-
-        await PerformScriptManagerActions(async () =>
-        {
-            using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
-            await editorManager.RunAsync();
+            using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+            var compiled = await scintillaScriptEditor.CompileAsync();
+            await compiled.RunAsync();
         });
     }
 
@@ -115,28 +87,18 @@ public partial class FormBasicDemo : Form
     /// </summary>
     private async void btnCompile_Click(object sender, EventArgs e)
     {
-        if (editorManager == null)
+        await PerformScriptAction(async () =>
         {
-            outputPanel.AppendLine("Error: Editor not initialized");
-            return;
-        }
-
-        await PerformScriptManagerActions(async () =>
-        {
-            await editorManager.CompileAsync();
-            var executable = await editorManager.GetCompiledScriptAsync();
-            var compilationOutput = executable.CompilationOutput;
-
+            var compiled = await scintillaScriptEditor.CompileAsync();
+            var output = compiled.CompilationOutput;
 
             outputPanel.AppendLine("Compilation complete");
 
-            foreach (var message in compilationOutput.Messages)
-            {
+            foreach (var message in output.Messages)
                 outputPanel.AppendLine(message);
-            }
 
-            outputPanel.AppendLine($"\t{compilationOutput.WarningCount} warnings");
-            outputPanel.AppendLine($"\t{compilationOutput.ErrorCount} errors");
+            outputPanel.AppendLine($"\t{output.WarningCount} warnings");
+            outputPanel.AppendLine($"\t{output.ErrorCount} errors");
         });
     }
 }

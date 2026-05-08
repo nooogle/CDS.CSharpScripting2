@@ -6,7 +6,6 @@ namespace WinFormsTest.Demos.ClassifiedSpansDemo;
 
 public partial class FormDemo : Form
 {
-    private CDS.CSharpScript2.Editors.EditorManager editorManager;
     private readonly Settings settings;
 
     public FormDemo(Settings settings)
@@ -18,22 +17,10 @@ public partial class FormDemo : Form
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseScript();
-    }
 
-    private void InitialiseScript()
-    {
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: CDS.CSharpScript2.ScriptEnvironment.Default,
-            scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplyClassifications);
-
-        scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
         scintillaScriptEditor.Script = settings.Script;
+        scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshList();
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -42,26 +29,21 @@ public partial class FormDemo : Form
         settings.Script = scintillaScriptEditor.Script;
     }
 
-    private async void scintillaScriptEditor_OnScriptChanged(object sender, EventArgs e)
+    // ScriptChanged fires after analysis completes, so Manager is ready immediately.
+    private async Task RefreshList()
     {
-        await RefreshTree();
-    }
+        var manager = scintillaScriptEditor.Manager;
+        if (manager is null) return;
 
-    private async Task RefreshTree()
-    {
-        while (!editorManager.IsReady)
-        {
-            await Task.Delay(250);
-        }
-
-        var classifiedSpans = await editorManager.GetClassificationsAsync();
-        var syntaxTree = await editorManager.GetSyntaxTreeAsync();
+        var classifiedSpans = manager.LastClassifications;
+        var syntaxTree = await manager.GetSyntaxTreeAsync();
 
         listViewInfo.Items.Clear();
 
         foreach (var classifiedSpan in classifiedSpans)
         {
             string spanText = string.Empty;
+
             if (syntaxTree != null)
             {
                 var span = new Microsoft.CodeAnalysis.Text.TextSpan(classifiedSpan.SpanStart, classifiedSpan.SpanLength);

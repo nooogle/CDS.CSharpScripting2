@@ -10,10 +10,9 @@ namespace WinFormsTest.Demos.OpenCvSharpDemo;
 /// </summary>
 public partial class FormOpenCvSharpDemo : Form
 {
-    private Settings settings;
-    private CDS.CSharpScript2.Editors.EditorManager? editorManager;
-    private SharedData sharedData = new SharedData();
-    private bool isRunningOrCompilingSentry = false;
+    private readonly Settings settings;
+    private readonly SharedData sharedData = new SharedData();
+    private bool isRunningOrCompilingSentry;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FormOpenCvSharpDemo"/> class.
@@ -28,56 +27,26 @@ public partial class FormOpenCvSharpDemo : Form
     /// <summary>
     /// Handles the load event of the form.
     /// </summary>
-    /// <param name="e">The event arguments.</param>
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        InitialiseEditor();
 
-        sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
-        ShowImages();
-    }
-
-    private void ShowImages()
-    {
-        ShowImage(sharedData.Source, pictureBoxSource);
-        ShowImage(sharedData.Dest, pictureBoxDest);
-    }
-
-    private void ShowImage(Mat image, PictureBox pictureBox)
-    {
-        pictureBox.Image =
-            image.Empty() ?
-            null :
-            image.ToBitmap();
-    }
-
-    private void InitialiseEditor()
-    {
-        var env =
-            CDS.CSharpScript2.ScriptEnvironment.Default
+        var env = CDS.CSharpScript2.ScriptEnvironment.Default
             .WithDrawingReferences()
             .WithGlobalType(typeof(SharedData))
             .WithAdditionalNamespaceForType<Mat>()
             .WithAdditionalReferenceForType<Mat>();
 
-        editorManager = new CDS.CSharpScript2.Editors.EditorManager(
-            environment: env,
-            scintillaScriptEditor.ApplyDiagnostics,
-            scintillaScriptEditor.ApplyClassifications);
-
-        scintillaScriptEditor.SetDelegates(
-            editorManager.ApplyScript,
-            editorManager.GetAutoCompletions,
-            editorManager.GetAPIInfo);
-
+        scintillaScriptEditor.Environment = env;
         scintillaScriptEditor.Script = settings.Script;
+
+        sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
+        ShowImages();
     }
 
     /// <summary>
     /// Handles the closing event of the form.
     /// </summary>
-    /// <param name="e">The event arguments.</param>
     protected override void OnClosing(CancelEventArgs e)
     {
         if (isRunningOrCompilingSentry)
@@ -91,13 +60,9 @@ public partial class FormOpenCvSharpDemo : Form
         sharedData?.Dispose();
     }
 
-
-    /// <summary>
-    /// Performs the script manager actions.
-    /// </summary>
-    private async Task PerformScriptManagerActions(Func<Task> action)
+    private async Task PerformScriptAction(Func<Task> action)
     {
-        if (isRunningOrCompilingSentry) { return; }
+        if (isRunningOrCompilingSentry) return;
 
         groupBoxScript.Enabled = false;
         isRunningOrCompilingSentry = true;
@@ -116,17 +81,16 @@ public partial class FormOpenCvSharpDemo : Form
     /// <summary>
     /// Handles the click event of the run button.
     /// </summary>
-    /// <param name="sender">The event sender.</param>
-    /// <param name="e">The event arguments.</param>
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.ConsoleOutputHook(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
 
         try
         {
-            await PerformScriptManagerActions(async () =>
+            await PerformScriptAction(async () =>
             {
-                await editorManager!.RunAsync(sharedData);
+                var compiled = await scintillaScriptEditor.CompileAsync();
+                await compiled.RunAsync(sharedData);
             });
 
             ShowImages();
@@ -140,32 +104,38 @@ public partial class FormOpenCvSharpDemo : Form
     /// <summary>
     /// Handles the click event of the compile button.
     /// </summary>
-    /// <param name="sender">The event sender.</param>
-    /// <param name="e">The event arguments.</param>
     private async void btnCompile_Click(object sender, EventArgs e)
     {
         try
         {
-            await PerformScriptManagerActions(async () =>
+            await PerformScriptAction(async () =>
             {
-                await editorManager!.CompileAsync();
-                var executable = await editorManager.GetCompiledScriptAsync();
-                var compilationOutput = executable.CompilationOutput;
+                var compiled = await scintillaScriptEditor.CompileAsync();
+                var output = compiled.CompilationOutput;
 
                 outputPanel.AppendLine("Compilation complete");
 
-                foreach (var message in compilationOutput.Messages)
-                {
+                foreach (var message in output.Messages)
                     outputPanel.AppendLine(message);
-                }
 
-                outputPanel.AppendLine($"\t{compilationOutput.WarningCount} warnings");
-                outputPanel.AppendLine($"\t{compilationOutput.ErrorCount} errors");
+                outputPanel.AppendLine($"\t{output.WarningCount} warnings");
+                outputPanel.AppendLine($"\t{output.ErrorCount} errors");
             });
         }
         catch (Exception ex)
         {
             outputPanel.AppendLine($"Error: {ex.Message}");
         }
+    }
+
+    private void ShowImages()
+    {
+        ShowImage(sharedData.Source, pictureBoxSource);
+        ShowImage(sharedData.Dest, pictureBoxDest);
+    }
+
+    private void ShowImage(Mat image, PictureBox pictureBox)
+    {
+        pictureBox.Image = image.Empty() ? null : image.ToBitmap();
     }
 }
