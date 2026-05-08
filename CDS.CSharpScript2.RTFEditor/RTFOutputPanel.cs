@@ -8,10 +8,12 @@ namespace CDS.CSharpScript2.RTFEditor;
 /// </summary>
 public partial class RTFOutputPanel : UserControl, OutputPanels.IOutputPanel
 {
+    private const string CDSCategory = "CDS";
+
     /// <summary>
     /// True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.
     /// </summary>
-    [Category(UIStrings.CDSPropertyCategory)]
+    [Category(CDSCategory)]
     [Description("True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowClickLinks2 { get; set; } = true;
