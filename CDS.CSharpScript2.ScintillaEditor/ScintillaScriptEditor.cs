@@ -4,24 +4,27 @@ using System.ComponentModel;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
+/// <summary>
+/// Provides a Scintilla-based script editor with live diagnostics, classifications, and editor assistance.
+/// </summary>
 public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 {
     private const string CDSCategory = "CDS";
 
-    private const int scintillaErrorIndicatorIndex = 3;
-    private const int scintillaWarningIndicatorIndex = 4;
-    private const int scintillaHighlightIndicatorIndex = 5;
+    private const int ScintillaErrorIndicatorIndex = 3;
+    private const int ScintillaWarningIndicatorIndex = 4;
+    private const int ScintillaHighlightIndicatorIndex = 5;
 
-    private ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
+    private readonly ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
     private ImmutableArray<Diagnostic> _currentDiagnostics = [];
     private ExecutableScript? _currentCompiledScript;
     private Editors.EditorManager? _manager;
     private ScriptEnvironment? _environment;
     private string _lastScript = "";
 
-    private ToolTipDiagnostics _diagnosticsToolTipManager;
-    private FormAPIInfo _apiInfoForm = new FormAPIInfo();
-    private Classification.Coloriser _coloriser = new();
+    private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
+    private readonly FormAPIInfo _apiInfoForm = new();
+    private readonly Classification.Coloriser _coloriser = new();
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
@@ -31,8 +34,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     [Category(CDSCategory)]
     public event EventHandler? ScriptChanged;
 
+    /// <inheritdoc/>
     public Editors.EditorManager? Manager => _manager;
 
+    /// <inheritdoc/>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ScriptEnvironment? Environment
     {
@@ -41,9 +46,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         {
             _environment = value;
             _manager = value is null ? null : new Editors.EditorManager(value);
+            ResetAnalysisState();
         }
     }
 
+    /// <inheritdoc/>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Script
     {
@@ -51,13 +58,17 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         set => scintilla.Text = value;
     }
 
+    /// <inheritdoc/>
     public bool HasErrors =>
         _currentDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
 
+    /// <inheritdoc/>
     public IReadOnlyList<Diagnostic> CurrentDiagnostics => _currentDiagnostics;
 
+    /// <inheritdoc/>
     public ExecutableScript? CurrentCompiledScript => _currentCompiledScript;
 
+    /// <inheritdoc/>
     public async Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken = default)
     {
         if (_manager is null)
@@ -69,6 +80,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     // ── Construction ─────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ScintillaScriptEditor"/> class.
+    /// </summary>
     public ScintillaScriptEditor()
     {
         InitializeComponent();
@@ -120,36 +134,44 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
         }
 
-        scintilla.Indicators[scintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[scintillaErrorIndicatorIndex].ForeColor = Color.Red;
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = Color.Red;
 
-        scintilla.Indicators[scintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[scintillaWarningIndicatorIndex].ForeColor = Color.Green;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = Color.Green;
 
-        scintilla.Indicators[scintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+        scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
     }
 
     // ── Internal analysis cycle ───────────────────────────────────────────────
 
-    private void HandleTextChanged()
+    private void ResetAnalysisState()
     {
         _currentDiagnostics = [];
         _currentCompiledScript = null;
+        _lastScript = string.Empty;
         _diagnosticsToolTipManager.ClearHover();
+    }
+
+    private void HandleTextChanged()
+    {
+        ResetAnalysisState();
 
         timerChangeMonitor.Stop();
         timerChangeMonitor.Start();
     }
 
-    private void timerChangeMonitor_Tick(object sender, EventArgs e)
+    private async void timerChangeMonitor_Tick(object sender, EventArgs e)
     {
         timerChangeMonitor.Stop();
 
         if (_lastScript != Script)
-            PerformLiveAnalysis();
+        {
+            await PerformLiveAnalysisAsync();
+        }
     }
 
-    private async void PerformLiveAnalysis()
+    private async Task PerformLiveAnalysisAsync()
     {
         if (_manager is null) return;
 
@@ -175,7 +197,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         foreach (var diagnostic in diagnostics)
         {
-            if (diagnostic.DefaultSeverity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
+            if (diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
                 MarkDiagnosticInEditor(diagnostic);
         }
     }
@@ -184,8 +206,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         scintilla.IndicatorCurrent =
             diagnostic.Severity == DiagnosticSeverity.Error
-            ? scintillaErrorIndicatorIndex
-            : scintillaWarningIndicatorIndex;
+            ? ScintillaErrorIndicatorIndex
+            : ScintillaWarningIndicatorIndex;
 
         var start = diagnostic.Location.SourceSpan.Start;
         var length = diagnostic.Location.SourceSpan.Length;
@@ -216,26 +238,34 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     private void ClearWarningAndErrorIndicators()
     {
-        scintilla.IndicatorCurrent = scintillaErrorIndicatorIndex;
+        scintilla.IndicatorCurrent = ScintillaErrorIndicatorIndex;
         scintilla.IndicatorClearRange(0, scintilla.Text.Length);
 
-        scintilla.IndicatorCurrent = scintillaWarningIndicatorIndex;
+        scintilla.IndicatorCurrent = ScintillaWarningIndicatorIndex;
         scintilla.IndicatorClearRange(0, scintilla.Text.Length);
     }
 
     // ── Highlight API (public — used by ClassifiedSpans and SyntaxTree demos) ─
 
+    /// <summary>
+    /// Highlights the specified text range in the editor.
+    /// </summary>
+    /// <param name="start">The zero-based start position.</param>
+    /// <param name="length">The length of the range to highlight.</param>
     public void HighlightText(int start, int length)
     {
         ClearHighlightText();
-        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorCurrent = ScintillaHighlightIndicatorIndex;
         scintilla.IndicatorFillRange(position: start, length: length);
         scintilla.ScrollCaret();
     }
 
+    /// <summary>
+    /// Clears any active highlight range from the editor.
+    /// </summary>
     public void ClearHighlightText()
     {
-        scintilla.IndicatorCurrent = scintillaHighlightIndicatorIndex;
+        scintilla.IndicatorCurrent = ScintillaHighlightIndicatorIndex;
         scintilla.IndicatorClearRange(0, scintilla.Text.Length);
     }
 
@@ -294,7 +324,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCCancel();
 
         // Flush any pending change before requesting completions
-        PerformLiveAnalysis();
+        if (_lastScript != Script)
+        {
+            await PerformLiveAnalysisAsync();
+        }
 
         int currentPosition = scintilla.CurrentPosition;
         int wordStartPosition = scintilla.WordStartPosition(position: currentPosition, onlyWordCharacters: true);
