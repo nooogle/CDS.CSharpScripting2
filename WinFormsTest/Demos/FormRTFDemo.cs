@@ -46,7 +46,8 @@ public partial class FormRTFDemo : Form
         outputPanel.Clear();
 
         await editorManager!.CompileAsync();
-        var compilationOutput = (await editorManager.GetCompiledScriptAsync()).CompilationOutput;
+        var executable = await editorManager.GetCompiledScriptAsync();
+        var compilationOutput = executable.CompilationOutput;
 
 
         foreach (var message in compilationOutput.Messages)

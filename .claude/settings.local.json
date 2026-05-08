@@ -5,7 +5,9 @@
       "Bash(sed 's/.*namespace //')",
       "Bash(xargs grep -l \"GeneratePackageOnBuild\")",
       "Bash(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\\" -Recurse -File | Select-Object FullName)",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\" -Directory | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\" -Directory | ForEach-Object { $_.Name })",
+      "Bash(Remove-Item \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\ScriptManager.cs\")",
+      "Bash(dotnet test *)"
     ]
   }
 }

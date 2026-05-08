@@ -1,142 +1,67 @@
-﻿using CDS.CSharpScript2;
+using CDS.CSharpScript2;
 
 namespace ConsoleTest.Demos.Completions;
 
 class BuiltInDemos
 {
-    /// <summary>
-    /// Gets the name of the demo.
-    /// </summary>
     public static string Name => "Completion suggestions";
+    public static string Description => "Demonstrates code completion suggestions at various cursor positions.";
 
-    /// <summary>
-    /// Gets the description of the demo.
-    /// </summary>
-    public static string Description => "TODO";
-
-    /// <summary>
-    /// Runs the demo.
-    /// </summary>
     public static void Run()
     {
-        var demo = new BuiltInDemos();
-        demo.RunAsync().Wait();
+        new BuiltInDemos().RunAsync().Wait();
     }
 
-    /// <summary>
-    /// Runs the demo.
-    /// </summary>
     public async Task RunAsync()
     {
-        // Setup screen for demo
         Console.Clear();
         Console.WriteLine("Code completions demo");
         Console.WriteLine("=====================\n");
 
-        // Setup
         var logger = new TimedConsoleLogger();
 
-        // Create the script manager
-        logger.Log("Creating script manager");
-        var scriptManager = await ScriptManager.CreateAsync();
+        logger.Log("Creating script context");
+        var context = await ScriptContext.CreateAsync();
 
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.");
+        context = await DemoCompletion(logger, context, "System.Console.");
+        context = await DemoCompletion(logger, context, "System.Console.W");
+        context = await DemoCompletion(logger, context, "System.Console.Wr");
+        context = await DemoCompletion(logger, context, "System.Console.Write");
+        context = await DemoCompletion(logger, context, "System.Console.WriteLi");
+        context = await DemoCompletion(logger, context, "System.Console.WriteLine");
+        context = await DemoCompletion(logger, context, "int Fibonacci(int n) => 0; Fibo");
+        context = await DemoCompletion(logger, context, "System.Conso");
+        context = await DemoCompletion(logger, context, "System.Cons     int x = 10;", cursorPosition: 11);
 
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.W");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.Wr");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.Write");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.WriteLi");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Console.WriteLine");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "int Fibonacci(int n) => 0; Fibo");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Conso");
-
-        scriptManager = await DemoCompletion(
-            logger,
-            scriptManager,
-            "System.Cons     int x = 10;",
-            cursorPosition: 11);
-
-        // All done
         Console.WriteLine("All done - press any key to exit");
         Console.ReadKey();
     }
 
-
-    /// <summary>
-    /// Demonstrates the completion suggestions, using the specified script and cursor 
-    /// at the end of the script.
-    /// </summary>
-    private static async Task<ScriptManager> DemoCompletion(
+    private static async Task<ScriptContext> DemoCompletion(
         TimedConsoleLogger logger,
-        ScriptManager scriptManager,
+        ScriptContext context,
         string script)
-    {
-        return await DemoCompletion(logger, scriptManager, script, script.Length);
-    }
+        => await DemoCompletion(logger, context, script, script.Length);
 
-
-    /// <summary>
-    /// Demonstrates the completion suggestions using the specified script and cursor position.
-    /// </summary>
-    private static async Task<ScriptManager> DemoCompletion(
-        TimedConsoleLogger logger, 
-        ScriptManager scriptManager, 
+    private static async Task<ScriptContext> DemoCompletion(
+        TimedConsoleLogger logger,
+        ScriptContext context,
         string script,
         int cursorPosition)
     {
-        // Apply the script
         Console.WriteLine(DashedLine);
         logger.Log($"Script: {script}");
-        scriptManager = scriptManager.ApplyScript(script);
+        context = context.ApplyScript(script);
 
-        // Get the completion suggestions
-        var completions = await scriptManager.GetCompletionSuggestionsAsync(cursorPosition);
+        var completions = await new ScriptAnalyser(context).GetCompletionsAsync(cursorPosition);
         logger.Log($"Found {completions.Count()} completions. Displaying up to the first 5");
 
-        // Log the completions
         int count = 1;
         foreach (var completion in completions.Take(5))
-        {
             logger.Log($"{count++}: {completion.DisplayText}");
-        }
 
-        return scriptManager;
+        return context;
     }
 
-
-    /// <summary>
-    /// Returns a dashed line the width of the console window.
-    /// </summary>
     private static string DashedLine => new string('-', Console.WindowWidth);
-
 }

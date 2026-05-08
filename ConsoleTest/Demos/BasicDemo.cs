@@ -1,4 +1,4 @@
-﻿using CDS.CSharpScript2;
+using CDS.CSharpScript2;
 
 namespace ConsoleTest.Demos;
 
@@ -7,50 +7,30 @@ namespace ConsoleTest.Demos;
 /// </summary>
 class BasicDemo
 {
-    /// <summary>
-    /// Gets the name of the demo.
-    /// </summary>
     public static string Name => "Basic function";
-
-    /// <summary>
-    /// Gets the description of the demo.
-    /// </summary>
     public static string Description => "A basic test where the script itself contains all the inputs and returns an output";
 
-
-    /// <summary>
-    /// Runs the demo.
-    /// </summary>
     public static void Run()
     {
         new BasicDemo().RunAsync().Wait();
     }
 
-
-    /// <summary>
-    /// Runs the demo.
-    /// </summary>
     private async Task RunAsync()
     {
-        // Setup
         var logger = new TimedConsoleLogger();
         int x = 10;
         var script = $"return 2 * {x};";
 
-        // Create the script manager
-        logger.Log("Creating script manager");
-        var scriptManager = await ScriptManager.CreateAsync();
+        logger.Log("Creating script context");
+        var context = await ScriptContext.CreateAsync();
 
-        // Apply the script
         logger.Log("Applying script");
-        scriptManager = scriptManager.ApplyScript(script);
+        context = context.ApplyScript(script);
 
-        // Run the script
-        logger.Log("Running script");
-        int result = await scriptManager.RunAsync<int>();
+        logger.Log("Compiling and running script");
+        var executable = await new ScriptExecutor(context).CompileAsync<int>();
+        int result = await executable.RunAsync<int>();
 
-        // Output
-        logger.Log("Output...");
         logger.Log($"Script: {script}");
         logger.Log($"Result: {result}");
     }

@@ -9,7 +9,7 @@ namespace CDS.CSharpScript2
     /// <summary>
     /// Utility to wrap a compiled script. 
     /// </summary>
-    public class CompiledScript
+    internal class CompiledScript
     {
         /// <summary>
         /// A compiled script.

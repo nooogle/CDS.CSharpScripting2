@@ -17,18 +17,17 @@ class CompletionsRnD
 
     private static async Task ViaScriptManager()
     {
-        var env =
-            CDS.CSharpScript2.ScriptEnvironment.Default;
+        var env = CDS.CSharpScript2.ScriptEnvironment.Default;
 
-        var scriptManager = await CDS.CSharpScript2.ScriptManager.CreateAsync(env);
+        var context = await CDS.CSharpScript2.ScriptContext.CreateAsync(env);
+        context = context.ApplyScript("System.Math.Pow(1, 2)");
 
-        scriptManager = scriptManager.ApplyScript("System.Math.Pow(1, 2)");
+        var analyser = new CDS.CSharpScript2.ScriptAnalyser(context);
+        var executable = await new CDS.CSharpScript2.ScriptExecutor(context).CompileAsync();
+        var compilationOutput = executable.CompilationOutput;
 
-        await scriptManager.CompileAsync();
-        var compilationOutput = await scriptManager.GetCompilationOutputAsync();
-
-        var semanticModel = await scriptManager.GetSemanticModelAsync();
-        var syntaxTree = await scriptManager.GetSyntaxTreeAsync();
+        var semanticModel = await analyser.GetSemanticModelAsync();
+        var syntaxTree = await analyser.GetSyntaxTreeAsync();
 
         var root = syntaxTree.GetRoot();
 

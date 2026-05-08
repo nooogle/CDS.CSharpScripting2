@@ -1,99 +1,116 @@
-﻿namespace CDS.CSharpScript2.Editors;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Completion;
+
+namespace CDS.CSharpScript2.Editors;
 
 public class EditorManager
 {
-    private ScriptManager scriptManager;
-    private ApplyDiagnosticsDelegate applyDiagnostics;
-    private ApplyClassificationsDelegate _applyClassifications;
-    private ScriptEnvironment environment;
-    private CompiledScript? compiledScript;
+    private ScriptContext? _context;
+    private ExecutableScript? _executableScript;
+    private readonly ApplyDiagnosticsDelegate _applyDiagnostics;
+    private readonly ApplyClassificationsDelegate _applyClassifications;
+    private readonly ScriptEnvironment _environment;
 
-    public bool IsReady => compiledScript != null;
+    /// <summary>True once the script context has been initialised (after the first <see cref="ApplyScript"/> call).</summary>
+    public bool IsReady => _context != null;
 
     public EditorManager(
         ScriptEnvironment environment,
-        ApplyDiagnosticsDelegate applyDiagnostics, 
+        ApplyDiagnosticsDelegate applyDiagnostics,
         ApplyClassificationsDelegate applyClassifications)
     {
-        this.applyDiagnostics = applyDiagnostics;
-        this._applyClassifications = applyClassifications;
-        this.environment = environment;
+        _environment = environment;
+        _applyDiagnostics = applyDiagnostics;
+        _applyClassifications = applyClassifications;
     }
 
-    public async Task<CompiledScript> GetCompiledScriptAsync()
-    {
-        await CompileAsync();
-
-        if (compiledScript == null)
-        {
-            throw new Exception("No compiled script available");
-        }
-
-        return compiledScript;
-    }
-
-    public async Task CompileAsync()
-    {
-        await CreateScriptManager();
-        await scriptManager.CompileAsync();
-        compiledScript = await scriptManager.GetCompiledScriptAsync();
-    }
-
-    public async Task<IEnumerable<Microsoft.CodeAnalysis.Completion.CompletionItem>> GetAutoCompletions(int cursorPosition)
-    {
-        await CreateScriptManager();
-        var completions = await scriptManager.GetCompletionSuggestionsAsync(cursorPosition);
-        return completions;
-    }
-
-    public async Task<APIInfo.IAPIInfoResult> GetAPIInfo(int cursorPosition)
-    {
-        await CreateScriptManager();
-        var apiInfo = await scriptManager.GetSuggestionsAsync(cursorPosition);
-        return apiInfo;
-    }
-
+    /// <summary>
+    /// Updates the script text, then pushes fresh diagnostics and classifications to the editor.
+    /// Does NOT compile for execution — call <see cref="CompileAsync"/> explicitly when needed.
+    /// </summary>
     public async Task ApplyScript(string script)
     {
-        await CreateScriptManager();
+        await EnsureContext().ConfigureAwait(false);
 
-        scriptManager = await scriptManager.ApplyScriptAsync(script);
-        await CompileAsync();
+        _context = _context!.ApplyScript(script);
+        _executableScript = null;
 
-        var syntaxTree = await scriptManager.GetSyntaxTreeAsync();
-        //var syntaxElements = Syntax.ScriptSyntaxAnalyser.Go(syntaxTree);
-        var classifications = await scriptManager.GetClassifications();
+        var analyser = new ScriptAnalyser(_context);
 
-        var diagnostics = await scriptManager.GetDiagnosticsAsync();
-        applyDiagnostics(diagnostics);
+        var diagnostics = await analyser.GetDiagnosticsAsync().ConfigureAwait(false);
+        var classifications = await analyser.GetClassificationsAsync().ConfigureAwait(false);
+
+        _applyDiagnostics(diagnostics);
         _applyClassifications(classifications);
     }
 
-
-    public async Task<Microsoft.CodeAnalysis.SyntaxTree> GetSyntaxTree()
+    /// <summary>Compiles the current script for execution.</summary>
+    public async Task CompileAsync()
     {
-        if (scriptManager == null)
-        {
-            throw new InvalidOperationException("ScriptManager is not initialized. Call ApplyScriptAsync first.");
-        }
-
-        return await scriptManager.GetSyntaxTreeAsync();
+        await EnsureContext().ConfigureAwait(false);
+        _executableScript = await new ScriptExecutor(_context!).CompileAsync().ConfigureAwait(false);
     }
 
+    /// <summary>Returns the compiled script, compiling first if necessary.</summary>
+    public async Task<ExecutableScript> GetCompiledScriptAsync()
+    {
+        if (_executableScript == null)
+            await CompileAsync().ConfigureAwait(false);
+
+        return _executableScript!;
+    }
+
+    /// <summary>Returns code completion suggestions at the given cursor position.</summary>
+    public async Task<IEnumerable<CompletionItem>> GetAutoCompletions(int cursorPosition)
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return await new ScriptAnalyser(_context!).GetCompletionsAsync(cursorPosition).ConfigureAwait(false);
+    }
+
+    /// <summary>Returns API info (type, overloads, XML docs) at the given cursor position.</summary>
+    public async Task<APIInfo.IAPIInfoResult> GetAPIInfo(int cursorPosition)
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return (await new ScriptAnalyser(_context!).GetAPIInfoAsync(cursorPosition).ConfigureAwait(false))!;
+    }
+
+    /// <summary>Returns the syntax tree for the current script (no compilation required).</summary>
+    public async Task<SyntaxTree?> GetSyntaxTreeAsync()
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return await new ScriptAnalyser(_context!).GetSyntaxTreeAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Returns the semantic model for the current script (no compilation required).</summary>
+    public async Task<SemanticModel?> GetSemanticModelAsync()
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return await new ScriptAnalyser(_context!).GetSemanticModelAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Returns classified symbol spans for the current script (no compilation required).</summary>
+    public async Task<IReadOnlyList<Classification.ClassifiedSymbol>> GetClassificationsAsync()
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return await new ScriptAnalyser(_context!).GetClassificationsAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Runs the compiled script, compiling first if necessary.</summary>
     public async Task RunAsync()
     {
-        await CreateScriptManager();
-        await scriptManager.RunAsync();
+        if (_executableScript == null) await CompileAsync().ConfigureAwait(false);
+        await _executableScript!.RunAsync().ConfigureAwait(false);
     }
 
+    /// <summary>Runs the compiled script with globals, compiling first if necessary.</summary>
     public async Task RunAsync(object globals)
     {
-        await CreateScriptManager();
-        await scriptManager.RunAsync(globals);
+        if (_executableScript == null) await CompileAsync().ConfigureAwait(false);
+        await _executableScript!.RunAsync(globals).ConfigureAwait(false);
     }
 
-    private async Task CreateScriptManager()
+    private async Task EnsureContext()
     {
-        scriptManager ??= await ScriptManager.CreateAsync(environment);
+        _context ??= await ScriptContext.CreateAsync(_environment).ConfigureAwait(false);
     }
 }

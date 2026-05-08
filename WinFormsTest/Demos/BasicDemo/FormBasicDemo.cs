@@ -124,7 +124,8 @@ public partial class FormBasicDemo : Form
         await PerformScriptManagerActions(async () =>
         {
             await editorManager.CompileAsync();
-            var compilationOutput = (await editorManager.GetCompiledScriptAsync()).CompilationOutput;
+            var executable = await editorManager.GetCompiledScriptAsync();
+            var compilationOutput = executable.CompilationOutput;
 
 
             outputPanel.AppendLine("Compilation complete");
