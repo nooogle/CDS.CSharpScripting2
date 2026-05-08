@@ -135,6 +135,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         _currentDiagnostics = [];
         _currentCompiledScript = null;
+        _diagnosticsToolTipManager.ClearHover();
 
         timerChangeMonitor.Stop();
         timerChangeMonitor.Start();
@@ -248,17 +249,18 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     private void scintilla_MouseMove(object sender, MouseEventArgs e)
     {
-        var characterPosition = scintilla.CharPositionFromPointClose(e.Location.X, e.Location.Y);
-
-        _diagnosticsToolTipManager.HandleMouseMove(
-            diagnostics: _currentDiagnostics,
-            characterPosition: characterPosition);
+        // Reserved for future pointer-tracking features.
     }
 
     private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
     {
-        // Reserved for future hover-based API info
+        _diagnosticsToolTipManager.HandleDwellStart(
+            diagnostics: _currentDiagnostics,
+            characterPosition: e.Position);
     }
+
+    private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e) =>
+        _diagnosticsToolTipManager.HandleDwellEnd();
 
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {

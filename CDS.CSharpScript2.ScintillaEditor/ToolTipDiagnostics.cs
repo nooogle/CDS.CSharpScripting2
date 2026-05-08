@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
@@ -8,6 +9,9 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 /// </summary>
 public class ToolTipDiagnostics
 {
+    private const int ToolTipOffsetX = 16;
+    private const int ToolTipOffsetY = 16;
+
     private readonly Control _editor;
     private readonly ToolTip _toolTip;
     private Diagnostic? _currentToolTipDiagnostic;
@@ -24,11 +28,33 @@ public class ToolTipDiagnostics
     }
 
     /// <summary>
-    /// Updates the tooltip based on the diagnostic under the specified character position.
+    /// Updates the tooltip when the pointer dwells over a character position.
     /// </summary>
     /// <param name="diagnostics">The diagnostics to inspect.</param>
-    /// <param name="characterPosition">The zero-based character position under the mouse pointer.</param>
-    public void HandleMouseMove(ImmutableArray<Diagnostic> diagnostics, int characterPosition)
+    /// <param name="characterPosition">The zero-based character position under the pointer.</param>
+    public void HandleDwellStart(ImmutableArray<Diagnostic> diagnostics, int characterPosition) =>
+        UpdateHoverDiagnostic(diagnostics, characterPosition);
+
+    /// <summary>
+    /// Clears any active diagnostic tooltip when hover tracking ends.
+    /// </summary>
+    public void HandleDwellEnd() => ClearHover();
+
+    /// <summary>
+    /// Clears the current hover state and hides any visible tooltip.
+    /// </summary>
+    public void ClearHover()
+    {
+        _currentToolTipDiagnostic = null;
+        ClearToolTip();
+    }
+
+    /// <summary>
+    /// Updates the hover diagnostic for the specified character position.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics to inspect.</param>
+    /// <param name="characterPosition">The zero-based character position under the pointer.</param>
+    private void UpdateHoverDiagnostic(ImmutableArray<Diagnostic> diagnostics, int characterPosition)
     {
         var diagnosticForToolTip = FindDiagnosticAtPosition(diagnostics, characterPosition);
 
@@ -48,24 +74,104 @@ public class ToolTipDiagnostics
     }
 
     /// <summary>
-    /// Finds the first diagnostic that contains the specified character position.
+    /// Finds the most appropriate diagnostic that contains the specified character position.
     /// </summary>
     /// <param name="diagnostics">The diagnostics to search.</param>
     /// <param name="characterPosition">The zero-based character position.</param>
     /// <returns>The diagnostic at the specified position, or <see langword="null"/> if none was found.</returns>
     private static Diagnostic? FindDiagnosticAtPosition(ImmutableArray<Diagnostic> diagnostics, int characterPosition)
     {
+        if (characterPosition < 0)
+        {
+            return null;
+        }
+
+        Diagnostic? bestDiagnostic = null;
+
         foreach (var diagnostic in diagnostics)
         {
-            var span = diagnostic.Location.SourceSpan;
-
-            if (span.Length > 0 && span.Contains(characterPosition))
+            if (!ShouldShowToolTipForDiagnostic(diagnostic))
             {
-                return diagnostic;
+                continue;
+            }
+
+            var span = GetInteractiveSpan(diagnostic);
+
+            if (!span.Contains(characterPosition))
+            {
+                continue;
+            }
+
+            if (bestDiagnostic is null || IsBetterMatch(candidate: diagnostic, currentBest: bestDiagnostic))
+            {
+                bestDiagnostic = diagnostic;
             }
         }
 
-        return null;
+        return bestDiagnostic;
+    }
+
+    /// <summary>
+    /// Returns the interactive span used for tooltip hit-testing.
+    /// </summary>
+    /// <param name="diagnostic">The diagnostic to inspect.</param>
+    /// <returns>The normalized span used for user interaction.</returns>
+    private static TextSpan GetInteractiveSpan(Diagnostic diagnostic)
+    {
+        var span = diagnostic.Location.SourceSpan;
+
+        if (span.Length > 0)
+        {
+            return span;
+        }
+
+        var start = Math.Max(0, span.Start - 1);
+        return new TextSpan(start, 1);
+    }
+
+    /// <summary>
+    /// Returns a value indicating whether the diagnostic should participate in tooltip hit-testing.
+    /// </summary>
+    /// <param name="diagnostic">The diagnostic to inspect.</param>
+    /// <returns><see langword="true"/> when the diagnostic is represented in the editor UI; otherwise, <see langword="false"/>.</returns>
+    private static bool ShouldShowToolTipForDiagnostic(Diagnostic diagnostic)
+    {
+        return diagnostic.Location.IsInSource &&
+            diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning;
+    }
+
+    /// <summary>
+    /// Determines whether one diagnostic is a better hover match than another.
+    /// </summary>
+    /// <param name="candidate">The candidate diagnostic.</param>
+    /// <param name="currentBest">The current best diagnostic.</param>
+    /// <returns><see langword="true"/> when the candidate should replace the current best match.</returns>
+    private static bool IsBetterMatch(Diagnostic candidate, Diagnostic currentBest)
+    {
+        var candidateSeverityRank = GetSeverityRank(candidate.Severity);
+        var currentSeverityRank = GetSeverityRank(currentBest.Severity);
+
+        if (candidateSeverityRank != currentSeverityRank)
+        {
+            return candidateSeverityRank > currentSeverityRank;
+        }
+
+        return GetInteractiveSpan(candidate).Length < GetInteractiveSpan(currentBest).Length;
+    }
+
+    /// <summary>
+    /// Converts a diagnostic severity into a hover priority rank.
+    /// </summary>
+    /// <param name="severity">The diagnostic severity.</param>
+    /// <returns>A numeric priority where larger values have higher priority.</returns>
+    private static int GetSeverityRank(DiagnosticSeverity severity)
+    {
+        return severity switch
+        {
+            DiagnosticSeverity.Error => 2,
+            DiagnosticSeverity.Warning => 1,
+            _ => 0,
+        };
     }
 
     /// <summary>
@@ -92,7 +198,15 @@ public class ToolTipDiagnostics
                 break;
         }
 
-        _toolTip.SetToolTip(_editor, diagnostic.GetMessage());
+        _toolTip.Hide(_editor);
+
+        var mousePosition = _editor.PointToClient(Control.MousePosition);
+        _toolTip.Show(
+            diagnostic.GetMessage(),
+            _editor,
+            mousePosition.X + ToolTipOffsetX,
+            mousePosition.Y + ToolTipOffsetY,
+            duration: _toolTip.AutoPopDelay);
     }
 
     /// <summary>
@@ -100,8 +214,8 @@ public class ToolTipDiagnostics
     /// </summary>
     private void ClearToolTip()
     {
+        _toolTip.Hide(_editor);
         _toolTip.ToolTipIcon = ToolTipIcon.None;
         _toolTip.ToolTipTitle = string.Empty;
-        _toolTip.SetToolTip(_editor, string.Empty);
     }
 }

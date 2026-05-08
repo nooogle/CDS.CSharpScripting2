@@ -51,6 +51,7 @@
             scintilla.CharAdded += scintilla_CharAdded;
             scintilla.Delete += scintilla_Delete;
             scintilla.DwellStart += scintilla_DwellStart;
+            scintilla.DwellEnd += scintilla_DwellEnd;
             scintilla.KeyDown += scintilla_KeyDown;
             scintilla.MouseMove += scintilla_MouseMove;
             // 
