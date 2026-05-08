@@ -24,9 +24,9 @@ public partial class FormTreeView : Form
         scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshTree();
     }
 
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        base.OnClosing(e);
+        base.OnFormClosing(e);
         settings.Script = scintillaScriptEditor.Script;
     }
 
@@ -65,8 +65,8 @@ public partial class FormTreeView : Form
     {
         if (node.IsToken) return $"{node.Kind()} (token)";
 
-        var syntaxNode = (SyntaxNode)node;
-        if (_semanticModel is null) return $"{node.Kind()} (Unresolved)";
+        var syntaxNode = node.AsNode();
+        if (syntaxNode is null || _semanticModel is null) return $"{node.Kind()} (Unresolved)";
 
         var symbolInfo = _semanticModel.GetSymbolInfo(syntaxNode);
         var symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault();

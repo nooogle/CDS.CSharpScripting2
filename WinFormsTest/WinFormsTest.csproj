@@ -58,6 +58,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TestSupport\" />
+  </ItemGroup>
+
   <!--This copies all the XML documentation files to the output folder! -->
   <PropertyGroup>
     <CopyDocumentationFilesFromPackages>true</CopyDocumentationFilesFromPackages>

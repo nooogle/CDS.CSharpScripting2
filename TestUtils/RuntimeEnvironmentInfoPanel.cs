@@ -1,7 +1,4 @@
-﻿using WinFormsTest.TestSupport;
-
-namespace WinFormsTest;
-
+﻿namespace TestUtils;
 
 /// <summary>
 /// Panel to display system information

@@ -29,7 +29,7 @@ public partial class FormGlobals : Form
         propertyGrid1.SelectedObject = sharedData;
     }
 
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
         if (isRunningOrCompilingSentry)
         {
@@ -37,7 +37,7 @@ public partial class FormGlobals : Form
             return;
         }
 
-        base.OnClosing(e);
+        base.OnFormClosing(e);
         settings.Script = scintillaScriptEditor.Script;
     }
 
@@ -61,7 +61,7 @@ public partial class FormGlobals : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
 
         await PerformScriptAction(async () =>
         {

@@ -17,7 +17,7 @@ public partial class FormRTFDemo : Form
 
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
         var compiled = await rtfScriptEditor.CompileAsync();
         await compiled.RunAsync();
     }

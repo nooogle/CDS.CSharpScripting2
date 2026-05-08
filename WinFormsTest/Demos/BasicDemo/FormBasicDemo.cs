@@ -31,10 +31,11 @@ public partial class FormBasicDemo : Form
         scintillaScriptEditor.Script = settings.Script;
     }
 
+
     /// <summary>
     /// Saves the current script to settings when the form is closing.
     /// </summary>
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
         if (isRunningOrCompilingSentry)
         {
@@ -42,8 +43,9 @@ public partial class FormBasicDemo : Form
             return;
         }
 
-        base.OnClosing(e);
         settings.Script = scintillaScriptEditor.Script;
+
+        base.OnFormClosing(e);
     }
 
     /// <summary>
@@ -76,7 +78,7 @@ public partial class FormBasicDemo : Form
     {
         await PerformScriptAction(async () =>
         {
-            using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+            using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
             var compiled = await scintillaScriptEditor.CompileAsync();
             await compiled.RunAsync();
         });

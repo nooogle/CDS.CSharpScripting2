@@ -23,9 +23,9 @@ public partial class FormDemo : Form
         scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshList();
     }
 
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        base.OnClosing(e);
+        base.OnFormClosing(e);
         settings.Script = scintillaScriptEditor.Script;
     }
 

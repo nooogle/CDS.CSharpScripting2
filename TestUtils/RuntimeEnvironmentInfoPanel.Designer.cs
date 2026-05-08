@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest
+﻿namespace TestUtils
 {
     partial class RuntimeEnvironmentInfoPanel
     {

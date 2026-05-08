@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
 
-namespace WinFormsTest.TestSupport;
+namespace TestUtils;
 
 /// <summary>
 /// Utility to provide file load/save for a JSON-compatible data type.
@@ -46,7 +46,7 @@ public class SettingsManager<T> where T : new()
                 string jsonContentFromFile = File.ReadAllText(fileName);
                 if (!string.IsNullOrEmpty(jsonContentFromFile))
                 {
-                    var deserializedSettings = JsonConvert.DeserializeObject<T>(jsonContentFromFile);
+                    var deserializedSettings = JsonSerializer.Deserialize<T>(jsonContentFromFile);
                     if (deserializedSettings != null)
                     {
                         Settings = deserializedSettings;
@@ -83,7 +83,7 @@ public class SettingsManager<T> where T : new()
                 File.Copy(fileName, backupFile, overwrite: true);
             }
 
-            string dataAsJSON = JsonConvert.SerializeObject(Settings, Formatting.Indented);
+            string dataAsJSON = JsonSerializer.Serialize(Settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(fileName, dataAsJSON);
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException)

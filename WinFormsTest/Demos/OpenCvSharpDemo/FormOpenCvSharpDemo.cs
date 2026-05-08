@@ -47,7 +47,7 @@ public partial class FormOpenCvSharpDemo : Form
     /// <summary>
     /// Handles the closing event of the form.
     /// </summary>
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
         if (isRunningOrCompilingSentry)
         {
@@ -55,7 +55,7 @@ public partial class FormOpenCvSharpDemo : Form
             return;
         }
 
-        base.OnClosing(e);
+        base.OnFormClosing(e);
         settings.Script = scintillaScriptEditor.Script;
         sharedData?.Dispose();
     }
@@ -83,7 +83,7 @@ public partial class FormOpenCvSharpDemo : Form
     /// </summary>
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(outputPanel.Append);
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
 
         try
         {
