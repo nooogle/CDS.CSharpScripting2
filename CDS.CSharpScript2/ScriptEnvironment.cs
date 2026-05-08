@@ -10,7 +10,7 @@ public class ScriptEnvironment
 {
     private ImmutableList<string> namespaceNames;
     private ImmutableList<Assembly> references;
-    private Type globalType;
+    private Type? globalType;
     private static ScriptEnvironment defaultInstance;
     private static readonly bool isNetFramework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains(".NET Framework");
 
@@ -37,11 +37,11 @@ public class ScriptEnvironment
     /// <summary>
     /// Gets the global type.
     /// </summary>
-    public Type GlobalType => globalType;
+    public Type? GlobalType => globalType;
 
     static ScriptEnvironment()
     {
-        var defaultNamespaces = (new[] { typeof(object).Namespace }).ToImmutableList();
+        var defaultNamespaces = (new[] { typeof(object).Namespace! }).ToImmutableList();
 
         var defaultReferences = new[]
         {
@@ -55,7 +55,7 @@ public class ScriptEnvironment
             globalType: null);
     }
 
-    private ScriptEnvironment(ImmutableList<string> namespaceNames, ImmutableList<Assembly> references, Type globalType)
+    private ScriptEnvironment(ImmutableList<string> namespaceNames, ImmutableList<Assembly> references, Type? globalType)
     {
         this.namespaceNames = namespaceNames.Distinct().ToImmutableList();
         this.references = references.Distinct().ToImmutableList();
@@ -69,8 +69,10 @@ public class ScriptEnvironment
     /// <returns>A new instance of <see cref="ScriptEnvironment"/>.</returns>
     public ScriptEnvironment WithAdditionalNamespaceType(Type type)
     {
+        string typeNamespace = type.Namespace ?? throw new ArgumentException($"The type '{type.FullName}' does not have a namespace.", nameof(type));
+
         return new ScriptEnvironment(
-            namespaceNames.Add(type.Namespace),
+            namespaceNames.Add(typeNamespace),
             references,
             globalType);
     }
@@ -161,7 +163,10 @@ public class ScriptEnvironment
     /// <returns>A new instance of <see cref="ScriptEnvironment"/>.</returns>
     public ScriptEnvironment WithAdditionalReferenceForType<T>()
     {
-        return WithAdditionalReferenceName(typeof(T).Assembly.FullName);
+        var fullName = typeof(T).Assembly.FullName;
+        if (fullName == null)
+            throw new InvalidOperationException($"The assembly full name for type {typeof(T).Name} is null.");
+        return WithAdditionalReferenceName(fullName);
     }
 
     /// <summary>
@@ -171,6 +176,9 @@ public class ScriptEnvironment
     /// <returns>A new instance of <see cref="ScriptEnvironment"/>.</returns>
     public ScriptEnvironment WithAdditionalNamespaceForType<T>()
     {
-        return WithAdditionalNamespaceName(typeof(T).Namespace);
+        var namespaceName = typeof(T).Namespace;
+        if (namespaceName == null)
+            throw new InvalidOperationException($"The namespace for type {typeof(T).Name} is null.");
+        return WithAdditionalNamespaceName(namespaceName);
     }
 }

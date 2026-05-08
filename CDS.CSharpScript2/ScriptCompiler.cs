@@ -53,7 +53,7 @@ namespace CDS.CSharpScript2
         /// <returns>A compiled script</returns>
         public static CompiledScript Compile<ReturnType>(
             string script,
-            Type typeOfGlobals)
+            Type? typeOfGlobals)
         {
             return Compile<ReturnType>(
                 script: script,
@@ -73,14 +73,38 @@ namespace CDS.CSharpScript2
         /// <returns>A compiled script</returns>
         public static CompiledScript Compile<ReturnType>(
             string script,
-            Type[] namespaceTypes,
-            Type[] referenceTypes,
-            Type typeOfGlobals)
+            Type[]? namespaceTypes,
+            Type[]? referenceTypes,
+            Type? typeOfGlobals)
         {
+            List<string> namespaceTypesList = new List<string>();
+            if(namespaceTypes != null)
+            {
+                foreach(var type in namespaceTypes)
+                {
+                    if(type.Namespace != null)
+                    {
+                        namespaceTypesList.Add(type.Namespace);
+                    }
+                }
+            }
+
+            List<Assembly> referenceTypesList = new List<Assembly>();
+            if (referenceTypes != null)
+            {
+                foreach (var type in referenceTypes)
+                {
+                    if (type.Assembly != null)
+                    {
+                        referenceTypesList.Add(type.Assembly);
+                    }
+                }
+            }
+
             return Compile<ReturnType>(
                 script: script,
-                namespaces: namespaceTypes.Select(t => t.Namespace).ToArray(),
-                references: referenceTypes.Select(t => t.Assembly).ToArray(),
+                namespaces: namespaceTypesList,
+                references: referenceTypesList,
                 typeOfGlobals: typeOfGlobals);
         }
 
@@ -98,7 +122,7 @@ namespace CDS.CSharpScript2
             string script,
             IEnumerable<string> namespaces,
             IEnumerable<Assembly> references,
-            Type typeOfGlobals)
+            Type? typeOfGlobals)
         {
             GC.Collect();
 

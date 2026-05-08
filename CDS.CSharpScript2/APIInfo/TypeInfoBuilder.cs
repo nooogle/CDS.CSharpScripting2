@@ -71,28 +71,28 @@ public static class TypeInfoBuilder
     {
         if (typeSymbol is IArrayTypeSymbol)
         {
-            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat), TypeKind = "Array", Namespace = "System" };
+            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = "Array", Namespace = "System" };
         }
         if (typeSymbol is IPointerTypeSymbol)
         {
-            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat), TypeKind = "Pointer" };
+            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = "Pointer" };
         }
         var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
         if (namedTypeSymbol == null || namedTypeSymbol.Kind == SymbolKind.ErrorType)
         {
-            return typeSymbol != null ? new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat), TypeKind = typeSymbol.TypeKind.ToString() } : null;
+            return typeSymbol != null ? new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = typeSymbol.TypeKind.ToString() ?? string.Empty } : null;
         }
         var docs = DocumentationParser.Parse(namedTypeSymbol);
         return new DetailedTypeInfo
         {
-            Name = namedTypeSymbol.ToDisplayString(MinimallyQualifiedFormat),
+            Name = namedTypeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty,
             Namespace = namedTypeSymbol.ContainingNamespace?.ToDisplayString() ?? "[Global Namespace]",
-            Accessibility = namedTypeSymbol.DeclaredAccessibility.ToString(),
-            TypeKind = namedTypeSymbol.TypeKind.ToString(),
-            BaseType = namedTypeSymbol.BaseType?.ToDisplayString(MinimallyQualifiedFormat),
-            Interfaces = namedTypeSymbol.Interfaces.Select(i => i.ToDisplayString(MinimallyQualifiedFormat)).ToList(),
-            Summary = docs.Summary,
-            Remarks = docs.Remarks
+            Accessibility = namedTypeSymbol.DeclaredAccessibility.ToString() ?? string.Empty,
+            TypeKind = namedTypeSymbol.TypeKind.ToString() ?? string.Empty,
+            BaseType = namedTypeSymbol.BaseType?.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty,
+            Interfaces = namedTypeSymbol.Interfaces.Select(i => i.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty).ToList(),
+            Summary = docs.Summary ?? string.Empty,
+            Remarks = docs.Remarks ?? string.Empty
         };
     }
 
@@ -105,14 +105,14 @@ public static class TypeInfoBuilder
             Name = method.MethodKind == MethodKind.Constructor ? method.ContainingType.Name : method.Name,
             Kind = method.MethodKind.ToString(),
             Signature = method.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = method.MethodKind == MethodKind.Constructor ? null : method.ReturnType.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary,
-            Remarks = docs.Remarks,
+            ReturnType = method.MethodKind == MethodKind.Constructor ? string.Empty : method.ReturnType.ToDisplayString(MinimallyQualifiedFormat),
+            Summary = docs.Summary ?? string.Empty,
+            Remarks = docs.Remarks ?? string.Empty,
             Parameters = method.Parameters.Select(p => new ParameterInfo
             {
                 Name = p.Name,
                 Type = p.Type.ToDisplayString(MinimallyQualifiedFormat),
-                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : null
+                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : string.Empty
             }).ToList()
         };
         return info;
@@ -128,8 +128,8 @@ public static class TypeInfoBuilder
             Kind = property.IsIndexer ? "Indexer" : "Property",
             Signature = property.ToDisplayString(MinimallyQualifiedFormat),
             ReturnType = property.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary,
-            Remarks = docs.Remarks
+            Summary = docs.Summary ?? string.Empty,
+            Remarks = docs.Remarks ?? string.Empty
         };
         if (property.IsIndexer)
         {
@@ -137,7 +137,7 @@ public static class TypeInfoBuilder
             {
                 Name = p.Name,
                 Type = p.Type.ToDisplayString(MinimallyQualifiedFormat),
-                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : null
+                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : string.Empty
             }).ToList();
         }
         return info;
@@ -153,8 +153,8 @@ public static class TypeInfoBuilder
             Kind = field.IsConst ? "Constant" : (field.IsReadOnly ? "Readonly Field" : "Field"),
             Signature = field.ToDisplayString(MinimallyQualifiedFormat),
             ReturnType = field.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary,
-            Remarks = docs.Remarks
+            Summary = docs.Summary ?? string.Empty,
+            Remarks = docs.Remarks ?? string.Empty
         };
         if (field.HasConstantValue && field.ConstantValue != null)
         {
@@ -173,8 +173,8 @@ public static class TypeInfoBuilder
             Kind = "Event",
             Signature = evt.ToDisplayString(MinimallyQualifiedFormat),
             ReturnType = evt.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary,
-            Remarks = docs.Remarks
+            Summary = docs.Summary ?? string.Empty,
+            Remarks = docs.Remarks ?? string.Empty
         };
     }
 
@@ -193,7 +193,7 @@ public static class TypeInfoBuilder
             Kind = "Parameter",
             Signature = parameter.ToDisplayString(MinimallyQualifiedFormat),
             ReturnType = parameter.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = paramDoc
+            Summary = paramDoc ?? string.Empty
         };
     }
 
@@ -205,7 +205,8 @@ public static class TypeInfoBuilder
             Name = local.Name,
             Kind = local.IsConst ? "Local Constant" : "Local Variable",
             Signature = local.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = local.Type.ToDisplayString(MinimallyQualifiedFormat)
+            ReturnType = local.Type.ToDisplayString(MinimallyQualifiedFormat),
+            Summary = string.Empty
         };
     }
 
@@ -216,13 +217,14 @@ public static class TypeInfoBuilder
         if (typeParam.ContainingSymbol != null)
         {
             var docs = DocumentationParser.Parse(typeParam.ContainingSymbol);
+            typeParamDoc = docs.Summary; // Best effort to provide some doc if applicable
         }
         return new MemberDetailsInfo
         {
             Name = typeParam.Name,
             Kind = "Type Parameter",
             Signature = typeParam.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = typeParamDoc
+            Summary = typeParamDoc ?? string.Empty
         };
     }
 }

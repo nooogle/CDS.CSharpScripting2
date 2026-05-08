@@ -23,7 +23,7 @@ public static class SymbolInfoExtractor
             var overloads = OverloadFinder.Find(semanticModel, invocation.Expression);
             if (overloads.Any())
             {
-                var overloadDetails = overloads.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).ToList();
+                var overloadDetails = overloads.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).Select(info => info!).ToList();
                 var firstOverload = overloads.FirstOrDefault();
                 var typeInfo = firstOverload != null ? TypeInfoBuilder.GetDetailedTypeInfo(firstOverload.ContainingType) : null;
                 return new APIInfoResult(typeInfo, overloadDetails);
@@ -48,7 +48,7 @@ public static class SymbolInfoExtractor
             if (symbols.Any())
             {
                 var typeInfo = TypeInfoBuilder.GetDetailedTypeInfo(symbols.First().ContainingType);
-                var membersDetails = symbols.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).ToList();
+                var membersDetails = symbols.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).Select(i => i!).ToList();
                 return new APIInfoResult(typeInfo, membersDetails.Count > 0 ? membersDetails : null);
             }
         }
@@ -56,7 +56,7 @@ public static class SymbolInfoExtractor
         // 3. Identifier or Predefined Type
         var identifier = node.AncestorsAndSelf().OfType<IdentifierNameSyntax>().FirstOrDefault();
         var predefinedTypeSyntax = node.AncestorsAndSelf().OfType<PredefinedTypeSyntax>().FirstOrDefault();
-        SyntaxNode symbolNode = null;
+        SyntaxNode? symbolNode = null;
         if (identifier != null && identifier.Span.Contains(position))
         {
             symbolNode = identifier;
@@ -89,7 +89,7 @@ public static class SymbolInfoExtractor
             else if (symbol is IMethodSymbol methodSymbol)
             {
                 var overloads = methodSymbol.ContainingType.GetMembers(methodSymbol.Name).OfType<IMethodSymbol>();
-                var methodInfos = overloads.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).ToList();
+                var methodInfos = overloads.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).Select(i => i!).ToList();
                 var typeInfo = TypeInfoBuilder.GetDetailedTypeInfo(methodSymbol.ContainingType);
                 return new APIInfoResult(typeInfo, methodInfos);
             }
@@ -97,7 +97,7 @@ public static class SymbolInfoExtractor
             {
                 var memberDetail = TypeInfoBuilder.CreateInfoForSymbol(symbol);
                 var variableType = TypeInfoBuilder.GetSymbolType(symbol);
-                var typeInfo = TypeInfoBuilder.GetDetailedTypeInfo(variableType);
+                var typeInfo = variableType != null ? TypeInfoBuilder.GetDetailedTypeInfo(variableType) : null;
                 return new APIInfoResult(typeInfo, memberDetail != null ? new[] { memberDetail } : null);
             }
         }
@@ -109,7 +109,7 @@ public static class SymbolInfoExtractor
             objectCreation.Type.Span.Contains(position) ||
             (objectCreation.ArgumentList != null && objectCreation.ArgumentList.FullSpan.Contains(position))))
         {
-            ISymbol symbol = null;
+            ISymbol? symbol = null;
             if (objectCreation.Type.Span.Contains(position))
             {
                 symbol = semanticModel.GetSymbolInfo(objectCreation.Type).Symbol;
@@ -119,7 +119,7 @@ public static class SymbolInfoExtractor
                 symbol = semanticModel.GetSymbolInfo(objectCreation).Symbol;
             }
             var methodSymbol = symbol as IMethodSymbol;
-            INamedTypeSymbol targetType = null;
+            INamedTypeSymbol? targetType = null;
             if (methodSymbol != null)
             {
                 targetType = methodSymbol.ContainingType;
@@ -136,11 +136,11 @@ public static class SymbolInfoExtractor
             {
                 var constructors = targetType.GetMembers(".ctor").OfType<IMethodSymbol>()
                     .Where(m => !m.IsImplicitlyDeclared);
-                var ctorInfos = constructors.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).ToList();
+                var ctorInfos = constructors.Select(TypeInfoBuilder.CreateInfoForSymbol).Where(info => info != null).Select(i => i!).ToList();
                 var typeInfo = TypeInfoBuilder.GetDetailedTypeInfo(targetType);
                 return new APIInfoResult(typeInfo, ctorInfos);
             }
         }
-        return null;
+        return new APIInfoResult(null, null);
     }
 }

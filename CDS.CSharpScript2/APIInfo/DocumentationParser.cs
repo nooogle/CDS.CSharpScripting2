@@ -8,13 +8,13 @@ namespace CDS.CSharpScript2.APIInfo;
 /// </summary>
 public static class DocumentationParser
 {
-    public static (string Summary, string Remarks, Dictionary<string, string> ParamDocs) Parse(ISymbol symbol)
+    public static (string Summary, string Remarks, Dictionary<string, string> ParamDocs) Parse(ISymbol? symbol)
     {
-        if (symbol == null) return (null, null, new Dictionary<string, string>());
-        string xmlDocs = symbol.GetDocumentationCommentXml(expandIncludes: true, cancellationToken: System.Threading.CancellationToken.None);
+        if (symbol == null) return (string.Empty, string.Empty, new Dictionary<string, string>());
+        string? xmlDocs = symbol.GetDocumentationCommentXml(expandIncludes: true, cancellationToken: System.Threading.CancellationToken.None);
         if (string.IsNullOrEmpty(xmlDocs))
         {
-            return (null, null, new Dictionary<string, string>());
+            return (string.Empty, string.Empty, new Dictionary<string, string>());
         }
         try
         {
@@ -23,10 +23,10 @@ public static class DocumentationParser
                 var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
                 using (var xmlReader = XmlReader.Create(reader, settings))
                 {
-                    string summary = null;
-                    string remarks = null;
+                    string summary = string.Empty;
+                    string remarks = string.Empty;
                     var paramDocs = new Dictionary<string, string>();
-                    string currentParamName = null;
+                    string? currentParamName = null;
                     while (xmlReader.Read())
                     {
                         if (xmlReader.NodeType == XmlNodeType.Element)
@@ -60,11 +60,11 @@ public static class DocumentationParser
         }
         catch (XmlException)
         {
-            return (null, null, new Dictionary<string, string>());
+            return (string.Empty, string.Empty, new Dictionary<string, string>());
         }
         catch (Exception)
         {
-            return (null, null, new Dictionary<string, string>());
+            return (string.Empty, string.Empty, new Dictionary<string, string>());
         }
     }
 }

@@ -11,13 +11,18 @@ public static class SymbolLocator
 {
     public class SymbolContext
     {
-        public SyntaxToken Token { get; set; }
-        public SyntaxNode Node { get; set; }
-        public SyntaxTree SyntaxTree { get; set; }
+        public required SyntaxToken Token { get; set; }
+        public required SyntaxNode Node { get; set; }
+        public required SyntaxTree SyntaxTree { get; set; }
     }
 
-    public static SymbolContext Locate(SyntaxTree syntaxTree, int position)
+    public static SymbolContext? Locate(SyntaxTree? syntaxTree, int position)
     {
+        if (syntaxTree == null)
+        {
+            throw new ArgumentNullException(nameof(syntaxTree));
+        }
+
         var root = syntaxTree.GetRoot();
         var token = root.FindToken(position, findInsideTrivia: true);
         if (SyntaxFacts.IsTrivia((SyntaxKind)token.RawKind))
