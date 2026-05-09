@@ -93,18 +93,27 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         var names = (Classification.SymbolClassification[])Enum.GetValues(typeof(Classification.SymbolClassification));
 
         for (int i = 1; i <= names.Length; i++)
+        {
             builder[names[i - 1]] = i;
+        }
 
         _classificationKindToScintillaStyle = builder.ToImmutableDictionary();
 
         InitialiseScintilla();
     }
 
+    /// <summary>
+    /// Initializes editor UI settings when the control is loaded.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
 
-        if (DesignMode) return;
+        if (DesignMode)
+        {
+            return;
+        }
 
         timerChangeMonitor.Start();
 
@@ -117,6 +126,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.Margins[1].Mask = 0;
     }
 
+    /// <summary>
+    /// Configures Scintilla styling, indicators, and hover behavior.
+    /// </summary>
     private void InitialiseScintilla()
     {
         scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Mono";
@@ -145,14 +157,22 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     // ── Internal analysis cycle ───────────────────────────────────────────────
 
+    /// <summary>
+    /// Resets cached diagnostics, compilation state, and transient editor UI.
+    /// </summary>
     private void ResetAnalysisState()
     {
         _currentDiagnostics = [];
         _currentCompiledScript = null;
         _lastScript = string.Empty;
         _diagnosticsToolTipManager.ClearHover();
+        ClearWarningAndErrorIndicators();
+        _apiInfoForm.Hide();
     }
 
+    /// <summary>
+    /// Handles text edits by clearing cached analysis and restarting the debounce timer.
+    /// </summary>
     private void HandleTextChanged()
     {
         ResetAnalysisState();
@@ -161,6 +181,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         timerChangeMonitor.Start();
     }
 
+    /// <summary>
+    /// Starts a fresh live-analysis pass once the debounce timer elapses.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private async void timerChangeMonitor_Tick(object sender, EventArgs e)
     {
         timerChangeMonitor.Stop();
@@ -171,16 +196,20 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
+    /// <summary>
+    /// Performs a live-analysis pass and updates diagnostics, classifications, and events.
+    /// </summary>
     private async Task PerformLiveAnalysisAsync()
     {
-        if (_manager is null) return;
+        if (_manager is null)
+        {
+            return;
+        }
 
         ClearWarningAndErrorIndicators();
 
         await _manager.ApplyScript(Script);
 
-        // Continuation is back on the UI thread (async void captures SynchronizationContext;
-        // no ConfigureAwait(false) on the outer await above).
         _currentDiagnostics = _manager.LastDiagnostics;
         _lastScript = Script;
 
@@ -193,15 +222,26 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     // ── Visual feedback ───────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Applies diagnostic indicators to the editor for source-based warnings and errors.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics to render.</param>
     private void ApplyDiagnosticsToEditor(ImmutableArray<Diagnostic> diagnostics)
     {
         foreach (var diagnostic in diagnostics)
         {
-            if (diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
+            if (diagnostic.Location.IsInSource &&
+                diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
+            {
                 MarkDiagnosticInEditor(diagnostic);
+            }
         }
     }
 
+    /// <summary>
+    /// Marks a single diagnostic in the editor using the configured indicator styles.
+    /// </summary>
+    /// <param name="diagnostic">The diagnostic to render.</param>
     private void MarkDiagnosticInEditor(Diagnostic diagnostic)
     {
         scintilla.IndicatorCurrent =
@@ -221,6 +261,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.IndicatorFillRange(position: start, length: length);
     }
 
+    /// <summary>
+    /// Applies syntax classification styling to the editor.
+    /// </summary>
+    /// <param name="classifications">The classifications to apply.</param>
     private void ApplyClassificationsToEditor(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
     {
         scintilla.StartStyling(0);
@@ -236,6 +280,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
+    /// <summary>
+    /// Clears all warning and error indicators from the editor.
+    /// </summary>
     private void ClearWarningAndErrorIndicators()
     {
         scintilla.IndicatorCurrent = ScintillaErrorIndicatorIndex;
@@ -271,17 +318,37 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     // ── Scintilla event handlers ──────────────────────────────────────────────
 
+    /// <summary>
+    /// Handles character insertion events from Scintilla.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e) =>
         HandleTextChanged();
 
+    /// <summary>
+    /// Handles character deletion events from Scintilla.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_Delete(object sender, ScintillaNET.ModificationEventArgs e) =>
         HandleTextChanged();
 
+    /// <summary>
+    /// Handles mouse movement over the editor.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_MouseMove(object sender, MouseEventArgs e)
     {
         // Reserved for future pointer-tracking features.
     }
 
+    /// <summary>
+    /// Handles the start of a dwell operation to show hover diagnostics.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
     {
         _diagnosticsToolTipManager.HandleDwellStart(
@@ -289,9 +356,19 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             characterPosition: e.Position);
     }
 
+    /// <summary>
+    /// Handles the end of a dwell operation to clear hover diagnostics.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e) =>
         _diagnosticsToolTipManager.HandleDwellEnd();
 
+    /// <summary>
+    /// Handles key input for editor assistance features.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Space && e.Control)
@@ -317,9 +394,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
+    /// <summary>
+    /// Shows the autocomplete list at the current caret position.
+    /// </summary>
     private async Task TryRunAutoComplete()
     {
-        if (_manager is null) return;
+        if (_manager is null)
+        {
+            return;
+        }
 
         scintilla.AutoCCancel();
 
@@ -343,7 +426,24 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCShow(word.Length, completionList);
     }
 
+    /// <summary>
+    /// Handles the cancellation of the autocomplete list.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_AutoCCancelled(object sender, EventArgs e) { }
+
+    /// <summary>
+    /// Handles deletion while the autocomplete list is active.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_AutoCCharDeleted(object sender, EventArgs e) { }
+
+    /// <summary>
+    /// Handles completion selection from the autocomplete list.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
     private void scintilla_AutoCCompleted(object sender, ScintillaNET.AutoCSelectionEventArgs e) { }
 }
