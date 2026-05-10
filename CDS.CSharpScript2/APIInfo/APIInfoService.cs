@@ -1,31 +1,19 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Xml; // For XmlException
 
 namespace CDS.CSharpScript2.APIInfo;
 
 /// <summary>
-/// Service for extracting API information (including XML documentation)
-/// from code symbols at a specific position. Geared towards hover tooltips.
+/// Extracts API information (type metadata, member signatures, XML documentation)
+/// for the symbol at a given cursor position. Designed for hover tooltips and signature help.
 /// </summary>
-public static class APIInfoService
+internal static class APIInfoService
 {
-    // Only the public entry point remains here. All logic is delegated to specialized classes.
-    public static APIInfoResult Get(
-        SyntaxTree syntaxTree,
-        SemanticModel semanticModel,
-        int position)
+    internal static APIInfoResult? Get(SyntaxTree syntaxTree, SemanticModel semanticModel, int position)
     {
-        // SymbolLocator: finds the relevant node/token for the position
         var symbolContext = SymbolLocator.Locate(syntaxTree, position);
         if (symbolContext == null)
-        {
-            return new APIInfoResult(null, null);
-        }
+            return null;
 
-        // SymbolInfoExtractor: determines what kind of symbol is at the location and what info to extract
-        var symbolInfo = SymbolInfoExtractor.Extract(symbolContext, semanticModel, position);
-        return symbolInfo ?? new APIInfoResult(null, null);
+        return SymbolInfoExtractor.Extract(symbolContext, semanticModel, position);
     }
 }

@@ -3,11 +3,11 @@ using Microsoft.CodeAnalysis;
 namespace CDS.CSharpScript2.APIInfo;
 
 /// <summary>
-/// Builds DetailedTypeInfo and MemberDetailsInfo objects from symbols.
+/// Builds <see cref="DetailedTypeInfo"/> and <see cref="MemberDetailsInfo"/> objects from Roslyn symbols.
 /// </summary>
-public static class TypeInfoBuilder
+internal static class TypeInfoBuilder
 {
-    private static readonly SymbolDisplayFormat MinimallyQualifiedFormat = new SymbolDisplayFormat(
+    private static readonly SymbolDisplayFormat _displayFormat = new SymbolDisplayFormat(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
         genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
         memberOptions:
@@ -23,76 +23,64 @@ public static class TypeInfoBuilder
         miscellaneousOptions:
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
             SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
-            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-    );
+            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
-    public static MemberDetailsInfo? CreateInfoForSymbol(ISymbol? symbol)
+    internal static MemberDetailsInfo? CreateInfoForSymbol(ISymbol? symbol)
     {
         if (symbol == null) return null;
-        if (symbol.IsImplicitlyDeclared && !(symbol is IMethodSymbol m && m.MethodKind == MethodKind.Constructor))
-        {
-            if (symbol.Kind == SymbolKind.Field) return null;
-        }
-        switch (symbol.Kind)
-        {
-            case SymbolKind.Method:
-                return CreateMethodInfo(symbol as IMethodSymbol);
-            case SymbolKind.Property:
-                return CreatePropertyInfo(symbol as IPropertySymbol);
-            case SymbolKind.Field:
-                return CreateFieldInfo(symbol as IFieldSymbol);
-            case SymbolKind.Event:
-                return CreateEventInfo(symbol as IEventSymbol);
-            case SymbolKind.Parameter:
-                return CreateParameterStandaloneInfo(symbol as IParameterSymbol);
-            case SymbolKind.Local:
-                return CreateLocalInfo(symbol as ILocalSymbol);
-            case SymbolKind.TypeParameter:
-                return CreateTypeParameterInfo(symbol as ITypeParameterSymbol);
-            default:
-                return null;
-        }
-    }
 
-    public static ITypeSymbol? GetSymbolType(ISymbol? symbol)
-    {
-        return symbol switch
+        if (symbol.IsImplicitlyDeclared
+            && !(symbol is IMethodSymbol { MethodKind: MethodKind.Constructor })
+            && symbol.Kind == SymbolKind.Field)
+            return null;
+
+        return symbol.Kind switch
         {
-            ILocalSymbol local => local.Type,
-            IParameterSymbol parameter => parameter.Type,
-            IFieldSymbol field => field.Type,
-            IPropertySymbol property => property.Type,
-            IEventSymbol evt => evt.Type,
-            _ => null,
+            SymbolKind.Method    => CreateMethodInfo(symbol as IMethodSymbol),
+            SymbolKind.Property  => CreatePropertyInfo(symbol as IPropertySymbol),
+            SymbolKind.Field     => CreateFieldInfo(symbol as IFieldSymbol),
+            SymbolKind.Event     => CreateEventInfo(symbol as IEventSymbol),
+            SymbolKind.Parameter => CreateParameterStandaloneInfo(symbol as IParameterSymbol),
+            SymbolKind.Local     => CreateLocalInfo(symbol as ILocalSymbol),
+            SymbolKind.TypeParameter => CreateTypeParameterInfo(symbol as ITypeParameterSymbol),
+            _ => null
         };
     }
 
-    public static DetailedTypeInfo? GetDetailedTypeInfo(ITypeSymbol? typeSymbol)
+    internal static ITypeSymbol? GetSymbolType(ISymbol? symbol) => symbol switch
+    {
+        ILocalSymbol local       => local.Type,
+        IParameterSymbol param   => param.Type,
+        IFieldSymbol field       => field.Type,
+        IPropertySymbol property => property.Type,
+        IEventSymbol evt         => evt.Type,
+        _ => null,
+    };
+
+    internal static DetailedTypeInfo? GetDetailedTypeInfo(ITypeSymbol? typeSymbol)
     {
         if (typeSymbol is IArrayTypeSymbol)
-        {
-            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = "Array", Namespace = "System" };
-        }
+            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(_displayFormat), TypeKind = "Array", Namespace = "System" };
+
         if (typeSymbol is IPointerTypeSymbol)
-        {
-            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = "Pointer" };
-        }
-        var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
-        if (namedTypeSymbol == null || namedTypeSymbol.Kind == SymbolKind.ErrorType)
-        {
-            return typeSymbol != null ? new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty, TypeKind = typeSymbol.TypeKind.ToString() ?? string.Empty } : null;
-        }
-        var docs = DocumentationParser.Parse(namedTypeSymbol);
+            return new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(_displayFormat), TypeKind = "Pointer" };
+
+        if (typeSymbol is not INamedTypeSymbol named || named.Kind == SymbolKind.ErrorType)
+            return typeSymbol != null
+                ? new DetailedTypeInfo { Name = typeSymbol.ToDisplayString(_displayFormat), TypeKind = typeSymbol.TypeKind.ToString() }
+                : null;
+
+        var docs = DocumentationParser.Parse(named);
         return new DetailedTypeInfo
         {
-            Name = namedTypeSymbol.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty,
-            Namespace = namedTypeSymbol.ContainingNamespace?.ToDisplayString() ?? "[Global Namespace]",
-            Accessibility = namedTypeSymbol.DeclaredAccessibility.ToString() ?? string.Empty,
-            TypeKind = namedTypeSymbol.TypeKind.ToString() ?? string.Empty,
-            BaseType = namedTypeSymbol.BaseType?.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty,
-            Interfaces = namedTypeSymbol.Interfaces.Select(i => i.ToDisplayString(MinimallyQualifiedFormat) ?? string.Empty).ToList(),
-            Summary = docs.Summary ?? string.Empty,
-            Remarks = docs.Remarks ?? string.Empty
+            Name          = named.ToDisplayString(_displayFormat),
+            Namespace     = named.ContainingNamespace?.ToDisplayString() ?? "[Global Namespace]",
+            Accessibility = named.DeclaredAccessibility.ToString(),
+            TypeKind      = named.TypeKind.ToString(),
+            BaseType      = named.BaseType?.ToDisplayString(_displayFormat) ?? string.Empty,
+            Interfaces    = named.Interfaces.Select(i => i.ToDisplayString(_displayFormat)).ToList(),
+            Summary       = docs.Summary,
+            Remarks       = docs.Remarks,
         };
     }
 
@@ -100,67 +88,67 @@ public static class TypeInfoBuilder
     {
         if (method == null) return null;
         var docs = DocumentationParser.Parse(method);
-        var info = new MemberDetailsInfo
+        return new MemberDetailsInfo
         {
-            Name = method.MethodKind == MethodKind.Constructor ? method.ContainingType.Name : method.Name,
-            Kind = method.MethodKind.ToString(),
-            Signature = method.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = method.MethodKind == MethodKind.Constructor ? string.Empty : method.ReturnType.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary ?? string.Empty,
-            Remarks = docs.Remarks ?? string.Empty,
-            Parameters = method.Parameters.Select(p => new ParameterInfo
-            {
-                Name = p.Name,
-                Type = p.Type.ToDisplayString(MinimallyQualifiedFormat),
-                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : string.Empty
-            }).ToList()
+            Name       = method.MethodKind == MethodKind.Constructor ? method.ContainingType.Name : method.Name,
+            Kind       = method.MethodKind.ToString(),
+            Signature  = method.ToDisplayString(_displayFormat),
+            ReturnType = method.MethodKind == MethodKind.Constructor ? string.Empty : method.ReturnType.ToDisplayString(_displayFormat),
+            Summary    = docs.Summary,
+            Remarks    = docs.Remarks,
+            Parameters = method.Parameters
+                .Select(p => new ParameterInfo(
+                    p.Name,
+                    p.Type.ToDisplayString(_displayFormat),
+                    docs.ParamDocs.TryGetValue(p.Name, out var d) ? d : null))
+                .ToList(),
         };
-        return info;
     }
 
     private static MemberDetailsInfo? CreatePropertyInfo(IPropertySymbol? property)
     {
         if (property == null) return null;
         var docs = DocumentationParser.Parse(property);
-        var info = new MemberDetailsInfo
+
+        var parameters = property.IsIndexer
+            ? property.Parameters
+                .Select(p => new ParameterInfo(
+                    p.Name,
+                    p.Type.ToDisplayString(_displayFormat),
+                    docs.ParamDocs.TryGetValue(p.Name, out var d) ? d : null))
+                .ToList<ParameterInfo>()
+            : [];
+
+        return new MemberDetailsInfo
         {
-            Name = property.Name,
-            Kind = property.IsIndexer ? "Indexer" : "Property",
-            Signature = property.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = property.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary ?? string.Empty,
-            Remarks = docs.Remarks ?? string.Empty
+            Name       = property.Name,
+            Kind       = property.IsIndexer ? "Indexer" : "Property",
+            Signature  = property.ToDisplayString(_displayFormat),
+            ReturnType = property.Type.ToDisplayString(_displayFormat),
+            Summary    = docs.Summary,
+            Remarks    = docs.Remarks,
+            Parameters = parameters,
         };
-        if (property.IsIndexer)
-        {
-            info.Parameters = property.Parameters.Select(p => new ParameterInfo
-            {
-                Name = p.Name,
-                Type = p.Type.ToDisplayString(MinimallyQualifiedFormat),
-                Documentation = docs.ParamDocs.TryGetValue(p.Name, out var doc) ? doc : string.Empty
-            }).ToList();
-        }
-        return info;
     }
 
     private static MemberDetailsInfo? CreateFieldInfo(IFieldSymbol? field)
     {
         if (field == null) return null;
         var docs = DocumentationParser.Parse(field);
-        var info = new MemberDetailsInfo
-        {
-            Name = field.Name,
-            Kind = field.IsConst ? "Constant" : (field.IsReadOnly ? "Readonly Field" : "Field"),
-            Signature = field.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = field.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary ?? string.Empty,
-            Remarks = docs.Remarks ?? string.Empty
-        };
+
+        var signature = field.ToDisplayString(_displayFormat);
         if (field.HasConstantValue && field.ConstantValue != null)
+            signature += $" = {field.ConstantValue}";
+
+        return new MemberDetailsInfo
         {
-            info.Signature += $" = {field.ConstantValue}";
-        }
-        return info;
+            Name       = field.Name,
+            Kind       = field.IsConst ? "Constant" : (field.IsReadOnly ? "Readonly Field" : "Field"),
+            Signature  = signature,
+            ReturnType = field.Type.ToDisplayString(_displayFormat),
+            Summary    = docs.Summary,
+            Remarks    = docs.Remarks,
+        };
     }
 
     private static MemberDetailsInfo? CreateEventInfo(IEventSymbol? evt)
@@ -169,12 +157,12 @@ public static class TypeInfoBuilder
         var docs = DocumentationParser.Parse(evt);
         return new MemberDetailsInfo
         {
-            Name = evt.Name,
-            Kind = "Event",
-            Signature = evt.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = evt.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = docs.Summary ?? string.Empty,
-            Remarks = docs.Remarks ?? string.Empty
+            Name       = evt.Name,
+            Kind       = "Event",
+            Signature  = evt.ToDisplayString(_displayFormat),
+            ReturnType = evt.Type.ToDisplayString(_displayFormat),
+            Summary    = docs.Summary,
+            Remarks    = docs.Remarks,
         };
     }
 
@@ -185,15 +173,15 @@ public static class TypeInfoBuilder
         if (parameter.ContainingSymbol != null)
         {
             var docs = DocumentationParser.Parse(parameter.ContainingSymbol);
-            paramDoc = docs.ParamDocs.TryGetValue(parameter.Name, out var doc) ? doc : null;
+            docs.ParamDocs.TryGetValue(parameter.Name, out paramDoc);
         }
         return new MemberDetailsInfo
         {
-            Name = parameter.Name,
-            Kind = "Parameter",
-            Signature = parameter.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = parameter.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = paramDoc ?? string.Empty
+            Name       = parameter.Name,
+            Kind       = "Parameter",
+            Signature  = parameter.ToDisplayString(_displayFormat),
+            ReturnType = parameter.Type.ToDisplayString(_displayFormat),
+            Summary    = paramDoc ?? string.Empty,
         };
     }
 
@@ -202,11 +190,10 @@ public static class TypeInfoBuilder
         if (local == null) return null;
         return new MemberDetailsInfo
         {
-            Name = local.Name,
-            Kind = local.IsConst ? "Local Constant" : "Local Variable",
-            Signature = local.ToDisplayString(MinimallyQualifiedFormat),
-            ReturnType = local.Type.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = string.Empty
+            Name       = local.Name,
+            Kind       = local.IsConst ? "Local Constant" : "Local Variable",
+            Signature  = local.ToDisplayString(_displayFormat),
+            ReturnType = local.Type.ToDisplayString(_displayFormat),
         };
     }
 
@@ -217,14 +204,14 @@ public static class TypeInfoBuilder
         if (typeParam.ContainingSymbol != null)
         {
             var docs = DocumentationParser.Parse(typeParam.ContainingSymbol);
-            typeParamDoc = docs.Summary; // Best effort to provide some doc if applicable
+            docs.TypeParamDocs.TryGetValue(typeParam.Name, out typeParamDoc);
         }
         return new MemberDetailsInfo
         {
-            Name = typeParam.Name,
-            Kind = "Type Parameter",
-            Signature = typeParam.ToDisplayString(MinimallyQualifiedFormat),
-            Summary = typeParamDoc ?? string.Empty
+            Name      = typeParam.Name,
+            Kind      = "Type Parameter",
+            Signature = typeParam.ToDisplayString(_displayFormat),
+            Summary   = typeParamDoc ?? string.Empty,
         };
     }
 }

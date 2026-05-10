@@ -1,8 +1,4 @@
-﻿namespace CDS.CSharpScript2.APIInfo;
+namespace CDS.CSharpScript2.APIInfo;
 
-public class ParameterInfo
-{
-    public string Name { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string? Documentation { get; set; }
-}
+/// <summary>A single parameter extracted from a method or indexer symbol.</summary>
+public sealed record ParameterInfo(string Name, string Type, string? Documentation = null);

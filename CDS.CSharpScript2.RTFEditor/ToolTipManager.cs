@@ -19,7 +19,7 @@ public class ToolTipManager
     }
 
 
-    public void ShowAPIInfo(APIInfo.IAPIInfoResult aPIInfo, Point position)
+    public void ShowAPIInfo(APIInfo.APIInfoResult? aPIInfo, Point position)
     {
         if (aPIInfo == null) { return; }
 
@@ -42,7 +42,7 @@ public class ToolTipManager
     public void HandleMouseMove(
         System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics,
         int characterPosition,
-        APIInfo.IAPIInfoResult apiInfo)
+        APIInfo.APIInfoResult? apiInfo)
     {
         Microsoft.CodeAnalysis.Diagnostic diagnosticForTooltip = null;
 

@@ -167,7 +167,7 @@ public class VirtualScriptEditor : IScriptEditor
 
         return await _manager!
             .GetAPIInfo(CaretPosition)
-            .ConfigureAwait(false) as APIInfo.APIInfoResult;
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

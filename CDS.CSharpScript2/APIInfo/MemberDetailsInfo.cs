@@ -1,13 +1,29 @@
-﻿namespace CDS.CSharpScript2.APIInfo;
+namespace CDS.CSharpScript2.APIInfo;
 
-// Renamed for clarity, although used for various members
-public class MemberDetailsInfo
+/// <summary>
+/// Metadata for a single member (method, property, field, event, parameter, or local).
+/// When a method has overloads, one <see cref="MemberDetailsInfo"/> is produced per overload.
+/// </summary>
+public sealed record MemberDetailsInfo
 {
-    public string Name { get; set; } = string.Empty;
-    public string Kind { get; set; } = string.Empty;
-    public string Signature { get; set; } = string.Empty;
-    public string ReturnType { get; set; } = string.Empty;
-    public string Summary { get; set; } = string.Empty;
-    public string Remarks { get; set; } = string.Empty;
-    public List<ParameterInfo> Parameters { get; set; } = new List<ParameterInfo>(); 
+    /// <summary>The simple member name.</summary>
+    public string Name { get; init; } = string.Empty;
+
+    /// <summary>The kind of member: Method, Property, Field, Event, Parameter, etc.</summary>
+    public string Kind { get; init; } = string.Empty;
+
+    /// <summary>The full display signature of the member.</summary>
+    public string Signature { get; init; } = string.Empty;
+
+    /// <summary>Display string of the return type (empty for constructors and void methods).</summary>
+    public string ReturnType { get; init; } = string.Empty;
+
+    /// <summary>Content of the XML <c>&lt;summary&gt;</c> documentation tag.</summary>
+    public string Summary { get; init; } = string.Empty;
+
+    /// <summary>Content of the XML <c>&lt;remarks&gt;</c> documentation tag.</summary>
+    public string Remarks { get; init; } = string.Empty;
+
+    /// <summary>Parameters for methods and indexers; empty for other member kinds.</summary>
+    public IReadOnlyList<ParameterInfo> Parameters { get; init; } = [];
 }

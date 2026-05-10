@@ -19,20 +19,14 @@ public partial class FormAPIInfo : Form
     /// <param name="parent">The parent window used to position the form.</param>
     /// <param name="apiInfo">The API information to display.</param>
     /// <param name="location">The preferred screen location for the form.</param>
-    public void ShowAPIInfo(IWin32Window parent, APIInfo.IAPIInfoResult apiInfo, Point location)
+    public void ShowAPIInfo(IWin32Window parent, APIInfo.APIInfoResult? apiInfo, Point location)
     {
         if (apiInfo?.TypeInfo != null)
         {
-            bool isTypeOnly = !(apiInfo.MemberInfos?.Any() ?? false);
-
-            if (isTypeOnly)
-            {
-                SetTypeOnly(apiInfo.TypeInfo);
-            }
-            else
-            {
+            if (apiInfo.MemberInfos.Any())
                 SetMemberInfo(apiInfo);
-            }
+            else
+                SetTypeOnly(apiInfo.TypeInfo);
 
             Show(parent);
         }
@@ -42,12 +36,12 @@ public partial class FormAPIInfo : Form
         }
     }
 
-    private void SetMemberInfo(IAPIInfoResult apiInfo)
+    private void SetMemberInfo(APIInfo.APIInfoResult apiInfo)
     {
         richTextBox.Clear();
         richTextBox.AppendText($"{apiInfo.TypeInfo!.Name} ({apiInfo.TypeInfo.TypeKind})\n\n");
 
-        foreach (var memberInfo in apiInfo.MemberInfos ?? [])
+        foreach (var memberInfo in apiInfo.MemberInfos)
         {
             richTextBox.AppendText($"{memberInfo.Signature}\n");
             if (!string.IsNullOrWhiteSpace(memberInfo.Remarks))
@@ -74,7 +68,7 @@ public partial class FormAPIInfo : Form
 
         var membersNode = new TreeNode("Members");
 
-        foreach (var memberInfo in apiInfo.MemberInfos ?? [])
+        foreach (var memberInfo in apiInfo.MemberInfos)
         {
             var memberNode = new TreeNode(memberInfo.Signature);
             memberNode.Tag = memberInfo;
@@ -91,7 +85,7 @@ public partial class FormAPIInfo : Form
             }
 
             // add parameters
-            if (memberInfo.Parameters != null && memberInfo.Parameters.Count > 0)
+            if (memberInfo.Parameters.Count > 0)
             {
                 var parametersNode = new TreeNode("Parameters");
                 foreach (var parameter in memberInfo.Parameters)

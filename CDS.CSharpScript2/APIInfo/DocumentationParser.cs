@@ -1,70 +1,49 @@
 using Microsoft.CodeAnalysis;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace CDS.CSharpScript2.APIInfo;
 
 /// <summary>
-/// Parses XML documentation from symbols.
+/// Parses XML documentation comments from Roslyn symbols.
 /// </summary>
-public static class DocumentationParser
+internal static class DocumentationParser
 {
-    public static (string Summary, string Remarks, Dictionary<string, string> ParamDocs) Parse(ISymbol? symbol)
+    /// <summary>
+    /// Extracts summary, remarks, param, and typeparam documentation from the given symbol.
+    /// Returns empty strings and empty dictionaries when the symbol is null or carries no docs.
+    /// </summary>
+    internal static (string Summary, string Remarks,
+        IReadOnlyDictionary<string, string> ParamDocs,
+        IReadOnlyDictionary<string, string> TypeParamDocs) Parse(ISymbol? symbol)
     {
-        if (symbol == null) return (string.Empty, string.Empty, new Dictionary<string, string>());
-        string? xmlDocs = symbol.GetDocumentationCommentXml(expandIncludes: true, cancellationToken: System.Threading.CancellationToken.None);
-        if (string.IsNullOrEmpty(xmlDocs))
-        {
-            return (string.Empty, string.Empty, new Dictionary<string, string>());
-        }
+        var xml = symbol?.GetDocumentationCommentXml(expandIncludes: true);
+        if (string.IsNullOrWhiteSpace(xml))
+            return (string.Empty, string.Empty, Empty, Empty);
+
         try
         {
-            using (var reader = new System.IO.StringReader(xmlDocs))
-            {
-                var settings = new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment };
-                using (var xmlReader = XmlReader.Create(reader, settings))
-                {
-                    string summary = string.Empty;
-                    string remarks = string.Empty;
-                    var paramDocs = new Dictionary<string, string>();
-                    string? currentParamName = null;
-                    while (xmlReader.Read())
-                    {
-                        if (xmlReader.NodeType == XmlNodeType.Element)
-                        {
-                            switch (xmlReader.Name.ToLowerInvariant())
-                            {
-                                case "summary":
-                                    summary = xmlReader.ReadInnerXml().Trim();
-                                    break;
-                                case "remarks":
-                                    remarks = xmlReader.ReadInnerXml().Trim();
-                                    break;
-                                case "param":
-                                    currentParamName = xmlReader.GetAttribute("name");
-                                    if (currentParamName != null)
-                                    {
-                                        string paramValue = xmlReader.ReadInnerXml().Trim();
-                                        if (!paramDocs.ContainsKey(currentParamName))
-                                        {
-                                            paramDocs.Add(currentParamName, paramValue);
-                                        }
-                                    }
-                                    currentParamName = null;
-                                    break;
-                            }
-                        }
-                    }
-                    return (summary, remarks, paramDocs);
-                }
-            }
+            // Wrap in a root element to handle both raw fragments and <member>-wrapped formats.
+            var doc = XDocument.Parse($"<root>{xml}</root>");
+
+            var summary = doc.Descendants("summary").FirstOrDefault()?.Value.Trim() ?? string.Empty;
+            var remarks = doc.Descendants("remarks").FirstOrDefault()?.Value.Trim() ?? string.Empty;
+
+            var paramDocs = doc.Descendants("param")
+                .Where(e => e.Attribute("name") != null)
+                .ToDictionary(e => e.Attribute("name")!.Value, e => e.Value.Trim());
+
+            var typeParamDocs = doc.Descendants("typeparam")
+                .Where(e => e.Attribute("name") != null)
+                .ToDictionary(e => e.Attribute("name")!.Value, e => e.Value.Trim());
+
+            return (summary, remarks, paramDocs, typeParamDocs);
         }
-        catch (XmlException)
+        catch (System.Xml.XmlException)
         {
-            return (string.Empty, string.Empty, new Dictionary<string, string>());
-        }
-        catch (Exception)
-        {
-            return (string.Empty, string.Empty, new Dictionary<string, string>());
+            return (string.Empty, string.Empty, Empty, Empty);
         }
     }
+
+    private static readonly IReadOnlyDictionary<string, string> Empty =
+        new Dictionary<string, string>();
 }

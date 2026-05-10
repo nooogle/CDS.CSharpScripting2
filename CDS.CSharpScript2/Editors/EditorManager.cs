@@ -77,10 +77,10 @@ public class EditorManager : IDisposable
     }
 
     /// <summary>Returns API info (type, overloads, XML docs) at the given cursor position.</summary>
-    public async Task<APIInfo.IAPIInfoResult> GetAPIInfo(int cursorPosition)
+    public async Task<APIInfo.APIInfoResult?> GetAPIInfo(int cursorPosition)
     {
         await EnsureContext().ConfigureAwait(false);
-        return (await new ScriptAnalyser(_context!).GetAPIInfoAsync(cursorPosition).ConfigureAwait(false))!;
+        return await new ScriptAnalyser(_context!).GetAPIInfoAsync(cursorPosition).ConfigureAwait(false);
     }
 
     /// <summary>Returns the syntax tree for the current script.</summary>
