@@ -10,19 +10,28 @@ namespace CDS.CSharpScript2;
 /// Create via <see cref="CreateAsync()"/>, then update text via <see cref="ApplyScript"/>.
 /// Use <see cref="ScriptAnalyser"/> for editor feedback and <see cref="ScriptExecutor"/> to compile for execution.
 /// </summary>
-public class ScriptContext
+/// <remarks>
+/// Only the instance returned by <see cref="CreateAsync()"/> owns the underlying
+/// <see cref="Microsoft.CodeAnalysis.Workspace"/> and must be disposed when no longer needed.
+/// Instances produced by <see cref="ApplyScript"/> share the same workspace and must not be disposed.
+/// </remarks>
+public class ScriptContext : IDisposable
 {
+    private readonly bool _ownsWorkspace;
+    private bool _disposed;
+
     internal Document Document { get; }
     internal ScriptEnvironment Environment { get; }
 
     /// <summary>Gets the current script text.</summary>
     public string ScriptText { get; }
 
-    private ScriptContext(Document document, string scriptText, ScriptEnvironment environment)
+    private ScriptContext(Document document, string scriptText, ScriptEnvironment environment, bool ownsWorkspace)
     {
         Document = document;
         ScriptText = scriptText;
         Environment = environment;
+        _ownsWorkspace = ownsWorkspace;
     }
 
     /// <summary>Creates a context using the default script environment.</summary>
@@ -36,10 +45,23 @@ public class ScriptContext
     /// Returns a new context with the given script text applied.
     /// The workspace document is updated in-place; no compilation occurs.
     /// </summary>
+    /// <remarks>
+    /// The returned context does not own the workspace. Only dispose the original
+    /// context returned by <see cref="CreateAsync()"/>.
+    /// </remarks>
     public ScriptContext ApplyScript(string script)
     {
         var updatedDocument = Document.WithText(SourceText.From(script));
-        return new ScriptContext(updatedDocument, script, Environment);
+        return new ScriptContext(updatedDocument, script, Environment, ownsWorkspace: false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (_ownsWorkspace)
+            Document.Project.Solution.Workspace.Dispose();
     }
 
     private static ScriptContext CreateCore(ScriptEnvironment environment)
@@ -82,7 +104,7 @@ public class ScriptContext
 
         var document = workspace.AddDocument(documentInfo);
 
-        return new ScriptContext(document, "", environment);
+        return new ScriptContext(document, "", environment, ownsWorkspace: true);
     }
 
     private static MetadataReference GetMetadataReference(Type type)
@@ -97,7 +119,7 @@ public class ScriptContext
 
     private static MetadataReference GetMetadataReferenceForRuntime()
     {
-        string xmlPath = TryFindXml("System.Runtime.xml");
+        string xmlPath = TryFindXml("System.Runtime.xml") ?? string.Empty;
         string assemblyPath = string.IsNullOrEmpty(xmlPath)
             ? string.Empty
             : Path.Combine(Path.GetDirectoryName(xmlPath) ?? string.Empty, "System.Runtime.dll");
@@ -121,7 +143,7 @@ public class ScriptContext
         return TryFindXml(xmlFileName) ?? xmlPath;
     }
 
-    private static string TryFindXml(string xmlFileName)
+    private static string? TryFindXml(string xmlFileName)
     {
         var programFilesPaths = new[]
         {
@@ -152,6 +174,6 @@ public class ScriptContext
             }
         }
 
-        return string.Empty;
+        return null;
     }
 }

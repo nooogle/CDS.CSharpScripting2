@@ -44,6 +44,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         get => _environment;
         set
         {
+            _manager?.Dispose();
             _environment = value;
             _manager = value is null ? null : new Editors.EditorManager(value);
             ResetAnalysisState();

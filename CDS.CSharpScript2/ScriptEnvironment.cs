@@ -11,7 +11,7 @@ public class ScriptEnvironment
     private ImmutableList<string> namespaceNames;
     private ImmutableList<Assembly> references;
     private Type? globalType;
-    private static ScriptEnvironment defaultInstance;
+    private static readonly ScriptEnvironment defaultInstance;
     private static readonly bool isNetFramework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains(".NET Framework");
 
     /// <summary>
@@ -162,12 +162,7 @@ public class ScriptEnvironment
     /// <typeparam name="T">The type whose assembly reference will be added.</typeparam>
     /// <returns>A new instance of <see cref="ScriptEnvironment"/>.</returns>
     public ScriptEnvironment WithAdditionalReferenceForType<T>()
-    {
-        var fullName = typeof(T).Assembly.FullName;
-        if (fullName == null)
-            throw new InvalidOperationException($"The assembly full name for type {typeof(T).Name} is null.");
-        return WithAdditionalReferenceName(fullName);
-    }
+        => new ScriptEnvironment(namespaceNames, references.Add(typeof(T).Assembly), globalType);
 
     /// <summary>
     /// Returns a new instance of <see cref="ScriptEnvironment"/> with an additional namespace for a specified type.

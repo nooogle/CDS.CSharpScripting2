@@ -41,6 +41,42 @@ public partial class UT_Compilation
     }
 
     [TestMethod]
+    [TestCategory("compilation")]
+    public async Task DualPath_ValidScript_BothPathsReportNoErrors()
+    {
+        var context = await ScriptContext.CreateAsync(ScriptEnvironment.Default);
+        context = context.ApplyScript("var x = Math.Sqrt(4);");
+
+        var workspaceDiagnostics = await new ScriptAnalyser(context).GetDiagnosticsAsync();
+        var executable = await new ScriptExecutor(context).CompileAsync();
+
+        workspaceDiagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+            .Should().BeEmpty("workspace path should report no errors for a valid script");
+
+        executable.HasErrors.Should().BeFalse("execution path should report no errors for a valid script");
+
+        context.Dispose();
+    }
+
+    [TestMethod]
+    [TestCategory("compilation")]
+    public async Task DualPath_ScriptWithError_BothPathsReportErrors()
+    {
+        var context = await ScriptContext.CreateAsync(ScriptEnvironment.Default);
+        context = context.ApplyScript("var x = new UndefinedType123();");
+
+        var workspaceDiagnostics = await new ScriptAnalyser(context).GetDiagnosticsAsync();
+        var executable = await new ScriptExecutor(context).CompileAsync();
+
+        workspaceDiagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+            .Should().NotBeEmpty("workspace path should report errors for an invalid script");
+
+        executable.HasErrors.Should().BeTrue("execution path should report errors for an invalid script");
+
+        context.Dispose();
+    }
+
+    [TestMethod]
     public async Task MathNet_UsedInScript_PerformsCalculationCorrectly()
     {
         var globals = new MathGlobals();

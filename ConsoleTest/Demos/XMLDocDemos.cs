@@ -59,13 +59,15 @@ class XMLDocDemos
             logger.Log($"\tSummary: {info.TypeInfo.Summary}");
         }
 
-        if (info == null || !info.MemberInfos.Any())
+        var memberInfos = info?.MemberInfos ?? [];
+
+        if (!memberInfos.Any())
         {
             logger.Log("No member info found");
         }
         else
         {
-            foreach (var memberInfo in info.MemberInfos)
+            foreach (var memberInfo in memberInfos)
             {
                 logger.Log($"\tMember: {memberInfo.Name}");
                 logger.Log($"\tReturn type: {memberInfo.ReturnType}");

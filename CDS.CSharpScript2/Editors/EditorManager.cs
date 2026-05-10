@@ -9,7 +9,11 @@ namespace CDS.CSharpScript2.Editors;
 /// Each editor control owns one instance; host applications access this via
 /// <see cref="IScriptEditor.Manager"/> only when advanced APIs are needed.
 /// </summary>
-public class EditorManager
+/// <remarks>
+/// This class is not thread-safe. All methods must be called from a single thread
+/// (typically the UI thread). Dispose when the owning editor is disposed.
+/// </remarks>
+public class EditorManager : IDisposable
 {
     private ScriptContext? _context;
     private ExecutableScript? _cachedExecutableScript;
@@ -61,7 +65,7 @@ public class EditorManager
             return _cachedExecutableScript;
 
         await EnsureContext().ConfigureAwait(false);
-        _cachedExecutableScript = await new ScriptExecutor(_context!).CompileAsync().ConfigureAwait(false);
+        _cachedExecutableScript = await new ScriptExecutor(_context!).CompileAsync(cancellationToken).ConfigureAwait(false);
         return _cachedExecutableScript;
     }
 
@@ -98,6 +102,13 @@ public class EditorManager
     {
         await EnsureContext().ConfigureAwait(false);
         return await new ScriptAnalyser(_context!).GetClassificationsAsync().ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _context?.Dispose();
+        _context = null;
     }
 
     private async Task EnsureContext()

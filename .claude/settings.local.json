@@ -11,7 +11,9 @@
       "Bash(grep -E \"\\(Core|RTFEditor|ScintillaEditor\\)$\")",
       "Bash(dotnet build *)",
       "Bash(Select-String -Pattern \"\\(error|Error|warning CS\\)\")",
-      "Bash(Select-String -NotMatch \"warning CS\")"
+      "Bash(Select-String -NotMatch \"warning CS\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20 FullName)"
     ]
   }
 }

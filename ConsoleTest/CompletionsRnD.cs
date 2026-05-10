@@ -1,8 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Reflection;
+
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Reflection;
 
 namespace ConsoleTest;
 
@@ -12,7 +13,7 @@ class CompletionsRnD
     {
         await ViaScriptManager();
         await ViaDocument();
-        await ViaCompiliation();
+        await ViaCompilation();
     }
 
     private static async Task ViaScriptManager()
@@ -24,10 +25,15 @@ class CompletionsRnD
 
         var analyser = new CDS.CSharpScript2.ScriptAnalyser(context);
         var executable = await new CDS.CSharpScript2.ScriptExecutor(context).CompileAsync();
-        var compilationOutput = executable.CompilationOutput;
 
         var semanticModel = await analyser.GetSemanticModelAsync();
         var syntaxTree = await analyser.GetSyntaxTreeAsync();
+
+        if (syntaxTree is null)
+        {
+            Console.WriteLine("Syntax tree not found!");
+            return;
+        }
 
         var root = syntaxTree.GetRoot();
 
@@ -59,12 +65,11 @@ class CompletionsRnD
 
     private static async Task ViaDocument()
     {
-        var references = new[] { GetMetadataReferenceForRuntime() }; //, GetMetadataReference(typeof(Console)) };
+        MetadataReference[] references = [GetMetadataReferenceForRuntime()];
 
         var compilationOptions = new CSharpCompilationOptions(
             OutputKind.DynamicallyLinkedLibrary,
             usings: new[] { "System" });
-
 
         var scriptProjectInfo =
             ProjectInfo
@@ -88,13 +93,16 @@ class CompletionsRnD
             DocumentId.CreateNewId(scriptProject.Id), "Script",
             sourceCodeKind: SourceCodeKind.Script,
             loader: TextLoader.From(TextAndVersion.Create(SourceText.From(scriptText), VersionStamp.Create())));
-
-
         var document = workspace.AddDocument(scriptDocumentInfo);
 
-        // get the semantic model
-        var semanticModel = document.GetSemanticModelAsync().Result;
-        var syntaxTree = document.GetSyntaxTreeAsync().Result;
+        var semanticModel = await document.GetSemanticModelAsync();
+        var syntaxTree = await document.GetSyntaxTreeAsync();
+
+        if (semanticModel is null || syntaxTree is null)
+        {
+            Console.WriteLine("Unable to create semantic model for the document!");
+            return;
+        }
 
         var root = syntaxTree.GetRoot();
 
@@ -124,12 +132,12 @@ class CompletionsRnD
         Console.WriteLine(xmlDocumentation);
     }
 
-    private static async Task ViaCompiliation()
+    private static async Task ViaCompilation()
     {
         var mscorlib = GetMetadataReferenceForRuntime();
         var systemConsole = GetMetadataReference(typeof(Console));
 
-        var compiliationOptions = new CSharpCompilationOptions(
+        var compilationOptions = new CSharpCompilationOptions(
             OutputKind.DynamicallyLinkedLibrary,
             usings: new[] { "System" });
 
@@ -140,7 +148,7 @@ class CompletionsRnD
             assemblyName: "DemoAssembly",
             syntaxTrees: new[] { syntaxTree },
             references: new[] { mscorlib, systemConsole },
-            compiliationOptions);
+            compilationOptions);
 
         // Obtain the semantic model.
         var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -180,9 +188,9 @@ class CompletionsRnD
 
     private static MetadataReference GetMetadataReference(Assembly assembly)
     {
-        string xmlPath = GetXmlDocumentationPath(assembly.Location);
+        var xmlPath = GetXmlDocumentationPath(assembly.Location);
 
-        DocumentationProvider documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
+        var documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
 
         var metadataReference = MetadataReference.CreateFromFile(
             path: assembly.Location,
@@ -193,10 +201,13 @@ class CompletionsRnD
 
     private static MetadataReference GetMetadataReferenceForRuntime()
     {
-        string xmlPath = TryFindXMLForXXX("System.Runtime.xml");
-        string assemblyPath = Path.Combine(Path.GetDirectoryName(xmlPath), "System.Runtime.dll");
+        var xmlPath = TryFindXMLForXXX("System.Runtime.xml")
+            ?? throw new FileNotFoundException("Could not locate System.Runtime.xml.");
+        var xmlDirectory = Path.GetDirectoryName(xmlPath)
+            ?? throw new InvalidOperationException($"Could not determine the directory for '{xmlPath}'.");
+        var assemblyPath = Path.Combine(xmlDirectory, "System.Runtime.dll");
 
-        DocumentationProvider documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
+        var documentationProvider = XmlDocumentationProvider.CreateFromFile(xmlPath);
 
         var metadataReference = MetadataReference.CreateFromFile(
             path: assemblyPath,
@@ -204,11 +215,9 @@ class CompletionsRnD
 
         return metadataReference;
     }
-
-
     private static string GetXmlDocumentationPath(string assemblyPath)
     {
-        string xmlPath = Path.ChangeExtension(assemblyPath, ".xml");
+        var xmlPath = Path.ChangeExtension(assemblyPath, ".xml");
 
         if (File.Exists(xmlPath))
         {
@@ -216,23 +225,23 @@ class CompletionsRnD
         }
 
         // Fallback to common locations
-        string assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
+        var assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
 
         var xmlFileName = $"{assemblyName}.xml";
 
-        var xxx = TryFindXMLForXXX(xmlFileName);
+        var xmlDocumentationPath = TryFindXMLForXXX(xmlFileName);
 
-        return xxx ?? xmlPath;
+        return xmlDocumentationPath ?? xmlPath;
     }
 
 
     private static string? TryFindXMLForXXX(string xmlFileName)
-    { 
+    {
         var programFilesPaths = new List<string>
-            {
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
-            };
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+        };
 
         var possiblePaths = new List<string>();
 

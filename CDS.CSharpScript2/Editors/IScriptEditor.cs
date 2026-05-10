@@ -18,8 +18,9 @@ namespace CDS.CSharpScript2.Editors;
 /// var compiled = await scriptEditor.CompileAsync();
 /// await compiled.RunAsync(myGlobals);
 /// </code>
+/// Dispose the editor when it is no longer needed to release the underlying Roslyn workspace.
 /// </remarks>
-public interface IScriptEditor
+public interface IScriptEditor : IDisposable
 {
     // ── Configuration ────────────────────────────────────────────────────────
 

@@ -33,6 +33,7 @@ public class VirtualScriptEditor : IScriptEditor
         get => _environment;
         set
         {
+            _manager?.Dispose();
             _environment = value;
             _manager = value is null ? null : new EditorManager(value);
             CaretPosition = Math.Min(CaretPosition, _script.Length);
@@ -190,6 +191,13 @@ public class VirtualScriptEditor : IScriptEditor
     {
         EnsureManager();
         await ApplyAnalysisAsync(raiseEvents: true, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _manager?.Dispose();
+        _manager = null;
     }
 
     /// <summary>
