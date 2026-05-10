@@ -69,6 +69,18 @@ public class EditorManager : IDisposable
         return _cachedExecutableScript;
     }
 
+    /// <summary>
+    /// Updates the Roslyn workspace document to reflect the latest script text without running
+    /// diagnostics or classification. Call this before requesting completions to keep the
+    /// document current while avoiding the cost of a full analysis pass.
+    /// </summary>
+    public async Task UpdateScriptDocumentAsync(string script)
+    {
+        await EnsureContext().ConfigureAwait(false);
+        _context = _context!.ApplyScript(script);
+        _cachedExecutableScript = null;
+    }
+
     /// <summary>Returns code completion suggestions at the given cursor position.</summary>
     public async Task<IEnumerable<CompletionItem>> GetAutoCompletions(int cursorPosition)
     {

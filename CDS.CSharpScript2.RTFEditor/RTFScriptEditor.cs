@@ -1,9 +1,13 @@
-using Microsoft.CodeAnalysis;
-using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Collections.Immutable;
+
+using Microsoft.CodeAnalysis;
 
 namespace CDS.CSharpScript2.RTFEditor;
 
+/// <summary>
+/// Provides a rich-text-based script editor with live diagnostics and classification feedback.
+/// </summary>
 public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
 {
     private Editors.EditorManager? _manager;
@@ -13,14 +17,16 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
     private string _lastScript = "";
     private int _programmaticTextChangeSentryDepth = 0;
 
-    private Font _errorFont;
-    private ToolTipManager _toolTipManager;
-    private Classification.Coloriser _coloriser = new();
+    private readonly Font _errorFont;
+    private readonly ToolTipManager _toolTipManager;
+    private readonly Classification.Coloriser _coloriser = new();
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
+    /// <inheritdoc/>
     public Editors.EditorManager? Manager => _manager;
 
+    /// <inheritdoc/>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ScriptEnvironment? Environment
     {
@@ -32,6 +38,7 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
+    /// <inheritdoc/>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Script
     {
@@ -39,27 +46,39 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
         set => richTextBox.Text = value;
     }
 
+    /// <inheritdoc/>
     public bool HasErrors =>
         _currentDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
 
+    /// <inheritdoc/>
     public IReadOnlyList<Diagnostic> CurrentDiagnostics => _currentDiagnostics;
 
+    /// <inheritdoc/>
     public ExecutableScript? CurrentCompiledScript => _currentCompiledScript;
 
+    /// <inheritdoc/>
     public async Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken = default)
     {
         if (_manager is null)
+        {
             throw new InvalidOperationException($"{nameof(Environment)} must be set before compiling.");
+        }
 
         _currentCompiledScript = await _manager.CompileAsync(cancellationToken).ConfigureAwait(false);
         return _currentCompiledScript;
     }
 
+    /// <inheritdoc/>
     public event EventHandler<Editors.DiagnosticsUpdatedEventArgs>? DiagnosticsUpdated;
+
+    /// <inheritdoc/>
     public event EventHandler? ScriptChanged;
 
     // ── Construction ─────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RTFScriptEditor"/> class.
+    /// </summary>
     public RTFScriptEditor()
     {
         InitializeComponent();
@@ -72,7 +91,10 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
 
     private void richTextBox_TextChanged(object sender, EventArgs e)
     {
-        if (_programmaticTextChangeSentryDepth > 0) return;
+        if (_programmaticTextChangeSentryDepth > 0)
+        {
+            return;
+        }
 
         _currentDiagnostics = [];
         _currentCompiledScript = null;
@@ -86,12 +108,17 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
         timerChangeMonitor.Stop();
 
         if (_lastScript != Script)
+        {
             PerformLiveAnalysis();
+        }
     }
 
     private async void PerformLiveAnalysis()
     {
-        if (_manager is null) return;
+        if (_manager is null)
+        {
+            return;
+        }
 
         ClearErrorIndicators();
 
@@ -118,7 +145,9 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
         foreach (var diagnostic in diagnostics)
         {
             if (diagnostic.DefaultSeverity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
+            {
                 MarkDiagnosticInEditor(diagnostic);
+            }
         }
 
         _programmaticTextChangeSentryDepth--;

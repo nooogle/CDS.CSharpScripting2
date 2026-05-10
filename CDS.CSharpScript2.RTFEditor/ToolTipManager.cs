@@ -1,72 +1,95 @@
-﻿namespace CDS.CSharpScript2.RTFEditor;
-
+﻿using System.Collections.Immutable;
 using System.Text;
 using System.Windows.Forms;
 
+using CDS.CSharpScript2.APIInfo;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+
+namespace CDS.CSharpScript2.RTFEditor;
+
+/// <summary>
+/// Manages diagnostic and API information tooltips for the editor control.
+/// </summary>
 public class ToolTipManager
 {
-    private Microsoft.CodeAnalysis.Diagnostic currentToolTipDiagnostic;
-    private Control editor;
-    private ToolTip toolTip;
+    private readonly Control _editor;
+    private readonly ToolTip _toolTip;
+    private Diagnostic? _currentToolTipDiagnostic;
 
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ToolTipManager"/> class.
+    /// </summary>
+    /// <param name="editor">The editor control that owns the tooltip.</param>
+    /// <param name="toolTip">The tooltip instance used to display messages.</param>
     public ToolTipManager(
         Control editor,
         ToolTip toolTip)
     {
-        this.editor = editor;
-        this.toolTip = toolTip;
+        _editor = editor ?? throw new ArgumentNullException(nameof(editor));
+        _toolTip = toolTip ?? throw new ArgumentNullException(nameof(toolTip));
     }
 
-
-    public void ShowAPIInfo(APIInfo.APIInfoResult? aPIInfo, Point position)
+    /// <summary>
+    /// Shows API information at the specified position when type information is available.
+    /// </summary>
+    /// <param name="apiInfo">The API information to display.</param>
+    /// <param name="position">The tooltip position relative to the editor.</param>
+    public void ShowAPIInfo(APIInfoResult? apiInfo, Point position)
     {
-        if (aPIInfo == null) { return; }
-
-        if(aPIInfo?.TypeInfo?.Summary != null)
+        if (apiInfo is null)
         {
-            toolTip.ToolTipIcon = ToolTipIcon.Info;
-            toolTip.ToolTipTitle = aPIInfo.TypeInfo.Name;
-            toolTip.SetToolTip(editor, aPIInfo.TypeInfo.Summary);
-            
-            toolTip.Show(aPIInfo.TypeInfo.Summary, editor, position);
+            return;
+        }
+
+        if (apiInfo.TypeInfo?.Summary != null)
+        {
+            _toolTip.ToolTipIcon = ToolTipIcon.Info;
+            _toolTip.ToolTipTitle = apiInfo.TypeInfo.Name;
+            _toolTip.SetToolTip(_editor, apiInfo.TypeInfo.Summary);
+            _toolTip.Show(apiInfo.TypeInfo.Summary, _editor, position);
         }
         else
         {
-            toolTip.SetToolTip(editor, "");
+            _toolTip.SetToolTip(_editor, string.Empty);
         }
-
     }
 
-
+    /// <summary>
+    /// Updates the tooltip based on API information or diagnostics at the specified character position.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics to inspect.</param>
+    /// <param name="characterPosition">The zero-based character position under the pointer.</param>
+    /// <param name="apiInfo">The API information for the hovered symbol, if available.</param>
     public void HandleMouseMove(
-        System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.Diagnostic> diagnostics,
+        ImmutableArray<Diagnostic> diagnostics,
         int characterPosition,
-        APIInfo.APIInfoResult? apiInfo)
+        APIInfoResult? apiInfo)
     {
-        Microsoft.CodeAnalysis.Diagnostic diagnosticForTooltip = null;
+        Diagnostic? diagnosticForTooltip = null;
 
-        if (apiInfo?.TypeInfo?.Summary != null) 
+        if (apiInfo?.TypeInfo?.Summary != null)
         {
-            toolTip.ToolTipIcon = ToolTipIcon.Info;
-            toolTip.ToolTipTitle = apiInfo.TypeInfo.Name;
+            _toolTip.ToolTipIcon = ToolTipIcon.Info;
+            _toolTip.ToolTipTitle = apiInfo.TypeInfo.Name;
 
-            StringBuilder sb = new();
+            var sb = new StringBuilder();
             sb.AppendLine(apiInfo.TypeInfo.Summary);
 
-            if (apiInfo.MemberInfos.Any())
+            if (apiInfo.MemberInfos?.Any() ?? false)
             {
-                var firstMember = apiInfo.MemberInfos.First();
+                var firstMember = apiInfo.MemberInfos!.First();
                 sb.Append($"Member: {firstMember.Name}");
 
-                int numOverloads = apiInfo.MemberInfos.Count();
+                var numOverloads = apiInfo.MemberInfos.Count();
                 if (numOverloads > 1)
                 {
                     sb.Append($" (overloads: {numOverloads})");
                 }
             }
 
-            toolTip.SetToolTip(editor, sb.ToString());
+            _toolTip.SetToolTip(_editor, sb.ToString());
         }
         else
         {
@@ -75,7 +98,7 @@ public class ToolTipManager
                 var span = diagnostic.Location.SourceSpan;
                 if (span.Length == 0)
                 {
-                    span = new Microsoft.CodeAnalysis.Text.TextSpan(span.Start - 1, 1);
+                    span = new TextSpan(Math.Max(0, span.Start - 1), 1);
                 }
 
                 if (span.Contains(characterPosition))
@@ -87,32 +110,32 @@ public class ToolTipManager
 
             if (diagnosticForTooltip == null)
             {
-                currentToolTipDiagnostic = null;
+                _currentToolTipDiagnostic = null;
             }
             else
             {
-                if (currentToolTipDiagnostic != diagnosticForTooltip)
+                if (_currentToolTipDiagnostic != diagnosticForTooltip)
                 {
-                    currentToolTipDiagnostic = diagnosticForTooltip;
+                    _currentToolTipDiagnostic = diagnosticForTooltip;
 
-                    if (diagnosticForTooltip.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+                    if (diagnosticForTooltip.Severity == DiagnosticSeverity.Error)
                     {
-                        toolTip.ToolTipIcon = ToolTipIcon.Error;
-                        toolTip.ToolTipTitle = $"Error {diagnosticForTooltip.Id}";
+                        _toolTip.ToolTipIcon = ToolTipIcon.Error;
+                        _toolTip.ToolTipTitle = $"Error {diagnosticForTooltip.Id}";
                     }
                     else
                     {
-                        toolTip.ToolTipIcon = ToolTipIcon.Warning;
-                        toolTip.ToolTipTitle = $"Warning {diagnosticForTooltip.Id} (level {diagnosticForTooltip.WarningLevel})";
+                        _toolTip.ToolTipIcon = ToolTipIcon.Warning;
+                        _toolTip.ToolTipTitle = $"Warning {diagnosticForTooltip.Id} (level {diagnosticForTooltip.WarningLevel})";
                     }
 
-                    toolTip.SetToolTip(editor, diagnosticForTooltip.GetMessage());
+                    _toolTip.SetToolTip(_editor, diagnosticForTooltip.GetMessage());
                 }
             }
 
-            if (currentToolTipDiagnostic == null)
+            if (_currentToolTipDiagnostic == null)
             {
-                toolTip.SetToolTip(editor, "");
+                _toolTip.SetToolTip(_editor, string.Empty);
             }
         }
     }

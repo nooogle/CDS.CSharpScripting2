@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 
 namespace CDS.CSharpScript2.RTFEditor;
 
@@ -60,11 +61,17 @@ public partial class RTFOutputPanel : UserControl, Output.IOutputPanel
     /// </summary>
     private void richTextBox_LinkClicked(object sender, LinkClickedEventArgs e)
     {
-        if (!AllowClickLinks2) { return; }
+        if (!AllowClickLinks2)
+        {
+            return;
+        }
 
         try
         {
-            System.Diagnostics.Process.Start(e.LinkText);
+            if (e.LinkText != null)
+            {
+                Process.Start(e.LinkText);
+            }
         }
         catch (Exception ex)
         {

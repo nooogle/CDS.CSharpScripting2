@@ -21,6 +21,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private Editors.EditorManager? _manager;
     private ScriptEnvironment? _environment;
     private string _lastScript = "";
+    private CancellationTokenSource? _completionCts;
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
     private readonly FormAPIInfo _apiInfoForm = new();
@@ -137,6 +138,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.StyleClearAll();
 
         scintilla.MouseDwellTime = 500;
+
+        scintilla.AutoCIgnoreCase = true;
+        scintilla.AutoCOrder = ScintillaNET.Order.Custom;
+        scintilla.AutoCMaxHeight = 12;
 
         foreach (var (classificationName, styleIndex) in _classificationKindToScintillaStyle)
         {
@@ -324,8 +329,31 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
-    private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e) =>
+    private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e)
+    {
         HandleTextChanged();
+
+        var ch = (char)e.Char;
+
+        if (ch == '.')
+        {
+            // Member access — cancel any open session and immediately start a fresh one.
+            scintilla.AutoCCancel();
+            StartCompletionSession(immediate: true);
+        }
+        else if (!scintilla.AutoCActive && (char.IsLetter(ch) || ch == '_'))
+        {
+            // First identifier character of a new word — trigger after a short delay so
+            // rapid typists don't fire a Roslyn request on every single keystroke.
+            StartCompletionSession(immediate: false);
+        }
+        else if (scintilla.AutoCActive && !char.IsLetterOrDigit(ch) && ch != '_')
+        {
+            // Non-identifier character while the list is open — dismiss.
+            scintilla.AutoCCancel();
+            _completionCts?.Cancel();
+        }
+    }
 
     /// <summary>
     /// Handles character deletion events from Scintilla.
@@ -365,6 +393,65 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e) =>
         _diagnosticsToolTipManager.HandleDwellEnd();
 
+    // ── Code completion ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Cancels any pending completion request and starts a new one.
+    /// </summary>
+    /// <param name="immediate">When <see langword="false"/> a 150 ms debounce is applied so rapid
+    /// typing only fires one Roslyn request per word, not one per character.</param>
+    private void StartCompletionSession(bool immediate)
+    {
+        _completionCts?.Cancel();
+        _completionCts = new CancellationTokenSource();
+        _ = ShowCompletionAsync(_completionCts.Token, immediate);
+    }
+
+    /// <summary>
+    /// Fetches completions from Roslyn and populates the Scintilla autocomplete list.
+    /// Runs on the UI thread throughout; the debounce <see cref="Task.Delay"/> simply
+    /// yields control without leaving the <see cref="System.Windows.Forms.WindowsFormsSynchronizationContext"/>.
+    /// </summary>
+    private async Task ShowCompletionAsync(CancellationToken cancellationToken, bool immediate)
+    {
+        try
+        {
+            if (!immediate)
+                await Task.Delay(150, cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested || _manager is null)
+                return;
+
+            // Keep the Roslyn document current without paying for a full diagnostics pass.
+            await _manager.UpdateScriptDocumentAsync(Script);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            int currentPosition = scintilla.CurrentPosition;
+            int wordStart = scintilla.WordStartPosition(currentPosition, onlyWordCharacters: true);
+            int lenEntered = currentPosition - wordStart;
+
+            var completions = await _manager.GetAutoCompletions(currentPosition);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            if (!completions.Any())
+            {
+                scintilla.AutoCCancel();
+                return;
+            }
+
+            var list = string.Join(
+                scintilla.AutoCSeparator.ToString(),
+                completions.Select(c => c.DisplayText));
+
+            scintilla.AutoCShow(lenEntered, list);
+        }
+        catch (OperationCanceledException) { }
+    }
+
     /// <summary>
     /// Handles key input for editor assistance features.
     /// </summary>
@@ -374,7 +461,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         if (e.KeyCode == Keys.Space && e.Control)
         {
-            await TryRunAutoComplete();
+            TryRunAutoComplete();
         }
         else if (e.KeyCode == Keys.F1)
         {
@@ -396,35 +483,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     }
 
     /// <summary>
-    /// Shows the autocomplete list at the current caret position.
+    /// Shows the autocomplete list at the current caret position (explicit Ctrl+Space trigger).
     /// </summary>
-    private async Task TryRunAutoComplete()
+    private void TryRunAutoComplete()
     {
-        if (_manager is null)
-        {
-            return;
-        }
-
         scintilla.AutoCCancel();
-
-        // Flush any pending change before requesting completions
-        if (_lastScript != Script)
-        {
-            await PerformLiveAnalysisAsync();
-        }
-
-        int currentPosition = scintilla.CurrentPosition;
-        int wordStartPosition = scintilla.WordStartPosition(position: currentPosition, onlyWordCharacters: true);
-        int lenEntered = currentPosition - wordStartPosition;
-        string word = scintilla.GetTextRange(wordStartPosition, length: lenEntered);
-
-        var completions = await _manager.GetAutoCompletions(currentPosition);
-
-        var completionList = string.Join(
-            scintilla.AutoCSeparator.ToString(),
-            completions.Select(c => c.DisplayText));
-
-        scintilla.AutoCShow(word.Length, completionList);
+        StartCompletionSession(immediate: true);
     }
 
     /// <summary>
@@ -436,10 +500,18 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     /// <summary>
     /// Handles deletion while the autocomplete list is active.
+    /// Scintilla dismisses the list when the user backspaces past the opening prefix;
+    /// this re-triggers completion if the caret is still inside a word.
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
-    private void scintilla_AutoCCharDeleted(object sender, EventArgs e) { }
+    private void scintilla_AutoCCharDeleted(object sender, EventArgs e)
+    {
+        int pos = scintilla.CurrentPosition;
+        int wordStart = scintilla.WordStartPosition(pos, onlyWordCharacters: true);
+        if (pos > wordStart)
+            StartCompletionSession(immediate: true);
+    }
 
     /// <summary>
     /// Handles completion selection from the autocomplete list.

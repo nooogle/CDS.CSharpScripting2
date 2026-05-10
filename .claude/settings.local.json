@@ -15,7 +15,9 @@
       "Bash(Get-ChildItem -Path \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\" -Recurse -Directory)",
       "Bash(Select-Object -First 20 FullName)",
       "Bash(Remove-Item \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\APIInfo\\\\IAPIInfoResult.cs\")",
-      "Bash(Remove-Item \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\APIInfo\\\\OverloadFinder.cs\")"
+      "Bash(Remove-Item \"c:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\CDS.CSharpScript2\\\\APIInfo\\\\OverloadFinder.cs\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\dev\\\\nooogle\\\\CDS.CSharpScripting2\\\\UnitTests\" -Recurse -File -Name)",
+      "Bash(Sort-Object)"
     ]
   }
 }
