@@ -20,6 +20,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="TestSupport\**" />
+    <EmbeddedResource Remove="TestSupport\**" />
+    <None Remove="TestSupport\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CDS.WinFormsMenus" Version="1.1.3" />
     <PackageReference Include="Humanizer.Core" Version="3.0.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -56,10 +62,6 @@
     <None Update="Demos\OpenCvSharpDemo\IMG_1412.jpeg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="TestSupport\" />
   </ItemGroup>
 
   <!--This copies all the XML documentation files to the output folder! -->

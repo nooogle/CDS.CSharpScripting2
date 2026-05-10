@@ -2,6 +2,9 @@
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
+/// <summary>
+/// Displays API information (type and member details) in a floating form.
+/// </summary>
 public partial class FormAPIInfo : Form
 {
     public FormAPIInfo()
@@ -10,28 +13,27 @@ public partial class FormAPIInfo : Form
     }
 
 
+    /// <summary>
+    /// Shows the form populated with the provided API information, or hides it when no relevant info is available.
+    /// </summary>
+    /// <param name="parent">The parent window used to position the form.</param>
+    /// <param name="apiInfo">The API information to display.</param>
+    /// <param name="location">The preferred screen location for the form.</param>
     public void ShowAPIInfo(IWin32Window parent, APIInfo.IAPIInfoResult apiInfo, Point location)
     {
-        bool didSetAPIInfo = false;
-
         if (apiInfo?.TypeInfo != null)
         {
-            bool isTypeOnly = !apiInfo.MemberInfos.Any();
+            bool isTypeOnly = !(apiInfo.MemberInfos?.Any() ?? false);
 
             if (isTypeOnly)
             {
                 SetTypeOnly(apiInfo.TypeInfo);
-                didSetAPIInfo = true;
             }
             else
             {
                 SetMemberInfo(apiInfo);
-                didSetAPIInfo = true;
             }
-        }
 
-        if (didSetAPIInfo)
-        {
             Show(parent);
         }
         else
@@ -43,17 +45,15 @@ public partial class FormAPIInfo : Form
     private void SetMemberInfo(IAPIInfoResult apiInfo)
     {
         richTextBox.Clear();
-        richTextBox.AppendText($"{apiInfo.TypeInfo.Name} ({apiInfo.TypeInfo.TypeKind})\n\n");
+        richTextBox.AppendText($"{apiInfo.TypeInfo!.Name} ({apiInfo.TypeInfo.TypeKind})\n\n");
 
-        foreach (var memberInfo in apiInfo.MemberInfos)
+        foreach (var memberInfo in apiInfo.MemberInfos ?? [])
         {
-            //richTextBox.AppendText($"{memberInfo.} {memberInfo.Name}\n");
             richTextBox.AppendText($"{memberInfo.Signature}\n");
             if (!string.IsNullOrWhiteSpace(memberInfo.Remarks))
             {
                 richTextBox.AppendText($"{memberInfo.Remarks}\n");
             }
-            //richTextBox.AppendText("\n");
         }
 
         // add the above to the treeview
@@ -74,7 +74,7 @@ public partial class FormAPIInfo : Form
 
         var membersNode = new TreeNode("Members");
 
-        foreach (var memberInfo in apiInfo.MemberInfos)
+        foreach (var memberInfo in apiInfo.MemberInfos ?? [])
         {
             var memberNode = new TreeNode(memberInfo.Signature);
             memberNode.Tag = memberInfo;
@@ -100,7 +100,7 @@ public partial class FormAPIInfo : Form
                     parameterNode.Tag = parameter;
                     parametersNode.Nodes.Add(parameterNode);
 
-                    if(!string.IsNullOrWhiteSpace(parameter.Documentation))
+                    if (!string.IsNullOrWhiteSpace(parameter.Documentation))
                     {
                         parameterNode.Nodes.Add(new TreeNode(parameter.Documentation));
                     }
@@ -150,14 +150,10 @@ public partial class FormAPIInfo : Form
 
     private void FormAPIInfo_KeyDown(object sender, KeyEventArgs e)
     {
-        if(e.KeyCode == Keys.Escape)
+        if (e.KeyCode == Keys.Escape)
         {
             Hide();
         }
     }
 
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
     }
-}
