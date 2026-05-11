@@ -22,6 +22,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private ScriptEnvironment? _environment;
     private string _lastScript = "";
     private bool _analysisInProgress;
+    private bool _disposed;
+    private int _editorStateVersion;
     private CancellationTokenSource? _completionCts;
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
@@ -49,11 +51,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         get => _environment;
         set
         {
+            _editorStateVersion++;
+            CancelPendingAsyncOperations();
             _manager?.Dispose();
             _environment = value;
             _manager = value is null ? null : new Editors.EditorManager(value);
-            _callTipSession?.Cancel();
-            _callTipSession = null;
             ResetAnalysisState();
         }
     }
@@ -62,8 +64,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Script
     {
-        get => scintilla.Text;
-        set => scintilla.Text = value;
+        get => TryGetScript(out var script)
+            ? script
+            : throw new ObjectDisposedException(nameof(ScintillaScriptEditor));
+        set
+        {
+            ThrowIfEditorUnavailable();
+            scintilla.Text = value;
+        }
     }
 
     /// <inheritdoc/>
@@ -177,7 +185,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _currentDiagnostics = [];
         _currentCompiledScript = null;
         _lastScript = string.Empty;
-        _dwellCts?.Cancel();
+
+        CancelAndDispose(ref _dwellCts);
+
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
         _diagnosticsToolTipManager.ClearHover();
         ClearWarningAndErrorIndicators();
         _apiInfoForm.Hide();
@@ -188,6 +203,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private void HandleTextChanged()
     {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
         ResetAnalysisState();
 
         timerChangeMonitor.Stop();
@@ -203,7 +223,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         timerChangeMonitor.Stop();
 
-        if (_lastScript != Script)
+        if (TryGetScript(out var script) && _lastScript != script)
         {
             await PerformLiveAnalysisAsync();
         }
@@ -214,40 +234,60 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private async Task PerformLiveAnalysisAsync()
     {
-        if (_manager is null || _analysisInProgress)
+        if (_manager is null || _analysisInProgress || !TryGetScript(out var scriptSnapshot))
         {
             return;
         }
+
+        var manager = _manager;
+        var stateVersion = _editorStateVersion;
 
         _analysisInProgress = true;
 
         try
         {
-            var scriptSnapshot = Script;
-
             ClearWarningAndErrorIndicators();
 
-            await _manager.ApplyScript(scriptSnapshot);
+            await manager.ApplyScript(scriptSnapshot);
 
-            if (!string.Equals(scriptSnapshot, Script, StringComparison.Ordinal))
+            if (stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !TryGetScript(out var currentScript))
             {
                 return;
             }
 
-            _currentDiagnostics = _manager.LastDiagnostics;
+            if (!string.Equals(scriptSnapshot, currentScript, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _currentDiagnostics = manager.LastDiagnostics;
             _lastScript = scriptSnapshot;
 
             ApplyDiagnosticsToEditor(_currentDiagnostics);
-            ApplyClassificationsToEditor(_manager.LastClassifications);
+            ApplyClassificationsToEditor(manager.LastClassifications);
 
-            DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
-            ScriptChanged?.Invoke(this, EventArgs.Empty);
+            if (CanAccessEditor)
+            {
+                DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
+                ScriptChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
         }
         finally
         {
             _analysisInProgress = false;
 
-            if (_lastScript != Script && !timerChangeMonitor.Enabled)
+            if (stateVersion == _editorStateVersion &&
+                TryGetScript(out var currentScript) &&
+                _lastScript != currentScript &&
+                !timerChangeMonitor.Enabled)
             {
                 timerChangeMonitor.Start();
             }
@@ -262,6 +302,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="diagnostics">The diagnostics to render.</param>
     private void ApplyDiagnosticsToEditor(ImmutableArray<Diagnostic> diagnostics)
     {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
         foreach (var diagnostic in diagnostics)
         {
             if (diagnostic.Location.IsInSource &&
@@ -278,6 +323,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="diagnostic">The diagnostic to render.</param>
     private void MarkDiagnosticInEditor(Diagnostic diagnostic)
     {
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
         scintilla.IndicatorCurrent =
             diagnostic.Severity == DiagnosticSeverity.Error
             ? ScintillaErrorIndicatorIndex
@@ -292,7 +342,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             length = 1;
         }
 
-        var documentLength = scintilla.Text.Length;
+        var documentLength = script.Length;
 
         if (!TryGetDocumentRange(start, length, documentLength, out var boundedStart, out var boundedLength))
         {
@@ -308,7 +358,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="classifications">The classifications to apply.</param>
     private void ApplyClassificationsToEditor(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
     {
-        var documentLength = scintilla.Text.Length;
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
+        var documentLength = script.Length;
 
         scintilla.StartStyling(0);
         scintilla.SetStyling(documentLength, 0);
@@ -334,11 +389,16 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private void ClearWarningAndErrorIndicators()
     {
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
         scintilla.IndicatorCurrent = ScintillaErrorIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+        scintilla.IndicatorClearRange(0, script.Length);
 
         scintilla.IndicatorCurrent = ScintillaWarningIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+        scintilla.IndicatorClearRange(0, script.Length);
     }
 
     // ── Highlight API (public — used by ClassifiedSpans and SyntaxTree demos) ─
@@ -350,9 +410,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="length">The length of the range to highlight.</param>
     public void HighlightText(int start, int length)
     {
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
         ClearHighlightText();
 
-        var documentLength = scintilla.Text.Length;
+        var documentLength = script.Length;
 
         if (!TryGetDocumentRange(start, length, documentLength, out var boundedStart, out var boundedLength))
         {
@@ -391,8 +456,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     public void ClearHighlightText()
     {
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
         scintilla.IndicatorCurrent = ScintillaHighlightIndicatorIndex;
-        scintilla.IndicatorClearRange(0, scintilla.Text.Length);
+        scintilla.IndicatorClearRange(0, script.Length);
     }
 
     // ── Scintilla event handlers ──────────────────────────────────────────────
@@ -486,7 +556,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
     {
-        _dwellCts?.Cancel();
+        CancelAndDispose(ref _dwellCts);
         _dwellCts = new CancellationTokenSource();
         _ = HandleDwellAsync(e.Position, _dwellCts.Token);
     }
@@ -498,7 +568,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e)
     {
-        _dwellCts?.Cancel();
+        CancelAndDispose(ref _dwellCts);
         _diagnosticsToolTipManager.HandleDwellEnd();
     }
 
@@ -509,20 +579,33 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private async Task HandleDwellAsync(int position, CancellationToken ct)
     {
         APIInfo.APIInfoResult? apiInfo = null;
+        var manager = _manager;
+        var stateVersion = _editorStateVersion;
 
-        if (_manager is not null)
+        if (manager is not null)
         {
             try
             {
-                apiInfo = await _manager.GetAPIInfo(position);
+                apiInfo = await manager.GetAPIInfo(position);
             }
             catch (OperationCanceledException)
             {
                 return;
             }
+            catch (ObjectDisposedException) when (
+                ct.IsCancellationRequested ||
+                stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !CanAccessEditor)
+            {
+                return;
+            }
         }
 
-        if (ct.IsCancellationRequested)
+        if (ct.IsCancellationRequested ||
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
             return;
 
         _diagnosticsToolTipManager.HandleDwellStart(_currentDiagnostics, position, apiInfo);
@@ -537,7 +620,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// typing only fires one Roslyn request per word, not one per character.</param>
     private void StartCompletionSession(bool immediate)
     {
-        _completionCts?.Cancel();
+        CancelAndDispose(ref _completionCts);
         _completionCts = new CancellationTokenSource();
         _ = ShowCompletionAsync(_completionCts.Token, immediate);
     }
@@ -554,22 +637,32 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             if (!immediate)
                 await Task.Delay(150, cancellationToken);
 
-            if (cancellationToken.IsCancellationRequested || _manager is null)
+            var manager = _manager;
+            var stateVersion = _editorStateVersion;
+
+            if (cancellationToken.IsCancellationRequested ||
+                manager is null ||
+                !TryGetScript(out var script))
                 return;
 
             // Keep the Roslyn document current without paying for a full diagnostics pass.
-            await _manager.UpdateScriptDocumentAsync(Script);
+            await manager.UpdateScriptDocumentAsync(script);
 
-            if (cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested ||
+                stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !TryGetCurrentPosition(out var currentPosition))
                 return;
 
-            int currentPosition = scintilla.CurrentPosition;
             int wordStart = scintilla.WordStartPosition(currentPosition, onlyWordCharacters: true);
             int lenEntered = currentPosition - wordStart;
 
-            var completions = await _manager.GetAutoCompletions(currentPosition);
+            var completions = await manager.GetAutoCompletions(currentPosition);
 
-            if (cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested ||
+                stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !CanAccessEditor)
                 return;
 
             if (!completions.Any())
@@ -585,6 +678,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             scintilla.AutoCShow(lenEntered, list);
         }
         catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested || !CanAccessEditor) { }
     }
 
     /// <summary>
@@ -606,14 +700,39 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
         else if (e.KeyCode == Keys.F1)
         {
-            if (_manager is null) return;
+            if (_manager is null || !TryGetCurrentPosition(out var pos))
+            {
+                return;
+            }
 
-            int pos = scintilla.CurrentPosition;
             var point = new Point(
                 x: scintilla.PointXFromPosition(pos),
                 y: scintilla.PointYFromPosition(pos));
 
-            var apiInfo = await _manager.GetAPIInfo(scintilla.CurrentPosition);
+            var manager = _manager;
+            var stateVersion = _editorStateVersion;
+
+            APIInfo.APIInfoResult? apiInfo;
+
+            try
+            {
+                apiInfo = await manager.GetAPIInfo(pos);
+            }
+            catch (ObjectDisposedException) when (
+                stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !CanAccessEditor)
+            {
+                return;
+            }
+
+            if (stateVersion != _editorStateVersion ||
+                !ReferenceEquals(manager, _manager) ||
+                !CanAccessEditor)
+            {
+                return;
+            }
+
             _apiInfoForm.ShowAPIInfo(parent: this, location: point, apiInfo: apiInfo);
         }
         else if (e.KeyCode == Keys.Escape)
@@ -658,23 +777,80 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private async Task StartCallTipSessionAsync()
     {
         if (_manager is null)
+        {
             return;
+        }
 
         _callTipSession?.Cancel();
         _callTipSession = null;
 
-        await _manager.UpdateScriptDocumentAsync(Script);
+        var manager = _manager;
+        var stateVersion = _editorStateVersion;
 
-        int pos = scintilla.CurrentPosition;
-        var context = await _manager.GetCallTipContext(pos);
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
 
-        if (context is null)
+        try
+        {
+            await manager.UpdateScriptDocumentAsync(script);
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
+
+        if (stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !TryGetCurrentPosition(out var pos))
+        {
+            return;
+        }
+
+        APIInfo.CallTipContext? context;
+
+        try
+        {
+            context = await manager.GetCallTipContext(pos);
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
+
+        if (context is null ||
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
             return;
 
         // API info is resolved at the character just before '(' to land on the method name.
-        var apiInfo = await _manager.GetAPIInfo(Math.Max(0, context.OpenParenPosition - 1));
+        APIInfo.APIInfoResult? apiInfo;
 
-        if (apiInfo?.MemberInfos is null || apiInfo.MemberInfos.Count == 0)
+        try
+        {
+            apiInfo = await manager.GetAPIInfo(Math.Max(0, context.OpenParenPosition - 1));
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
+
+        if (apiInfo?.MemberInfos is null ||
+            apiInfo.MemberInfos.Count == 0 ||
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
             return;
 
         _callTipSession = new CallTipSession(
@@ -690,20 +866,69 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private async Task UpdateCallTipArgumentAsync()
     {
         if (_manager is null || _callTipSession is null)
+        {
             return;
+        }
 
-        await _manager.UpdateScriptDocumentAsync(Script);
+        var manager = _manager;
+        var callTipSession = _callTipSession;
+        var stateVersion = _editorStateVersion;
 
-        var context = await _manager.GetCallTipContext(scintilla.CurrentPosition);
+        if (!TryGetScript(out var script))
+        {
+            return;
+        }
+
+        try
+        {
+            await manager.UpdateScriptDocumentAsync(script);
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
+
+        if (stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !ReferenceEquals(callTipSession, _callTipSession) ||
+            !TryGetCurrentPosition(out var currentPosition))
+        {
+            return;
+        }
+
+        APIInfo.CallTipContext? context;
+
+        try
+        {
+            context = await manager.GetCallTipContext(currentPosition);
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
 
         if (context is null)
         {
-            _callTipSession.Cancel();
+            callTipSession.Cancel();
             _callTipSession = null;
             return;
         }
 
-        _callTipSession.UpdateArgument(context.ArgumentIndex);
+        if (stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !ReferenceEquals(callTipSession, _callTipSession) ||
+            !CanAccessEditor)
+        {
+            return;
+        }
+
+        callTipSession.UpdateArgument(context.ArgumentIndex);
     }
 
     /// <summary>
@@ -722,10 +947,16 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private void scintilla_AutoCCharDeleted(object sender, EventArgs e)
     {
-        int pos = scintilla.CurrentPosition;
+        if (!TryGetCurrentPosition(out var pos))
+        {
+            return;
+        }
+
         int wordStart = scintilla.WordStartPosition(pos, onlyWordCharacters: true);
         if (pos > wordStart)
+        {
             StartCompletionSession(immediate: true);
+        }
     }
 
     /// <summary>
@@ -734,4 +965,86 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
     private void scintilla_AutoCCompleted(object sender, ScintillaNET.AutoCSelectionEventArgs e) { }
+
+    /// <summary>
+    /// Gets a value indicating whether the Scintilla editor can still be accessed safely.
+    /// </summary>
+    private bool CanAccessEditor =>
+        !_disposed &&
+        !IsDisposed &&
+        !Disposing &&
+        !scintilla.IsDisposed;
+
+    /// <summary>
+    /// Cancels pending asynchronous editor interactions that may resume after disposal or environment changes.
+    /// </summary>
+    private void CancelPendingAsyncOperations()
+    {
+        CancelAndDispose(ref _completionCts);
+        CancelAndDispose(ref _dwellCts);
+        _callTipSession?.Cancel();
+        _callTipSession = null;
+
+        if (CanAccessEditor)
+        {
+            _apiInfoForm.Hide();
+            _diagnosticsToolTipManager.ClearHover();
+        }
+    }
+
+    /// <summary>
+    /// Cancels and disposes the specified token source.
+    /// </summary>
+    /// <param name="cts">The token source to cancel and dispose.</param>
+    private static void CancelAndDispose(ref CancellationTokenSource? cts)
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = null;
+    }
+
+    /// <summary>
+    /// Throws when the editor control or its Scintilla child has already been disposed.
+    /// </summary>
+    private void ThrowIfEditorUnavailable()
+    {
+        if (!CanAccessEditor)
+        {
+            throw new ObjectDisposedException(nameof(ScintillaScriptEditor));
+        }
+    }
+
+    /// <summary>
+    /// Tries to read the current script text without touching a disposed Scintilla control.
+    /// </summary>
+    /// <param name="script">The current script when available.</param>
+    /// <returns><see langword="true"/> when the script was read; otherwise <see langword="false"/>.</returns>
+    private bool TryGetScript(out string script)
+    {
+        if (!CanAccessEditor)
+        {
+            script = string.Empty;
+            return false;
+        }
+
+        script = scintilla.Text;
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to read the current caret position without touching a disposed Scintilla control.
+    /// </summary>
+    /// <param name="currentPosition">The current caret position when available.</param>
+    /// <returns><see langword="true"/> when the caret position was read; otherwise <see langword="false"/>.</returns>
+    private bool TryGetCurrentPosition(out int currentPosition)
+    {
+        if (!CanAccessEditor)
+        {
+            currentPosition = 0;
+            return false;
+        }
+
+        currentPosition = scintilla.CurrentPosition;
+        return true;
+    }
 }

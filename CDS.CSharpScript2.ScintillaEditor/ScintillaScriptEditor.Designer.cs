@@ -15,8 +15,13 @@
         {
             if (disposing)
             {
+                _disposed = true;
+                _editorStateVersion++;
+                timerChangeMonitor?.Stop();
+                CancelPendingAsyncOperations();
                 _manager?.Dispose();
                 _manager = null;
+                _apiInfoForm.Dispose();
                 components?.Dispose();
             }
             base.Dispose(disposing);
