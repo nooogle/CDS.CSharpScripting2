@@ -1,11 +1,16 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Text;
+
+using CDS.CSharpScript2.APIInfo;
+
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
 
 /// <summary>
-/// Manages diagnostic tooltips for an editor control.
+/// Manages hover tooltips for an editor control.
+/// Shows API symbol information when available; falls back to diagnostics.
 /// </summary>
 public class ToolTipDiagnostics
 {
@@ -29,11 +34,26 @@ public class ToolTipDiagnostics
 
     /// <summary>
     /// Updates the tooltip when the pointer dwells over a character position.
+    /// When <paramref name="apiInfo"/> is provided and has displayable content it takes
+    /// priority; diagnostics are shown as a secondary line or used as the sole content
+    /// when no symbol info is available.
     /// </summary>
     /// <param name="diagnostics">The diagnostics to inspect.</param>
     /// <param name="characterPosition">The zero-based character position under the pointer.</param>
-    public void HandleDwellStart(ImmutableArray<Diagnostic> diagnostics, int characterPosition) =>
+    /// <param name="apiInfo">Optional symbol information for the hovered position.</param>
+    public void HandleDwellStart(
+        ImmutableArray<Diagnostic> diagnostics,
+        int characterPosition,
+        APIInfoResult? apiInfo = null)
+    {
+        if (apiInfo is not null && HasDisplayableInfo(apiInfo))
+        {
+            ShowAPIInfoToolTip(apiInfo, diagnostics, characterPosition);
+            return;
+        }
+
         UpdateHoverDiagnostic(diagnostics, characterPosition);
+    }
 
     /// <summary>
     /// Clears any active diagnostic tooltip when hover tracking ends.
@@ -48,6 +68,67 @@ public class ToolTipDiagnostics
         _currentToolTipDiagnostic = null;
         ClearToolTip();
     }
+
+    // ── API info display ──────────────────────────────────────────────────────
+
+    private static bool HasDisplayableInfo(APIInfoResult apiInfo) =>
+        !string.IsNullOrWhiteSpace(apiInfo.TypeInfo?.Summary) ||
+        (apiInfo.MemberInfos?.Count > 0);
+
+    private void ShowAPIInfoToolTip(
+        APIInfoResult apiInfo,
+        ImmutableArray<Diagnostic> diagnostics,
+        int characterPosition)
+    {
+        var sb = new StringBuilder();
+        string title;
+
+        if (apiInfo.MemberInfos?.Count > 0)
+        {
+            var first = apiInfo.MemberInfos[0];
+            title = first.Name;
+            sb.AppendLine(first.Signature);
+
+            if (!string.IsNullOrWhiteSpace(first.Summary))
+                sb.AppendLine(first.Summary);
+
+            int extra = apiInfo.MemberInfos.Count - 1;
+            if (extra > 0)
+                sb.AppendLine($"+{extra} overload{(extra > 1 ? "s" : "")}");
+        }
+        else
+        {
+            var typeInfo = apiInfo.TypeInfo!;
+            title = typeInfo.Name;
+            sb.AppendLine($"{typeInfo.TypeKind} {typeInfo.Name}");
+
+            if (!string.IsNullOrWhiteSpace(typeInfo.Summary))
+                sb.AppendLine(typeInfo.Summary);
+        }
+
+        var diagnostic = FindDiagnosticAtPosition(diagnostics, characterPosition);
+        if (diagnostic is not null)
+        {
+            if (sb.Length > 0)
+                sb.AppendLine();
+            sb.Append(diagnostic.GetMessage());
+        }
+
+        _currentToolTipDiagnostic = null;
+        _toolTip.ToolTipIcon = ToolTipIcon.Info;
+        _toolTip.ToolTipTitle = title;
+        _toolTip.Hide(_editor);
+
+        var mousePosition = _editor.PointToClient(Control.MousePosition);
+        _toolTip.Show(
+            sb.ToString().TrimEnd(),
+            _editor,
+            mousePosition.X + ToolTipOffsetX,
+            mousePosition.Y + ToolTipOffsetY,
+            duration: _toolTip.AutoPopDelay);
+    }
+
+    // ── Diagnostic display ────────────────────────────────────────────────────
 
     /// <summary>
     /// Updates the hover diagnostic for the specified character position.

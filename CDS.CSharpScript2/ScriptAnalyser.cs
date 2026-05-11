@@ -131,4 +131,19 @@ public class ScriptAnalyser
 
         return APIInfo.APIInfoService.Get(syntaxTree, semanticModel, position) as APIInfo.APIInfoResult;
     }
+
+    /// <summary>
+    /// Returns the active argument index and opening-paren position when the cursor
+    /// sits inside a method or indexer argument list; otherwise returns <see langword="null"/>.
+    /// Only the syntax tree is required — no semantic analysis is performed.
+    /// </summary>
+    public async Task<APIInfo.CallTipContext?> GetCallTipContextAsync(int position)
+    {
+        var syntaxTree = await GetSyntaxTreeAsync().ConfigureAwait(false);
+
+        if (syntaxTree is null)
+            return null;
+
+        return APIInfo.CallTipService.GetContext(syntaxTree, position);
+    }
 }

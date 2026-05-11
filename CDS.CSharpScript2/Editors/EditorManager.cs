@@ -95,6 +95,16 @@ public class EditorManager : IDisposable
         return await new ScriptAnalyser(_context!).GetAPIInfoAsync(cursorPosition).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Returns the active argument index and opening-paren position when the cursor
+    /// sits inside a method or indexer argument list; otherwise returns <see langword="null"/>.
+    /// </summary>
+    public async Task<APIInfo.CallTipContext?> GetCallTipContext(int cursorPosition)
+    {
+        await EnsureContext().ConfigureAwait(false);
+        return await new ScriptAnalyser(_context!).GetCallTipContextAsync(cursorPosition).ConfigureAwait(false);
+    }
+
     /// <summary>Returns the syntax tree for the current script.</summary>
     public async Task<SyntaxTree?> GetSyntaxTreeAsync()
     {

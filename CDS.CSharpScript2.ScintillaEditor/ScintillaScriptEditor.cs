@@ -21,11 +21,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private Editors.EditorManager? _manager;
     private ScriptEnvironment? _environment;
     private string _lastScript = "";
+    private bool _analysisInProgress;
     private CancellationTokenSource? _completionCts;
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
     private readonly FormAPIInfo _apiInfoForm = new();
     private readonly Classification.Coloriser _coloriser = new();
+
+    private CallTipSession? _callTipSession;
+    private CancellationTokenSource? _dwellCts;
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
@@ -48,6 +52,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             _manager?.Dispose();
             _environment = value;
             _manager = value is null ? null : new Editors.EditorManager(value);
+            _callTipSession?.Cancel();
+            _callTipSession = null;
             ResetAnalysisState();
         }
     }
@@ -171,6 +177,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _currentDiagnostics = [];
         _currentCompiledScript = null;
         _lastScript = string.Empty;
+        _dwellCts?.Cancel();
         _diagnosticsToolTipManager.ClearHover();
         ClearWarningAndErrorIndicators();
         _apiInfoForm.Hide();
@@ -207,23 +214,44 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private async Task PerformLiveAnalysisAsync()
     {
-        if (_manager is null)
+        if (_manager is null || _analysisInProgress)
         {
             return;
         }
 
-        ClearWarningAndErrorIndicators();
+        _analysisInProgress = true;
 
-        await _manager.ApplyScript(Script);
+        try
+        {
+            var scriptSnapshot = Script;
 
-        _currentDiagnostics = _manager.LastDiagnostics;
-        _lastScript = Script;
+            ClearWarningAndErrorIndicators();
 
-        ApplyDiagnosticsToEditor(_currentDiagnostics);
-        ApplyClassificationsToEditor(_manager.LastClassifications);
+            await _manager.ApplyScript(scriptSnapshot);
 
-        DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
-        ScriptChanged?.Invoke(this, EventArgs.Empty);
+            if (!string.Equals(scriptSnapshot, Script, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _currentDiagnostics = _manager.LastDiagnostics;
+            _lastScript = scriptSnapshot;
+
+            ApplyDiagnosticsToEditor(_currentDiagnostics);
+            ApplyClassificationsToEditor(_manager.LastClassifications);
+
+            DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
+            ScriptChanged?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            _analysisInProgress = false;
+
+            if (_lastScript != Script && !timerChangeMonitor.Enabled)
+            {
+                timerChangeMonitor.Start();
+            }
+        }
     }
 
     // ── Visual feedback ───────────────────────────────────────────────────────
@@ -264,7 +292,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             length = 1;
         }
 
-        scintilla.IndicatorFillRange(position: start, length: length);
+        var documentLength = scintilla.Text.Length;
+
+        if (!TryGetDocumentRange(start, length, documentLength, out var boundedStart, out var boundedLength))
+        {
+            return;
+        }
+
+        scintilla.IndicatorFillRange(position: boundedStart, length: boundedLength);
     }
 
     /// <summary>
@@ -273,15 +308,23 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="classifications">The classifications to apply.</param>
     private void ApplyClassificationsToEditor(IReadOnlyList<Classification.ClassifiedSymbol> classifications)
     {
+        var documentLength = scintilla.Text.Length;
+
         scintilla.StartStyling(0);
-        scintilla.SetStyling(scintilla.Text.Length, 0);
+        scintilla.SetStyling(documentLength, 0);
 
         foreach (var classification in classifications)
         {
-            if (_classificationKindToScintillaStyle.TryGetValue(classification.Classification, out var styleIndex))
+            if (_classificationKindToScintillaStyle.TryGetValue(classification.Classification, out var styleIndex)
+                && TryGetDocumentRange(
+                    classification.SpanStart,
+                    classification.SpanLength,
+                    documentLength,
+                    out var boundedStart,
+                    out var boundedLength))
             {
-                scintilla.StartStyling(classification.SpanStart);
-                scintilla.SetStyling(classification.SpanLength, styleIndex);
+                scintilla.StartStyling(boundedStart);
+                scintilla.SetStyling(boundedLength, styleIndex);
             }
         }
     }
@@ -308,9 +351,39 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     public void HighlightText(int start, int length)
     {
         ClearHighlightText();
+
+        var documentLength = scintilla.Text.Length;
+
+        if (!TryGetDocumentRange(start, length, documentLength, out var boundedStart, out var boundedLength))
+        {
+            return;
+        }
+
         scintilla.IndicatorCurrent = ScintillaHighlightIndicatorIndex;
-        scintilla.IndicatorFillRange(position: start, length: length);
+        scintilla.IndicatorFillRange(position: boundedStart, length: boundedLength);
         scintilla.ScrollCaret();
+    }
+
+    /// <summary>
+    /// Clamps a requested editor span to the current document bounds.
+    /// </summary>
+    /// <param name="start">The requested zero-based start position.</param>
+    /// <param name="length">The requested span length.</param>
+    /// <param name="documentLength">The current document length.</param>
+    /// <param name="boundedStart">The bounded start position.</param>
+    /// <param name="boundedLength">The bounded span length.</param>
+    /// <returns><see langword="true"/> when a non-empty in-range span is available; otherwise <see langword="false"/>.</returns>
+    private static bool TryGetDocumentRange(
+        int start,
+        int length,
+        int documentLength,
+        out int boundedStart,
+        out int boundedLength)
+    {
+        boundedStart = Math.Clamp(start, 0, documentLength);
+        boundedLength = Math.Min(length, documentLength - boundedStart);
+
+        return boundedLength > 0;
     }
 
     /// <summary>
@@ -340,6 +413,25 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             // Member access — cancel any open session and immediately start a fresh one.
             scintilla.AutoCCancel();
             StartCompletionSession(immediate: true);
+        }
+        else if (ch == '(')
+        {
+            scintilla.AutoCCancel();
+            _completionCts?.Cancel();
+            _ = StartCallTipSessionAsync();
+        }
+        else if (ch == ',')
+        {
+            if (_callTipSession is not null)
+                _ = UpdateCallTipArgumentAsync();
+            else
+                _ = StartCallTipSessionAsync();  // re-activate if the outer session was lost
+        }
+        else if (ch == ')')
+        {
+            _callTipSession?.Cancel();
+            _callTipSession = null;
+            _ = StartCallTipSessionAsync();  // restore the enclosing call's tip if one exists
         }
         else if (!scintilla.AutoCActive && (char.IsLetter(ch) || ch == '_'))
         {
@@ -374,24 +466,67 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     }
 
     /// <summary>
+    /// Handles clicks on the up/down arrow buttons embedded in an active call tip.
+    /// </summary>
+    private void scintilla_CallTipClick(object sender, ScintillaNET.CallTipClickEventArgs e)
+    {
+        if (_callTipSession is null)
+            return;
+
+        if (e.CallTipClickType == ScintillaNET.CallTipClickType.UpArrow)
+            _callTipSession.PreviousOverload();
+        else if (e.CallTipClickType == ScintillaNET.CallTipClickType.DownArrow)
+            _callTipSession.NextOverload();
+    }
+
+    /// <summary>
     /// Handles the start of a dwell operation to show hover diagnostics.
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
     private void scintilla_DwellStart(object sender, ScintillaNET.DwellEventArgs e)
     {
-        _diagnosticsToolTipManager.HandleDwellStart(
-            diagnostics: _currentDiagnostics,
-            characterPosition: e.Position);
+        _dwellCts?.Cancel();
+        _dwellCts = new CancellationTokenSource();
+        _ = HandleDwellAsync(e.Position, _dwellCts.Token);
     }
 
     /// <summary>
-    /// Handles the end of a dwell operation to clear hover diagnostics.
+    /// Handles the end of a dwell operation to clear hover tooltips.
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
-    private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e) =>
+    private void scintilla_DwellEnd(object sender, ScintillaNET.DwellEventArgs e)
+    {
+        _dwellCts?.Cancel();
         _diagnosticsToolTipManager.HandleDwellEnd();
+    }
+
+    /// <summary>
+    /// Fetches API info asynchronously then shows the combined hover tooltip.
+    /// Runs on the UI thread throughout; no marshal-back needed.
+    /// </summary>
+    private async Task HandleDwellAsync(int position, CancellationToken ct)
+    {
+        APIInfo.APIInfoResult? apiInfo = null;
+
+        if (_manager is not null)
+        {
+            try
+            {
+                apiInfo = await _manager.GetAPIInfo(position);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+
+        if (ct.IsCancellationRequested)
+            return;
+
+        _diagnosticsToolTipManager.HandleDwellStart(_currentDiagnostics, position, apiInfo);
+    }
 
     // ── Code completion ───────────────────────────────────────────────────────
 
@@ -459,7 +594,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.KeyCode == Keys.Space && e.Control)
+        if (e.KeyCode == Keys.Space && e.Control && e.Shift)
+        {
+            _ = StartCallTipSessionAsync();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+        else if (e.KeyCode == Keys.Space && e.Control)
         {
             TryRunAutoComplete();
         }
@@ -478,7 +619,24 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         else if (e.KeyCode == Keys.Escape)
         {
             scintilla.AutoCCancel();
+            _callTipSession?.Cancel();
+            _callTipSession = null;
             _apiInfoForm.Hide();
+        }
+        else if (_callTipSession is not null && !e.Control && !e.Alt)
+        {
+            if (e.KeyCode == Keys.Up)
+            {
+                _callTipSession.PreviousOverload();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+            else if (e.KeyCode == Keys.Down)
+            {
+                _callTipSession.NextOverload();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
         }
     }
 
@@ -489,6 +647,63 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         scintilla.AutoCCancel();
         StartCompletionSession(immediate: true);
+    }
+
+    // ── Call tips ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Starts a new call tip session when the cursor has just entered a method argument list.
+    /// Cancels any session already in progress.
+    /// </summary>
+    private async Task StartCallTipSessionAsync()
+    {
+        if (_manager is null)
+            return;
+
+        _callTipSession?.Cancel();
+        _callTipSession = null;
+
+        await _manager.UpdateScriptDocumentAsync(Script);
+
+        int pos = scintilla.CurrentPosition;
+        var context = await _manager.GetCallTipContext(pos);
+
+        if (context is null)
+            return;
+
+        // API info is resolved at the character just before '(' to land on the method name.
+        var apiInfo = await _manager.GetAPIInfo(Math.Max(0, context.OpenParenPosition - 1));
+
+        if (apiInfo?.MemberInfos is null || apiInfo.MemberInfos.Count == 0)
+            return;
+
+        _callTipSession = new CallTipSession(
+            scintilla,
+            apiInfo.MemberInfos,
+            context.OpenParenPosition,
+            context.ArgumentIndex);
+    }
+
+    /// <summary>
+    /// Updates the active parameter highlight when the cursor moves to a different argument.
+    /// </summary>
+    private async Task UpdateCallTipArgumentAsync()
+    {
+        if (_manager is null || _callTipSession is null)
+            return;
+
+        await _manager.UpdateScriptDocumentAsync(Script);
+
+        var context = await _manager.GetCallTipContext(scintilla.CurrentPosition);
+
+        if (context is null)
+        {
+            _callTipSession.Cancel();
+            _callTipSession = null;
+            return;
+        }
+
+        _callTipSession.UpdateArgument(context.ArgumentIndex);
     }
 
     /// <summary>
