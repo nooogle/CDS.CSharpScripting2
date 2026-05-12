@@ -10,18 +10,13 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageIcon>script.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <Title>C# Scripting: Scintillia editor</Title>
+    <Title>C# Scripting: Scintilla editor</Title>
     <Description>Scintilla editor for C# script editing</Description>
     <Authors>Jon Shadforth</Authors>
     <Company>Carpe Diem Systems</Company>
     <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
     <Platforms>AnyCPU;ARM64;x64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
-    <GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse>
-    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,10 +30,6 @@
 
   <ItemGroup>
    <PackageReference Include="Scintilla5.NET" Version="6.1.2" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="System.Resources.Extensions" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
