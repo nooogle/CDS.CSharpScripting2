@@ -75,7 +75,10 @@ public class ScriptContext : IDisposable
             references.Add(GetMetadataReference(environment.GlobalType));
 
         if (!ScriptEnvironment.IsNetFramework)
-            references.Add(GetMetadataReferenceForRuntime());
+        {
+            references.Add(GetMetadataReferenceForAssemblyName("System.Runtime"));
+            references.Add(GetMetadataReferenceForAssemblyName("System.Collections"));
+        }
 
         var compilationOptions = new CSharpCompilationOptions(
             OutputKind.DynamicallyLinkedLibrary,
@@ -117,12 +120,12 @@ public class ScriptContext : IDisposable
         return MetadataReference.CreateFromFile(assembly.Location, documentation: provider);
     }
 
-    private static MetadataReference GetMetadataReferenceForRuntime()
+    private static MetadataReference GetMetadataReferenceForAssemblyName(string assemblyName)
     {
-        string xmlPath = TryFindXml("System.Runtime.xml") ?? string.Empty;
+        string xmlPath = TryFindXml($"{assemblyName}.xml") ?? string.Empty;
         string assemblyPath = string.IsNullOrEmpty(xmlPath)
             ? string.Empty
-            : Path.Combine(Path.GetDirectoryName(xmlPath) ?? string.Empty, "System.Runtime.dll");
+            : Path.Combine(Path.GetDirectoryName(xmlPath) ?? string.Empty, $"{assemblyName}.dll");
 
         if (string.IsNullOrEmpty(assemblyPath) || !File.Exists(assemblyPath))
         {

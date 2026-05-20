@@ -81,6 +81,29 @@ public partial class UT_UseCases
         pX.Should().Be(1, "Point(1, 2).X should equal 1");
     }
 
+    [TestMethod]
+    public async Task ScriptWithGenericList_CompilesAndRuns_WithoutErrorsOrWarnings()
+    {
+        var environment = ScriptEnvironment.Default.WithAdditionalNamespaceName("System.Collections.Generic");
+        var context = await ScriptContext.CreateAsync(environment);
+        context = context.ApplyScript(
+            """
+            var list = new List<string>();
+            list.Add("hello");
+            list.Add("world");
+            return list.Count;
+            """);
+
+        var diagnostics = await new ScriptAnalyser(context).GetDiagnosticsAsync();
+        var executable = await new ScriptExecutor(context).CompileAsync<int>();
+        var count = await executable.RunAsync<int>();
+
+        diagnostics.Should().BeEmpty("script should have no diagnostics");
+        executable.CompilationOutput.ErrorCount.Should().Be(0, "script should compile successfully");
+        executable.CompilationOutput.Diagnostics.Should().BeEmpty("compilation should have no errors or warnings");
+        count.Should().Be(2, "list should contain 2 items");
+    }
+
     public class GlobalData
     {
         public string Animal { get; set; } = "Donkey";
