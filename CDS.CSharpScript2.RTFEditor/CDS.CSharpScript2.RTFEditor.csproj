@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows</TargetFrameworks>
@@ -7,16 +7,17 @@
     <ImplicitUsings>true</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageIcon>script.png</PackageIcon>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <Title>C# Scripting: RTF editor</Title>
-    <Description>Simple RTF editor for C# script editing</Description>
-    <Authors>Jon Shadforth</Authors>
-    <Company>Carpe Diem Systems</Company>
-    <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Platforms>AnyCPU;ARM64;x64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+
+    <!-- Package -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>CDS C# Scripting: RTF Editor</Title>
+    <Description>Lightweight RTF-based WinForms editor control for embedding C# script editing in .NET 10 Windows applications. Provides Roslyn-powered syntax highlighting and code completion without a dependency on the Scintilla native library.</Description>
+    <PackageIcon>script.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>roslyn;csharp;scripting;rtf;editor;winforms;intellisense;code-completion</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,16 +32,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="RTFOutputPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="RTFScriptEditor.cs">
       <SubType>UserControl</SubType>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
   </ItemGroup>
 
 </Project>

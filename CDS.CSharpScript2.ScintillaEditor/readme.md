@@ -1,22 +1,50 @@
-﻿# CDS.CSharpScriptUtils
+# CDS.CSharpScript2.ScintillaEditor
 
-C# Scripting: compilation, execution, editor framework
+Scintilla5-based WinForms editor control for C# script editing, powered by Roslyn.
 
 ## Description
 
-TODO update!
-CDS.CSharpScriptUtils is a .NET Standard 2.0 compatible scripting library that supports both .NET Framework and .NET 6+. It provides a framework for compiling, executing, and editing C# scripts.
+`CDS.CSharpScript2.ScintillaEditor` provides a drop-in WinForms `UserControl` that gives your
+application a professional C# script editor backed by the Scintilla5 native editing component
+and full Roslyn IntelliSense.
 
 ## Features
 
-- Compile and execute C# scripts
-- Editor framework for scripting
-- Compatible with .NET Framework and .NET 6+
+- **Syntax highlighting** — real Roslyn classification (keywords, types, literals, comments, …).
+- **Code completion** — member lists, type suggestions, and smart single-letter prioritisation.
+- **Signature help (call tips)** — parameter info as you type method calls.
+- **Hover tooltips** — type and XML-doc info on mouse hover.
+- **Error indicators** — squiggles and a diagnostic list tied to the Roslyn compiler.
+- **Output panel** — companion `RTFOutputPanel` for displaying script results.
 
-## Installation
+## Quick Start
 
-You can install the package via NuGet:
+Add the control to a WinForms form in the designer or in code:
 
-## Attributuions
+```csharp
+using CDS.CSharpScript2.ScintillaEditor;
 
-Uicons by <a href="https://www.flaticon.com/uicons">Flaticon</a>
+var editor = new ScintillaScriptEditor();
+editor.Dock = DockStyle.Fill;
+Controls.Add(editor);
+
+// Configure a ScriptEnvironment and wire it up
+editor.ScriptManager = new ScriptManager(env);
+```
+
+See the [WinFormsTest](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/WinFormsTest)
+project for a full working example.
+
+## Requirements
+
+- .NET 10.0 (Windows)
+- x64 or ARM64 — Scintilla5 is a native library; AnyCPU is not supported at runtime
+
+## Dependencies
+
+- [CDS.CSharpScript2](https://www.nuget.org/packages/CDS.CSharpScript2) — core scripting engine
+- [Scintilla5.NET](https://www.nuget.org/packages/Scintilla5.NET) — managed wrapper for Scintilla5
+
+## Attributions
+
+Icon by [Flaticon Uicons](https://www.flaticon.com/uicons)

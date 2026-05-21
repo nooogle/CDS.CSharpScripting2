@@ -10,4 +10,10 @@ public class SharedData
     /// An animal
     /// </summary>
     public string Animal { get; set; } = "Cat";
+
+
+    /// <summary>
+    /// A list of countries
+    /// </summary>
+    public List<string> Countries { get; } = ["USA", "UK", "France"];
 }

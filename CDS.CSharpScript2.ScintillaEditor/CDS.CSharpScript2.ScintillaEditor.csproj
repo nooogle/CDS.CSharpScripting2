@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows</TargetFrameworks>
@@ -7,17 +7,29 @@
     <ImplicitUsings>true</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageIcon>script.png</PackageIcon>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <Title>C# Scripting: Scintilla editor</Title>
-    <Description>Scintilla editor for C# script editing</Description>
-    <Authors>Jon Shadforth</Authors>
-    <Company>Carpe Diem Systems</Company>
-    <Copyright>Copyright (c) 2025 Carpe Diem Systems</Copyright>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Platforms>AnyCPU;ARM64;x64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+
+    <!-- Package -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>CDS C# Scripting: Scintilla Editor</Title>
+    <Description>Scintilla5-based WinForms editor control for embedding C# script editing in .NET 10 Windows applications. Provides syntax highlighting, IntelliSense, code completion, call tips, and hover info — all powered by Roslyn.</Description>
+    <PackageIcon>script.png</PackageIcon>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>roslyn;csharp;scripting;scintilla;editor;winforms;intellisense;code-completion</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="script.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="ScintillaScriptEditor.cs">
@@ -29,18 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-   <PackageReference Include="Scintilla5.NET" Version="6.1.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="readme.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="script.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <PackageReference Include="Scintilla5.NET" Version="6.1.2" />
   </ItemGroup>
 
   <ItemGroup>
