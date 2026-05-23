@@ -147,15 +147,37 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private void InitialiseScintilla()
     {
-        scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Mono";
-        scintilla.Styles[ScintillaNET.Style.Default].SizeF = 10;
+        // DirectWrite must be set before StyleClearAll for it to take effect.
+        scintilla.Technology = ScintillaNET.Technology.DirectWrite;
+
+        scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Code";
+        scintilla.Styles[ScintillaNET.Style.Default].SizeF = 9.5f;
         scintilla.StyleClearAll();
+
+        // Line spacing — adds a little breathing room without changing the font size.
+        scintilla.ExtraAscent = 1;
+        scintilla.ExtraDescent = 1;
+
+        // Caret line highlight.
+        scintilla.CaretLineVisible = true;
+        scintilla.CaretLineBackColor = Color.FromArgb(236, 240, 255);
+
+        // Scroll width follows the longest line automatically.
+        scintilla.ScrollWidthTracking = true;
+
+        // Tab and indent settings — 4 spaces, no tab characters.
+        scintilla.TabWidth = 4;
+        scintilla.IndentWidth = 4;
+        scintilla.UseTabs = false;
+        scintilla.TabIndents = true;
+        scintilla.BackspaceUnindents = true;
 
         scintilla.MouseDwellTime = 500;
 
         scintilla.AutoCIgnoreCase = true;
         scintilla.AutoCOrder = ScintillaNET.Order.Custom;
         scintilla.AutoCMaxHeight = 12;
+        scintilla.AutoCDropRestOfWord = true;
 
         foreach (var (classificationName, styleIndex) in _classificationKindToScintillaStyle)
         {
@@ -165,6 +187,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
             scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
         }
+
+        // Brace highlight styles: matching pair and unmatched brace.
+        scintilla.Styles[ScintillaNET.Style.BraceLight].ForeColor = Color.FromArgb(0, 120, 215);
+        scintilla.Styles[ScintillaNET.Style.BraceLight].Bold = true;
+        scintilla.Styles[ScintillaNET.Style.BraceBad].ForeColor = Color.Red;
+        scintilla.Styles[ScintillaNET.Style.BraceBad].Bold = true;
 
         scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
         scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = Color.Red;
@@ -524,6 +552,50 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private void scintilla_Delete(object sender, ScintillaNET.ModificationEventArgs e) =>
         HandleTextChanged();
+
+    /// <summary>
+    /// Highlights matching brace pairs when the caret is adjacent to a brace character.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_UpdateUI(object sender, ScintillaNET.UpdateUIEventArgs e)
+    {
+        var pos = scintilla.CurrentPosition;
+
+        // Check the character at and just before the caret for a brace.
+        var bracePos = ScintillaNET.Scintilla.InvalidPosition;
+
+        if (pos > 0 && IsBrace(scintilla.GetCharAt(pos - 1)))
+        {
+            bracePos = pos - 1;
+        }
+        else if (IsBrace(scintilla.GetCharAt(pos)))
+        {
+            bracePos = pos;
+        }
+
+        if (bracePos == ScintillaNET.Scintilla.InvalidPosition)
+        {
+            scintilla.BraceHighlight(ScintillaNET.Scintilla.InvalidPosition, ScintillaNET.Scintilla.InvalidPosition);
+            return;
+        }
+
+        var matchPos = scintilla.BraceMatch(bracePos);
+
+        if (matchPos == ScintillaNET.Scintilla.InvalidPosition)
+        {
+            scintilla.BraceBadLight(bracePos);
+        }
+        else
+        {
+            scintilla.BraceHighlight(bracePos, matchPos);
+        }
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the character is a recognised brace glyph.
+    /// </summary>
+    private static bool IsBrace(int c) => c is '(' or ')' or '{' or '}' or '[' or ']';
 
     /// <summary>
     /// Handles mouse movement over the editor.

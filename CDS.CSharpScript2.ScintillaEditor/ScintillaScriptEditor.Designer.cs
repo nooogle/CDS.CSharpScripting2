@@ -49,7 +49,6 @@
             scintilla.LexerName = null;
             scintilla.Location = new Point(0, 0);
             scintilla.Name = "scintilla";
-            scintilla.ScrollWidth = 182;
             scintilla.Size = new Size(336, 261);
             scintilla.TabIndex = 0;
             scintilla.AutoCCancelled += scintilla_AutoCCancelled;
@@ -62,6 +61,7 @@
             scintilla.CallTipClick += scintilla_CallTipClick;
             scintilla.KeyDown += scintilla_KeyDown;
             scintilla.MouseMove += scintilla_MouseMove;
+            scintilla.UpdateUI += scintilla_UpdateUI;
             // 
             // timerChangeMonitor
             // 
