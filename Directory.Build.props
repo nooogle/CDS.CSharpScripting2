@@ -1,21 +1,30 @@
 <Project>
-  <PropertyGroup>
-    <MinVerTagPrefix>v</MinVerTagPrefix>
+	<PropertyGroup>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
 
-    <!-- Common package metadata — override per-project as needed -->
-    <Authors>Jon Shadforth</Authors>
-    <Company>Carpe Diem Systems</Company>
-    <Copyright>Copyright © 2026 Carpe Diem Systems</Copyright>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <RepositoryUrl>https://github.com/nooogle/CDS.CSharpScripting2</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/nooogle/CDS.CSharpScripting2</PackageProjectUrl>
-  </PropertyGroup>
+		<!-- Common package metadata — override per-project as needed -->
+		<Authors>Jon Shadforth</Authors>
+		<Company>Carpe Diem Systems</Company>
+		<Copyright>Copyright © 2026 Carpe Diem Systems</Copyright>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<RepositoryUrl>https://github.com/nooogle/CDS.CSharpScripting2</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageProjectUrl>https://github.com/nooogle/CDS.CSharpScripting2</PackageProjectUrl>
 
-  <ItemGroup>
-    <PackageReference Include="MinVer" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ApplicationVisualStyles>true</ApplicationVisualStyles>
+		<ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+		<ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+		<ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="MinVer" Version="6.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 </Project>

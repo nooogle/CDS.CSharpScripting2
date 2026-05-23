@@ -32,6 +32,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     private CallTipSession? _callTipSession;
     private CancellationTokenSource? _dwellCts;
+    private FormFindReplace? _findReplaceForm;
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
@@ -766,6 +767,18 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             e.Handled = true;
             e.SuppressKeyPress = true;
         }
+        else if (e.KeyCode == Keys.F && e.Control && !e.Shift && !e.Alt)
+        {
+            EnsureFindReplaceForm().OpenFind();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+        else if (e.KeyCode == Keys.H && e.Control && !e.Shift && !e.Alt)
+        {
+            EnsureFindReplaceForm().OpenReplace();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
         else if (e.KeyCode == Keys.Space && e.Control)
         {
             TryRunAutoComplete();
@@ -838,6 +851,19 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         scintilla.AutoCCancel();
         StartCompletionSession(immediate: true);
+    }
+
+    /// <summary>
+    /// Returns the shared Find / Replace form, creating it on first use.
+    /// </summary>
+    private FormFindReplace EnsureFindReplaceForm()
+    {
+        if (_findReplaceForm is null || _findReplaceForm.IsDisposed)
+        {
+            _findReplaceForm = new FormFindReplace(scintilla);
+        }
+
+        return _findReplaceForm;
     }
 
     // ── Call tips ─────────────────────────────────────────────────────────────

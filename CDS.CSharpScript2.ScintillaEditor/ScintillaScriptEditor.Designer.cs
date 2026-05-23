@@ -22,6 +22,7 @@
                 _manager?.Dispose();
                 _manager = null;
                 _apiInfoForm.Dispose();
+                _findReplaceForm?.Dispose();
                 components?.Dispose();
             }
             base.Dispose(disposing);
