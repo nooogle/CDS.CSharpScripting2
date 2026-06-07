@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.OpenCvSharpDemo
+﻿namespace WinFormsTest.Demos.OpenCvSharpStaticDemo
 {
     partial class FormOpenCvSharpDemo
     {

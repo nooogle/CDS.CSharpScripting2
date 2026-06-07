@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace WinFormsTest.Demos.OpenCvSharpDemo;
+namespace WinFormsTest.Demos.OpenCvSharpStaticDemo;
 
 /// <summary>
 /// Settings for the demo

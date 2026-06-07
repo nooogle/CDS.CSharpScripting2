@@ -3,7 +3,7 @@ using OpenCvSharp.Extensions;
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace WinFormsTest.Demos.OpenCvSharpDemo;
+namespace WinFormsTest.Demos.OpenCvSharpStaticDemo;
 
 /// <summary>
 /// Form for demonstrating OpenCvSharp functionality.
@@ -36,7 +36,7 @@ public partial class FormOpenCvSharpDemo : Form
         scintillaScriptEditor.Environment = environment;
         scintillaScriptEditor.Script = _settings.Script;
 
-        _sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
+        _sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpStaticDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
         ShowImages();
     }
 

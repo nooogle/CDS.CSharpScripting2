@@ -33,7 +33,7 @@ public partial class FormMain : Form
             name: "OpenCvSharp",
             tooltip: "Demonstrates using a script to perform image processing",
             parent: this,
-            createForm: () => new Demos.OpenCvSharpDemo.FormOpenCvSharpDemo(settingsManager.Settings.Demos.OpenCvSharpDemo));
+            createForm: () => new Demos.OpenCvSharpStaticDemo.FormOpenCvSharpDemo(settingsManager.Settings.Demos.OpenCvSharpStaticDemo));
 
         var otherGroup = demosTreeView.AddGroup(name: "Other");
 
