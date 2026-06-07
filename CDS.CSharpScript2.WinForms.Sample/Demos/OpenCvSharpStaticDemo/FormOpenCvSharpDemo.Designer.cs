@@ -1,6 +1,6 @@
-﻿namespace WinFormsTest.Demos.GlobalsDemo
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo
 {
-    partial class FormGlobals
+    partial class FormOpenCvSharpDemo
     {
         /// <summary>
         ///  Required designer variable.
@@ -34,11 +34,16 @@
             btnCompile = new Button();
             btnRun = new Button();
             groupBoxScript = new GroupBox();
-            propertyGrid1 = new PropertyGrid();
-            groupBox1 = new GroupBox();
+            tableLayoutPanel2 = new TableLayoutPanel();
+            pictureBoxDest = new PictureBox();
+            label1 = new Label();
+            label2 = new Label();
+            pictureBoxSource = new PictureBox();
             tableLayoutPanel1.SuspendLayout();
             groupBoxScript.SuspendLayout();
-            groupBox1.SuspendLayout();
+            tableLayoutPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxDest).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxSource).BeginInit();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -48,12 +53,12 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
             tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanel1.Location = new Point(344, 24);
+            tableLayoutPanel1.Location = new Point(604, 24);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 2;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(587, 520);
+            tableLayoutPanel1.Size = new Size(327, 529);
             tableLayoutPanel1.TabIndex = 2;
             // 
             // scintillaScriptEditor
@@ -62,16 +67,16 @@
             scintillaScriptEditor.Location = new Point(3, 3);
             scintillaScriptEditor.Name = "scintillaScriptEditor";
             scintillaScriptEditor.Script = "";
-            scintillaScriptEditor.Size = new Size(581, 340);
+            scintillaScriptEditor.Size = new Size(321, 346);
             scintillaScriptEditor.TabIndex = 5;
             // 
             // outputPanel
             // 
             outputPanel.AllowClickLinks2 = true;
             outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 349);
+            outputPanel.Location = new Point(3, 355);
             outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(581, 168);
+            outputPanel.Size = new Size(321, 171);
             outputPanel.TabIndex = 6;
             // 
             // btnCompile
@@ -105,38 +110,81 @@
             groupBoxScript.TabStop = false;
             groupBoxScript.Text = "Script";
             // 
-            // propertyGrid1
+            // tableLayoutPanel2
             // 
-            propertyGrid1.Location = new Point(15, 31);
-            propertyGrid1.Name = "propertyGrid1";
-            propertyGrid1.Size = new Size(284, 227);
-            propertyGrid1.TabIndex = 13;
+            tableLayoutPanel2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            tableLayoutPanel2.ColumnCount = 1;
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            tableLayoutPanel2.Controls.Add(pictureBoxDest, 0, 3);
+            tableLayoutPanel2.Controls.Add(label1, 0, 0);
+            tableLayoutPanel2.Controls.Add(label2, 0, 2);
+            tableLayoutPanel2.Controls.Add(pictureBoxSource, 0, 1);
+            tableLayoutPanel2.Location = new Point(21, 90);
+            tableLayoutPanel2.Name = "tableLayoutPanel2";
+            tableLayoutPanel2.RowCount = 4;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 21F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 21F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel2.Size = new Size(577, 463);
+            tableLayoutPanel2.TabIndex = 13;
             // 
-            // groupBox1
+            // pictureBoxDest
             // 
-            groupBox1.Controls.Add(propertyGrid1);
-            groupBox1.Location = new Point(15, 94);
-            groupBox1.Name = "groupBox1";
-            groupBox1.Padding = new Padding(12);
-            groupBox1.Size = new Size(314, 273);
-            groupBox1.TabIndex = 14;
-            groupBox1.TabStop = false;
-            groupBox1.Text = "Globals";
+            pictureBoxDest.Dock = DockStyle.Fill;
+            pictureBoxDest.Location = new Point(3, 255);
+            pictureBoxDest.Name = "pictureBoxDest";
+            pictureBoxDest.Size = new Size(571, 205);
+            pictureBoxDest.SizeMode = PictureBoxSizeMode.CenterImage;
+            pictureBoxDest.TabIndex = 17;
+            pictureBoxDest.TabStop = false;
             // 
-            // FormGlobals
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(3, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(43, 15);
+            label1.TabIndex = 14;
+            label1.Text = "Source";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(3, 231);
+            label2.Name = "label2";
+            label2.Size = new Size(30, 15);
+            label2.TabIndex = 15;
+            label2.Text = "Dest";
+            // 
+            // pictureBoxSource
+            // 
+            pictureBoxSource.Dock = DockStyle.Fill;
+            pictureBoxSource.Location = new Point(3, 24);
+            pictureBoxSource.Name = "pictureBoxSource";
+            pictureBoxSource.Size = new Size(571, 204);
+            pictureBoxSource.SizeMode = PictureBoxSizeMode.CenterImage;
+            pictureBoxSource.TabIndex = 16;
+            pictureBoxSource.TabStop = false;
+            // 
+            // FormOpenCvSharpDemo
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(943, 568);
-            Controls.Add(groupBox1);
+            Controls.Add(tableLayoutPanel2);
             Controls.Add(groupBoxScript);
             Controls.Add(tableLayoutPanel1);
-            Name = "FormGlobals";
+            Name = "FormOpenCvSharpDemo";
             Padding = new Padding(12);
             Text = "Globals demo";
             tableLayoutPanel1.ResumeLayout(false);
             groupBoxScript.ResumeLayout(false);
-            groupBox1.ResumeLayout(false);
+            tableLayoutPanel2.ResumeLayout(false);
+            tableLayoutPanel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxDest).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxSource).EndInit();
             ResumeLayout(false);
         }
 
@@ -145,9 +193,12 @@
         private Button btnCompile;
         private Button btnRun;
         private GroupBox groupBoxScript;
-        private PropertyGrid propertyGrid1;
-        private GroupBox groupBox1;
         private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private TableLayoutPanel tableLayoutPanel2;
+        private PictureBox pictureBoxDest;
+        private Label label1;
+        private Label label2;
+        private PictureBox pictureBoxSource;
     }
 }

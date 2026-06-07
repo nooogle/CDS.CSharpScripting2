@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.SyntaxTreeViewDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.ClassifiedSpansDemo;
 
 /// <summary>
 /// Settings for the demo

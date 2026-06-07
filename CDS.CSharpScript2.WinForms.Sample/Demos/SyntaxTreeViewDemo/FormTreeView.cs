@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.ComponentModel;
 
-namespace WinFormsTest.Demos.SyntaxTreeViewDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.SyntaxTreeViewDemo;
 
 public partial class FormTreeView : Form
 {

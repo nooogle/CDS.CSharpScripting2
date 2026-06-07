@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.ClassifiedSpansDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo;
 
 /// <summary>
 /// Settings for the demo

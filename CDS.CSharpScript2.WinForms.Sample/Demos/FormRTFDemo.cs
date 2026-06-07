@@ -1,4 +1,4 @@
-namespace WinFormsTest.Demos;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos;
 
 /// <summary>
 /// Demonstrates the RTF-based script editor.

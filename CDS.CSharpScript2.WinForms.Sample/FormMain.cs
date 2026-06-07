@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest;
+namespace CDS.CSharpScript2.WinForms.Sample;
 
 public partial class FormMain : Form
 {

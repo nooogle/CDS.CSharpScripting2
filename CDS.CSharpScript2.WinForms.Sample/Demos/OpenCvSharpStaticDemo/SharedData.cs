@@ -1,6 +1,6 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 
-namespace WinFormsTest.Demos.OpenCvSharpStaticDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo;
 
 
 /// <summary>

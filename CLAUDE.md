@@ -28,7 +28,7 @@ The full pipeline (clean → restore → build → test) is in `build.cake`, run
 | `CDS.CSharpScript2.RTFEditor` | net10.0-windows | RTF-based editor control |
 | `CDS.CSharpScriptUtils` | net8.0-windows + net48 | Legacy dual-target library — packaged |
 | `UnitTests` | net10.0-windows | MSTest suite |
-| `WinFormsTest` / `ConsoleTest` | net10.0-windows | Manual test harnesses |
+| `CDS.CSharpScript2.WinForms.Sample` / `ConsoleTest` | net10.0-windows | Demo app / manual test harness |
 
 ## Architecture
 

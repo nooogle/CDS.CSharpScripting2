@@ -2,7 +2,7 @@ using Humanizer;
 using Microsoft.CodeAnalysis;
 using System.ComponentModel;
 
-namespace WinFormsTest.Demos.ClassifiedSpansDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.ClassifiedSpansDemo;
 
 public partial class FormDemo : Form
 {

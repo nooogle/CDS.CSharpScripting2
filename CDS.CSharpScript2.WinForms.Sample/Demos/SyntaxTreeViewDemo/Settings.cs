@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.BasicDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.SyntaxTreeViewDemo;
 
 /// <summary>
 /// Settings for the demo

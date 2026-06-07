@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace WinFormsTest.Demos.GlobalsDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.GlobalsDemo;
 
 /// <summary>
 /// Provides a demo form for working with globals shared between the host and the script.

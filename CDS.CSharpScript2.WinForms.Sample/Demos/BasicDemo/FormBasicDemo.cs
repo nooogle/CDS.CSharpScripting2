@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace WinFormsTest.Demos.BasicDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo;
 
 /// <summary>
 /// Provides a basic demonstration form for C# scripting functionality.

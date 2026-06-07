@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.GlobalsDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.GlobalsDemo;
 
 
 /// <summary>

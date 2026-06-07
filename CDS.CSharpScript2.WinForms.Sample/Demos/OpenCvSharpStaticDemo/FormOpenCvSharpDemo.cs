@@ -3,7 +3,7 @@ using OpenCvSharp.Extensions;
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace WinFormsTest.Demos.OpenCvSharpStaticDemo;
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo;
 
 /// <summary>
 /// Form for demonstrating OpenCvSharp functionality.

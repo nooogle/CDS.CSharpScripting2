@@ -32,7 +32,7 @@ Controls.Add(editor);
 editor.ScriptManager = new ScriptManager(env);
 ```
 
-See the [WinFormsTest](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/WinFormsTest)
+See the [CDS.CSharpScript2.WinForms.Sample](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/CDS.CSharpScript2.WinForms.Sample)
 project for a full working example.
 
 ## Requirements

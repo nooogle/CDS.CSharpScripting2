@@ -1,4 +1,4 @@
-﻿namespace WinFormsTest.Demos.ClassifiedSpansDemo
+namespace CDS.CSharpScript2.WinForms.Sample.Demos.ClassifiedSpansDemo
 {
     partial class FormDemo
     {
