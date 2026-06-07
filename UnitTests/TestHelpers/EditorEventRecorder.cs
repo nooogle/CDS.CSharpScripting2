@@ -15,7 +15,7 @@ internal sealed class EditorEventRecorder
     /// <param name="editor">The editor whose events should be recorded.</param>
     public EditorEventRecorder(IScriptEditor editor)
     {
-        ArgumentNullException.ThrowIfNull(editor);
+        if(editor == null) throw new ArgumentNullException(nameof(editor));
 
         editor.DiagnosticsUpdated += OnDiagnosticsUpdated;
         editor.ScriptChanged += OnScriptChanged;

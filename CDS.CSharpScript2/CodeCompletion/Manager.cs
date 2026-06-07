@@ -3,18 +3,31 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 
 namespace CDS.CSharpScript2.CodeCompletion;
 
+/// <summary>
+/// Provides code completion suggestions for a Roslyn-backed C# script document.
+/// </summary>
 public static class Manager
 {
+    /// <summary>
+    /// Returns completion items for the given cursor position within the script document.
+    /// </summary>
+    /// <param name="scriptText">The full source text of the script, used to extract the span text for filtering.</param>
+    /// <param name="document">The Roslyn <see cref="Document"/> representing the script.</param>
+    /// <param name="cursorPosition">The caret offset within the document.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A filtered and sorted array of <see cref="CompletionItem"/> values, or an empty array if none are available.</returns>
     public static async Task<ImmutableArray<CompletionItem>> GetAsync(
-        string scriptText, 
-        Document document, 
-        int cursorPosition)
+        string scriptText,
+        Document document,
+        int cursorPosition,
+        CancellationToken cancellationToken = default)
     {
         var completionService = CompletionService.GetService(document);
         if (completionService == null)
@@ -27,7 +40,7 @@ public static class Manager
             var completionList = await completionService.GetCompletionsAsync(
                 document,
                 cursorPosition,
-                cancellationToken: default).ConfigureAwait(false);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (completionList == null || completionList.ItemsList.Count == 0)
             {

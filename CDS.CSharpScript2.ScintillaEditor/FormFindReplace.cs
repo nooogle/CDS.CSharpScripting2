@@ -1,3 +1,5 @@
+#nullable enable
+
 using ScintillaNET;
 
 namespace CDS.CSharpScript2.ScintillaEditor;
@@ -17,7 +19,11 @@ internal sealed partial class FormFindReplace : Form
     /// <param name="scintilla">The Scintilla editor to search within.</param>
     public FormFindReplace(Scintilla scintilla)
     {
-        ArgumentNullException.ThrowIfNull(scintilla);
+        if (scintilla is null)
+        {
+            throw new ArgumentNullException(nameof(scintilla));
+        }
+
         _scintilla = scintilla;
         InitializeComponent();
         txtFindFind.KeyDown += txtFindFind_KeyDown;
@@ -146,12 +152,12 @@ internal sealed partial class FormFindReplace : Form
 
     // ── Find tab event handlers ───────────────────────────────────────────────
 
-    private void btnFindNext_Click(object sender, EventArgs e)
+    private void btnFindNext_Click(object? sender, EventArgs e)
     {
         FindNext(txtFindFind.Text, forward: true, chkFindMatchCase.Checked, chkFindWholeWord.Checked);
     }
 
-    private void btnFindPrevious_Click(object sender, EventArgs e)
+    private void btnFindPrevious_Click(object? sender, EventArgs e)
     {
         FindNext(txtFindFind.Text, forward: false, chkFindMatchCase.Checked, chkFindWholeWord.Checked);
     }
@@ -168,12 +174,12 @@ internal sealed partial class FormFindReplace : Form
 
     // ── Replace tab event handlers ────────────────────────────────────────────
 
-    private void btnReplaceFindNext_Click(object sender, EventArgs e)
+    private void btnReplaceFindNext_Click(object? sender, EventArgs e)
     {
         FindNext(txtReplaceFind.Text, forward: true, chkReplaceMatchCase.Checked, chkReplaceWholeWord.Checked);
     }
 
-    private void btnReplaceReplace_Click(object sender, EventArgs e)
+    private void btnReplaceReplace_Click(object? sender, EventArgs e)
     {
         var searchText = txtReplaceFind.Text;
 
@@ -197,7 +203,7 @@ internal sealed partial class FormFindReplace : Form
         FindNext(searchText, forward: true, chkReplaceMatchCase.Checked, chkReplaceWholeWord.Checked);
     }
 
-    private void btnReplaceAll_Click(object sender, EventArgs e)
+    private void btnReplaceAll_Click(object? sender, EventArgs e)
     {
         var searchText = txtReplaceFind.Text;
 
@@ -272,3 +278,4 @@ internal sealed partial class FormFindReplace : Form
         return base.ProcessCmdKey(ref msg, keyData);
     }
 }
+

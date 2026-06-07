@@ -4,17 +4,24 @@ using System.Collections.Immutable;
 namespace CDS.CSharpScript2.Editors;
 
 /// <summary>
-/// Event arguments for the <see cref="IScriptEditor.DiagnosticsUpdated"/> event.
+/// Provides diagnostics from the most recent live-analysis pass in an editor control.
 /// </summary>
 public class DiagnosticsUpdatedEventArgs : EventArgs
 {
-    /// <summary>All diagnostics from the most recent analysis pass.</summary>
+    /// <summary>
+    /// Gets all diagnostics from the most recent analysis pass.
+    /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
 
-    /// <summary>True when at least one error-severity diagnostic is present.</summary>
+    /// <summary>
+    /// Gets a value indicating whether at least one error-severity diagnostic is present.
+    /// </summary>
     public bool HasErrors { get; }
 
-    /// <summary>Initializes a new instance with the given diagnostics array.</summary>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiagnosticsUpdatedEventArgs"/> class.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics captured by the completed analysis pass.</param>
     public DiagnosticsUpdatedEventArgs(ImmutableArray<Diagnostic> diagnostics)
     {
         Diagnostics = diagnostics;

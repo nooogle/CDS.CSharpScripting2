@@ -1,26 +1,29 @@
+#nullable enable
+
+
 namespace CDS.CSharpScript2.ScintillaEditor
 {
     partial class FormFindReplace
     {
         private System.ComponentModel.IContainer? components = null;
-        private TabControl tabControl;
-        private TabPage tabPageFind;
-        private TabPage tabPageReplace;
-        private Label lblFind;
-        private TextBox txtFindFind;
-        private CheckBox chkFindMatchCase;
-        private CheckBox chkFindWholeWord;
-        private Button btnFindNext;
-        private Button btnFindPrevious;
-        private Label lblReplaceFind;
-        private TextBox txtReplaceFind;
-        private Label lblReplaceWith;
-        private TextBox txtReplaceWith;
-        private CheckBox chkReplaceMatchCase;
-        private CheckBox chkReplaceWholeWord;
-        private Button btnReplaceFindNext;
-        private Button btnReplaceReplace;
-        private Button btnReplaceAll;
+        private TabControl tabControl = null!;
+        private TabPage tabPageFind = null!;
+        private TabPage tabPageReplace = null!;
+        private Label lblFind = null!;
+        private TextBox txtFindFind = null!;
+        private CheckBox chkFindMatchCase = null!;
+        private CheckBox chkFindWholeWord = null!;
+        private Button btnFindNext = null!;
+        private Button btnFindPrevious = null!;
+        private Label lblReplaceFind = null!;
+        private TextBox txtReplaceFind = null!;
+        private Label lblReplaceWith = null!;
+        private TextBox txtReplaceWith = null!;
+        private CheckBox chkReplaceMatchCase = null!;
+        private CheckBox chkReplaceWholeWord = null!;
+        private Button btnReplaceFindNext = null!;
+        private Button btnReplaceReplace = null!;
+        private Button btnReplaceAll = null!;
 
         protected override void Dispose(bool disposing)
         {

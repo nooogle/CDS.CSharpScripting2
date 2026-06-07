@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0-windows</TargetFrameworks>
-    <UseWindowsForms>true</UseWindowsForms>
+	  <TargetFrameworks>net48;net10.0-windows</TargetFrameworks>
+	  <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>true</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -46,6 +46,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="MinVer" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

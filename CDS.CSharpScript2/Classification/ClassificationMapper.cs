@@ -3,10 +3,21 @@ using System.Collections.Immutable;
 
 namespace CDS.CSharpScript2.Classification;
 
+
+/// <summary>
+/// Provides a mapping from Roslyn classification type names to our internal SymbolClassification enum.
+/// </summary>
 public class ClassificationMapper
 {
-    public ImmutableDictionary<string, SymbolClassification> Map { get; } 
+    /// <summary>
+    /// Immutable dictionary mapping Roslyn classification type names (e.g., "keyword", "identifier") to our SymbolClassification enum values.
+    /// </summary>
+    public ImmutableDictionary<string, SymbolClassification> Map { get; }
 
+
+    /// <summary>
+    /// Initializes the classification mapping with all relevant Roslyn classification type names mapped to our SymbolClassification enum values.
+    /// </summary>
     public ClassificationMapper()
     {
         var builder = ImmutableDictionary.CreateBuilder<string, SymbolClassification>();

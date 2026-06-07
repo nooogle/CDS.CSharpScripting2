@@ -5,7 +5,8 @@ using System.ComponentModel;
 namespace CDS.CSharpScript2.ScintillaEditor;
 
 /// <summary>
-/// Provides a Scintilla-based script editor with live diagnostics, classifications, and editor assistance.
+/// Provides a Scintilla-based script editor with live diagnostics, syntax classifications,
+/// completion lists, call tips, API information, and find/replace support.
 /// </summary>
 public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 {
@@ -36,9 +37,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
+    /// <summary>Raised when the set of Roslyn diagnostics for the current script changes.</summary>
     [Category(CDSCategory)]
     public event EventHandler<Editors.DiagnosticsUpdatedEventArgs>? DiagnosticsUpdated;
 
+    /// <summary>Raised when the text content of the script is modified by the user.</summary>
     [Category(CDSCategory)]
     public event EventHandler? ScriptChanged;
 
@@ -100,6 +103,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <summary>
     /// Initializes a new instance of the <see cref="ScintillaScriptEditor"/> class.
     /// </summary>
+    /// <remarks>
+    /// Set <see cref="Editors.IScriptEditor.Environment"/> before compiling or relying on live analysis.
+    /// </remarks>
     public ScintillaScriptEditor()
     {
         InitializeComponent();
@@ -180,8 +186,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCMaxHeight = 12;
         scintilla.AutoCDropRestOfWord = true;
 
-        foreach (var (classificationName, styleIndex) in _classificationKindToScintillaStyle)
+        foreach (var entry in _classificationKindToScintillaStyle)
         {
+            var classificationName = entry.Key;
+            var styleIndex = entry.Value;
             var colorScheme = _coloriser.FromClassificationName(classificationName);
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
             scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
@@ -474,7 +482,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         out int boundedStart,
         out int boundedLength)
     {
-        boundedStart = Math.Clamp(start, 0, documentLength);
+        boundedStart = Math.Min(Math.Max(start, 0), documentLength);
         boundedLength = Math.Min(length, documentLength - boundedStart);
 
         return boundedLength > 0;
@@ -700,7 +708,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     /// <summary>
     /// Fetches completions from Roslyn and populates the Scintilla autocomplete list.
-    /// Runs on the UI thread throughout; the debounce <see cref="Task.Delay"/> simply
+    /// Runs on the UI thread throughout; the debounce <see cref="Task.Delay(int)"/> simply
     /// yields control without leaving the <see cref="System.Windows.Forms.WindowsFormsSynchronizationContext"/>.
     /// </summary>
     private async Task ShowCompletionAsync(CancellationToken cancellationToken, bool immediate)

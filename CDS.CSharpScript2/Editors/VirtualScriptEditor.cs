@@ -95,7 +95,10 @@ public class VirtualScriptEditor : IScriptEditor
     /// <param name="cancellationToken">The cancellation token.</param>
     public async Task TypeTextAsync(string text, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(text);
+        if (text is null)
+        {
+            throw new ArgumentNullException(nameof(text));
+        }
 
         foreach (var character in text)
         {
@@ -111,7 +114,10 @@ public class VirtualScriptEditor : IScriptEditor
     /// <param name="cancellationToken">The cancellation token.</param>
     public async Task BackspaceAsync(int count = 1, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (count < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
 
         for (var i = 0; i < count && CaretPosition > 0; i++)
         {
@@ -128,7 +134,10 @@ public class VirtualScriptEditor : IScriptEditor
     /// <param name="position">The zero-based caret position.</param>
     public void MoveCaretTo(int position)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(position);
+        if (position < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(position));
+        }
 
         if (position > _script.Length)
         {

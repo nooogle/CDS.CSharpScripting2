@@ -4,9 +4,12 @@ using System.Collections.Immutable;
 namespace CDS.CSharpScript2;
 
 /// <summary>
-/// A script compiled for execution. Obtain via <see cref="ScriptExecutor.CompileAsync()"/>.
-/// A single instance can be run multiple times; only the globals change between runs.
+/// Represents a compiled script that is ready to execute.
 /// </summary>
+/// <remarks>
+/// Obtain instances from editor controls or higher-level compilation APIs.
+/// A single compiled script can be executed multiple times with different globals objects.
+/// </remarks>
 public class ExecutableScript
 {
     private readonly CompiledScript _compiled;
@@ -16,20 +19,39 @@ public class ExecutableScript
         _compiled = compiled;
     }
 
-    /// <summary>Full compilation output including diagnostics and message strings.</summary>
+    /// <summary>
+    /// Gets the full compilation output, including diagnostics and preformatted diagnostic messages.
+    /// </summary>
     public CompilationOutput CompilationOutput => _compiled.CompilationOutput;
 
-    /// <summary>All diagnostics produced during compilation.</summary>
+    /// <summary>
+    /// Gets all diagnostics produced during compilation.
+    /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics => _compiled.CompilationOutput.Diagnostics;
 
-    /// <summary>True when the compilation produced at least one error-severity diagnostic.</summary>
+    /// <summary>
+    /// Gets a value indicating whether compilation produced at least one error-severity diagnostic.
+    /// </summary>
     public bool HasErrors => Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
 
-    /// <summary>Runs the script. Pass a globals instance if the environment was configured with a global type.</summary>
+    /// <summary>
+    /// Runs the script without returning a typed value.
+    /// </summary>
+    /// <param name="globals">
+    /// The globals object exposed to the script, or <see langword="null"/> when the script does not use globals.
+    /// </param>
+    /// <returns>A task that completes when script execution finishes.</returns>
     public async Task RunAsync(object? globals = null)
         => await ScriptRunner.RunAsync<object>(_compiled, globals).ConfigureAwait(false);
 
-    /// <summary>Runs the script and returns its return value cast to <typeparamref name="T"/>.</summary>
+    /// <summary>
+    /// Runs the script and returns its result cast to <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The expected return type.</typeparam>
+    /// <param name="globals">
+    /// The globals object exposed to the script, or <see langword="null"/> when the script does not use globals.
+    /// </param>
+    /// <returns>A task that completes with the script return value.</returns>
     public async Task<T> RunAsync<T>(object? globals = null)
         => await ScriptRunner.RunAsync<T>(_compiled, globals).ConfigureAwait(false);
 }

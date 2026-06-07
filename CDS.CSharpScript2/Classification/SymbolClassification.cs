@@ -1,7 +1,11 @@
 ﻿namespace CDS.CSharpScript2.Classification;
 
+// suppress CS1591 - no need for XML comments on enum values
+#pragma warning disable CS1591
+
 /// <summary>
-/// Symbol classification types
+/// Identifies the syntactic or semantic classification of a code symbol,
+/// as returned by the Roslyn classifier.
 /// </summary>
 public enum SymbolClassification
 {
@@ -72,3 +76,5 @@ public enum SymbolClassification
     RegexSelfEscapedCharacter,
     RegexOtherEscape
 }
+
+#pragma warning restore CS1591

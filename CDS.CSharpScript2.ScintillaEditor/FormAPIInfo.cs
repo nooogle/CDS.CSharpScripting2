@@ -7,6 +7,9 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 /// </summary>
 public partial class FormAPIInfo : Form
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FormAPIInfo"/> class.
+    /// </summary>
     public FormAPIInfo()
     {
         InitializeComponent();

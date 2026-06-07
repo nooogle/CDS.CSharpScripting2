@@ -6,8 +6,7 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 
 
 /// <summary>
-/// A rich text format output panel that displays text with formatting capabilities.
-/// Implements the <see cref="IOutputPanel"/> interface for consistent output handling.
+/// Provides a RichTextBox-based output panel for displaying script output and diagnostics.
 /// </summary>
 public partial class RTFOutputPanel : UserControl, IOutputPanel
 {
@@ -15,7 +14,7 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
 
 
     /// <summary>
-    /// True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.
+    /// Gets or sets a value indicating whether hyperlinks in the output can be opened by the user.
     /// </summary>
     [Category(CDSCategory)]
     [Description("True to allow the user to click on links in the rich text box, false to prevent the user from clicking on links.")]
@@ -25,7 +24,6 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RTFOutputPanel"/> class.
-    /// Sets up the rich text box control and any required event handlers.
     /// </summary>
     public RTFOutputPanel()
     {
@@ -60,7 +58,7 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
 
 
     /// <summary>
-    /// The user has clicked on a link in the rich text box. Open the link in the default browser (if allowed).
+    /// Opens a clicked hyperlink in the default shell handler when link navigation is enabled.
     /// </summary>
     private void richTextBox_LinkClicked(object sender, LinkClickedEventArgs e)
     {

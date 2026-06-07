@@ -61,7 +61,7 @@ public partial class FormGlobals : Form
     /// <returns><see langword="true"/> when the action completed successfully; otherwise, <see langword="false"/>.</returns>
     private async Task<bool> PerformScriptActionAsync(Func<Task> action)
     {
-        ArgumentNullException.ThrowIfNull(action);
+        if (action == null) { throw new ArgumentNullException(nameof(action)); }
 
         if (_isRunningOrCompiling)
         {

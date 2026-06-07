@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 namespace CDS.CSharpScript2.RTFEditor;
 
 /// <summary>
-/// Provides a rich-text-based script editor with live diagnostics and classification feedback.
+/// Provides a RichTextBox-based script editor with live diagnostics and background classification feedback.
 /// </summary>
 public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
 {
@@ -79,6 +79,9 @@ public partial class RTFScriptEditor : UserControl, Editors.IScriptEditor
     /// <summary>
     /// Initializes a new instance of the <see cref="RTFScriptEditor"/> class.
     /// </summary>
+    /// <remarks>
+    /// Set <see cref="Editors.IScriptEditor.Environment"/> before compiling or relying on live analysis.
+    /// </remarks>
     public RTFScriptEditor()
     {
         InitializeComponent();

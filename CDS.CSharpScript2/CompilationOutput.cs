@@ -4,31 +4,35 @@ using System.Collections.Immutable;
 namespace CDS.CSharpScript2
 {
     /// <summary>
-    /// Basic compilation results
+    /// Represents the diagnostics and summary counts produced by a script compilation.
     /// </summary>
     public class CompilationOutput
     {
         /// <summary>
-        /// Compilation diagnostics
+        /// Gets preformatted diagnostic messages suitable for display in logs or output panes.
         /// </summary>
         public ImmutableArray<string> Messages { get; }
 
-        /// <summary>Number of compilation warnings</summary>
+        /// <summary>
+        /// Gets the number of warning diagnostics.
+        /// </summary>
         public int WarningCount { get; }
 
-        /// <summary>Number of compilation errors</summary>
+        /// <summary>
+        /// Gets the number of error diagnostics.
+        /// </summary>
         public int ErrorCount { get; }
 
         /// <summary>
-        /// All diagnostics
+        /// Gets all diagnostics returned by Roslyn for the compilation.
         /// </summary>
         public ImmutableArray<Diagnostic> Diagnostics { get; }
 
         /// <summary>
-        /// Initialize
+        /// Initializes a new instance of the <see cref="CompilationOutput"/> class.
         /// </summary>
-        /// <param name="diagnostics">The compilation diagnostics</param>
-        /// <exception cref="ArgumentNullException">Thrown when diagnostics is null</exception>
+        /// <param name="diagnostics">The compilation diagnostics.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="diagnostics"/> is default.</exception>
         internal CompilationOutput(ImmutableArray<Diagnostic> diagnostics)
         {
             if (diagnostics.IsDefault)
