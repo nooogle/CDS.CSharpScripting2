@@ -30,10 +30,16 @@ public partial class FormMain : Form
             createForm: () => new Demos.GlobalsDemo.FormGlobals(settingsManager.Settings.Demos.GlobalsDemo));
 
         scintillaGroup.AddItem(
-            name: "OpenCvSharp",
-            tooltip: "Demonstrates using a script to perform image processing",
+            name: "OpenCvSharp (static)",
+            tooltip: "Demonstrates using a script to perform image processing on a static image",
             parent: this,
             createForm: () => new Demos.OpenCvSharpStaticDemo.FormOpenCvSharpDemo(settingsManager.Settings.Demos.OpenCvSharpStaticDemo));
+
+        scintillaGroup.AddItem(
+            name: "OpenCvSharp (live)",
+            tooltip: "Demonstrates per-frame script processing of a live webcam feed",
+            parent: this,
+            createForm: () => new Demos.OpenCvSharpLiveDemo.FormOpenCvSharpLiveDemo(settingsManager.Settings.Demos.OpenCvSharpLiveDemo));
 
         var otherGroup = demosTreeView.AddGroup(name: "Other");
 

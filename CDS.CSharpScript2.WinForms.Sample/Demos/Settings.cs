@@ -16,4 +16,6 @@ class Settings
 
 
     public ClassifiedSpansDemo.Settings ClassifiedSpansDemo { get; set; } = new ();
+
+    public OpenCvSharpLiveDemo.Settings OpenCvSharpLiveDemo { get; set; } = new ();
 }
