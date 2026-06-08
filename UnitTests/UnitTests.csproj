@@ -22,7 +22,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" GeneratePathProperty="true" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.13.0.20260531" />
+    <PackageReference Include="OpenCvSharp4.Windows" Version="4.13.0.20260602" />
   </ItemGroup>
 
   <ItemGroup>
