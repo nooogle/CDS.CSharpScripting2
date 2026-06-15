@@ -74,7 +74,16 @@ public class ScriptContext : IDisposable
         if (environment.GlobalType != null)
             references.Add(GetMetadataReference(environment.GlobalType));
 
-        if (!ScriptEnvironment.IsNetFramework)
+        if (ScriptEnvironment.IsNetFramework)
+        {
+            // netstandard.dll is required so Roslyn can follow type-forwards from assemblies
+            // that target .NET Standard (e.g. OpenCvSharp) back to mscorlib.dll.
+            // Without it the workspace compilation reports CS0012 on types like System.Object.
+            var netStandardRef = TryGetNetStandardReference();
+            if (netStandardRef != null)
+                references.Add(netStandardRef);
+        }
+        else
         {
             references.Add(GetMetadataReferenceForAssemblyName("System.Runtime"));
             references.Add(GetMetadataReferenceForAssemblyName("System.Collections"));
@@ -144,6 +153,22 @@ public class ScriptContext : IDisposable
 
         string xmlFileName = $"{Path.GetFileNameWithoutExtension(assemblyPath)}.xml";
         return TryFindXml(xmlFileName) ?? xmlPath;
+    }
+
+    private static MetadataReference? TryGetNetStandardReference()
+    {
+        // netstandard.dll lives in the same directory as mscorlib.dll on .NET Framework 4.x.
+        var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
+        if (runtimeDir is null)
+            return null;
+
+        var path = Path.Combine(runtimeDir, "netstandard.dll");
+        if (!File.Exists(path))
+            return null;
+
+        string xmlPath = GetXmlDocumentationPath(path);
+        var provider = XmlDocumentationProvider.CreateFromFile(xmlPath);
+        return MetadataReference.CreateFromFile(path, documentation: provider);
     }
 
     private static string? TryFindXml(string xmlFileName)
