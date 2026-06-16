@@ -35,8 +35,8 @@ public partial class FormOpenCvSharpLiveDemo : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.Environment = CreateScriptEnvironment();
-        scintillaScriptEditor.Script = _settings.Script;
+        scintillaScriptEditor.API.Environment = CreateScriptEnvironment();
+        scintillaScriptEditor.API.Script = _settings.Script;
 
         zoomPictureBoxSource.ViewportChanged += OnSourceViewportChanged;
     }
@@ -50,7 +50,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
         }
 
         base.OnFormClosing(e);
-        _settings.Script = scintillaScriptEditor.Script;
+        _settings.Script = scintillaScriptEditor.API.Script;
         _sharedData.Dispose();
     }
 
@@ -93,7 +93,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
         outputPanel.Clear();
         outputPanel.AppendLine("Compiling script...");
 
-        _executableScript = await scintillaScriptEditor.CompileAsync();
+        _executableScript = await scintillaScriptEditor.API.CompileAsync();
 
         if (_executableScript.HasErrors)
         {

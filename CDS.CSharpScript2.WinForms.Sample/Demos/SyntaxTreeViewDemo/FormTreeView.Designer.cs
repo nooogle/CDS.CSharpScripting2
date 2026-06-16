@@ -37,7 +37,6 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.SyntaxTreeViewDemo
             scintillaScriptEditor.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             scintillaScriptEditor.Location = new Point(12, 12);
             scintillaScriptEditor.Name = "scintillaScriptEditor";
-            scintillaScriptEditor.Script = "";
             scintillaScriptEditor.Size = new Size(609, 161);
             scintillaScriptEditor.TabIndex = 6;
             // 

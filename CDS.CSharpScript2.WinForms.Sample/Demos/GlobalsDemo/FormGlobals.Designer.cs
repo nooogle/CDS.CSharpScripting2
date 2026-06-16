@@ -61,7 +61,6 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.GlobalsDemo
             scintillaScriptEditor.Dock = DockStyle.Fill;
             scintillaScriptEditor.Location = new Point(3, 3);
             scintillaScriptEditor.Name = "scintillaScriptEditor";
-            scintillaScriptEditor.Script = "";
             scintillaScriptEditor.Size = new Size(581, 340);
             scintillaScriptEditor.TabIndex = 5;
             // 

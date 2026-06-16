@@ -19,21 +19,21 @@ public partial class FormTreeView : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
-        scintillaScriptEditor.Script = settings.Script;
+        scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
+        scintillaScriptEditor.API.Script = settings.Script;
         scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshTree();
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         base.OnFormClosing(e);
-        settings.Script = scintillaScriptEditor.Script;
+        settings.Script = scintillaScriptEditor.API.Script;
     }
 
     // ScriptChanged fires after analysis completes, so Manager is ready immediately.
     private async Task RefreshTree()
     {
-        var manager = scintillaScriptEditor.Manager;
+        var manager = scintillaScriptEditor.API.Manager;
         if (manager is null) return;
 
         var syntaxTree = await manager.GetSyntaxTreeAsync();
@@ -109,11 +109,11 @@ public partial class FormTreeView : Form
 
         if (treeNode is SyntaxNodeOrToken syntaxNodeOrToken)
         {
-            scintillaScriptEditor.HighlightText(syntaxNodeOrToken.SpanStart, syntaxNodeOrToken.Span.Length);
+            scintillaScriptEditor.API.HighlightText(syntaxNodeOrToken.SpanStart, syntaxNodeOrToken.Span.Length);
             didHighlight = true;
         }
 
         if (!didHighlight)
-            scintillaScriptEditor.ClearHighlightText();
+            scintillaScriptEditor.API.ClearHighlightText();
     }
 }

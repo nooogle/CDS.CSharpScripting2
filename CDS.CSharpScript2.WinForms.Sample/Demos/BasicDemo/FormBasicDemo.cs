@@ -27,8 +27,8 @@ public partial class FormBasicDemo : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
-        scintillaScriptEditor.Script = _settings.Script;
+        scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
+        scintillaScriptEditor.API.Script = _settings.Script;
     }
 
 
@@ -43,7 +43,7 @@ public partial class FormBasicDemo : Form
             return;
         }
 
-        _settings.Script = scintillaScriptEditor.Script;
+        _settings.Script = scintillaScriptEditor.API.Script;
 
         base.OnFormClosing(e);
     }
@@ -90,7 +90,7 @@ public partial class FormBasicDemo : Form
 
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             await compiled.RunAsync();
         });
     }
@@ -102,7 +102,7 @@ public partial class FormBasicDemo : Form
     {
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             var output = compiled.CompilationOutput;
 
             outputPanel.AppendLine("Compilation complete");

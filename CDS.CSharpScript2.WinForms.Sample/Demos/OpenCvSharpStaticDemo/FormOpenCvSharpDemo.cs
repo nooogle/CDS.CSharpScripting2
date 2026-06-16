@@ -33,8 +33,8 @@ public partial class FormOpenCvSharpDemo : Form
 
         var environment = CreateScriptEnvironment();
 
-        scintillaScriptEditor.Environment = environment;
-        scintillaScriptEditor.Script = _settings.Script;
+        scintillaScriptEditor.API.Environment = environment;
+        scintillaScriptEditor.API.Script = _settings.Script;
 
         _sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpStaticDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
         ShowImages();
@@ -52,7 +52,7 @@ public partial class FormOpenCvSharpDemo : Form
         }
 
         base.OnFormClosing(e);
-        _settings.Script = scintillaScriptEditor.Script;
+        _settings.Script = scintillaScriptEditor.API.Script;
         _sharedData.Dispose();
     }
 
@@ -118,7 +118,7 @@ public partial class FormOpenCvSharpDemo : Form
 
         var didSucceed = await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             await compiled.RunAsync(_sharedData);
         });
 
@@ -135,7 +135,7 @@ public partial class FormOpenCvSharpDemo : Form
     {
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             var output = compiled.CompilationOutput;
 
             outputPanel.AppendLine("Compilation complete");

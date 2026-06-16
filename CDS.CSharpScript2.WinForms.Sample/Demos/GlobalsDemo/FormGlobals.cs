@@ -33,8 +33,8 @@ public partial class FormGlobals : Form
             .WithDrawingReferences()
             .WithGlobalType(typeof(SharedData));
 
-        scintillaScriptEditor.Environment = environment;
-        scintillaScriptEditor.Script = _settings.Script;
+        scintillaScriptEditor.API.Environment = environment;
+        scintillaScriptEditor.API.Script = _settings.Script;
 
         propertyGrid1.SelectedObject = _sharedData;
     }
@@ -51,7 +51,7 @@ public partial class FormGlobals : Form
         }
 
         base.OnFormClosing(e);
-        _settings.Script = scintillaScriptEditor.Script;
+        _settings.Script = scintillaScriptEditor.API.Script;
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public partial class FormGlobals : Form
 
         var didSucceed = await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             await compiled.RunAsync(_sharedData);
         });
 
@@ -120,7 +120,7 @@ public partial class FormGlobals : Form
     {
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.CompileAsync();
+            var compiled = await scintillaScriptEditor.API.CompileAsync();
             var output = compiled.CompilationOutput;
 
             outputPanel.AppendLine("Compilation complete");

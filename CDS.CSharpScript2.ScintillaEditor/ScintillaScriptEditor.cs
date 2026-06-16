@@ -45,12 +45,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     [Category(CDSCategory)]
     public event EventHandler? ScriptChanged;
 
-    /// <inheritdoc/>
-    public Editors.EditorManager? Manager => _manager;
+    private Editors.EditorManager? Manager => _manager;
 
-    /// <inheritdoc/>
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public ScriptEnvironment? Environment
+    private ScriptEnvironment? Environment
     {
         get => _environment;
         set
@@ -64,9 +61,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
-    /// <inheritdoc/>
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-    public string Script
+    private string Script
     {
         get => TryGetScript(out var script)
             ? script
@@ -78,18 +73,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
     }
 
-    /// <inheritdoc/>
-    public bool HasErrors =>
+    private bool HasErrors =>
         _currentDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
 
-    /// <inheritdoc/>
-    public IReadOnlyList<Diagnostic> CurrentDiagnostics => _currentDiagnostics;
+    private IReadOnlyList<Diagnostic> CurrentDiagnostics => _currentDiagnostics;
 
-    /// <inheritdoc/>
-    public ExecutableScript? CurrentCompiledScript => _currentCompiledScript;
+    private ExecutableScript? CurrentCompiledScript => _currentCompiledScript;
 
-    /// <inheritdoc/>
-    public async Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken = default)
+    private async Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken = default)
     {
         if (_manager is null)
             throw new InvalidOperationException($"{nameof(Environment)} must be set before compiling.");
@@ -97,6 +88,38 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _currentCompiledScript = await _manager.CompileAsync(cancellationToken).ConfigureAwait(false);
         return _currentCompiledScript;
     }
+
+    // ── IScriptEditor (explicit implementations) ─────────────────────────────
+
+    Editors.EditorManager? Editors.IScriptEditor.Manager => Manager;
+
+    ScriptEnvironment? Editors.IScriptEditor.Environment
+    {
+        get => Environment;
+        set => Environment = value;
+    }
+
+    string Editors.IScriptEditor.Script
+    {
+        get => Script;
+        set => Script = value;
+    }
+
+    bool Editors.IScriptEditor.HasErrors => HasErrors;
+
+    IReadOnlyList<Diagnostic> Editors.IScriptEditor.CurrentDiagnostics => CurrentDiagnostics;
+
+    ExecutableScript? Editors.IScriptEditor.CurrentCompiledScript => CurrentCompiledScript;
+
+    Task<ExecutableScript> Editors.IScriptEditor.CompileAsync(CancellationToken cancellationToken) =>
+        CompileAsync(cancellationToken);
+
+    // ── API facade ────────────────────────────────────────────────────────────
+
+    /// <summary>Gets the custom API surface for this editor, grouping all script and display members under a single named property.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ScintillaScriptEditorApi API { get; }
 
     // ── Construction ─────────────────────────────────────────────────────────
 
@@ -123,6 +146,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _classificationKindToScintillaStyle = builder.ToImmutableDictionary();
 
         InitialiseScintilla();
+
+        API = new ScintillaScriptEditorApi(this);
     }
 
     /// <summary>
@@ -445,7 +470,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     /// <param name="start">The zero-based start position.</param>
     /// <param name="length">The length of the range to highlight.</param>
-    public void HighlightText(int start, int length)
+    private void HighlightText(int start, int length)
     {
         if (!TryGetScript(out var script))
         {
@@ -491,7 +516,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <summary>
     /// Clears any active highlight range from the editor.
     /// </summary>
-    public void ClearHighlightText()
+    private void ClearHighlightText()
     {
         if (!TryGetScript(out var script))
         {
@@ -1159,5 +1184,76 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         currentPosition = scintilla.CurrentPosition;
         return true;
+    }
+
+    // ── Nested API facade class ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Custom API surface for <see cref="ScintillaScriptEditor"/>.
+    /// Access via <c>control.API.Xxx</c>.
+    /// </summary>
+    public sealed class ScintillaScriptEditorApi
+    {
+        private readonly ScintillaScriptEditor _ctrl;
+
+        internal ScintillaScriptEditorApi(ScintillaScriptEditor ctrl) => _ctrl = ctrl;
+
+        /// <summary>Raised when the set of Roslyn diagnostics for the current script changes.</summary>
+        public event EventHandler<Editors.DiagnosticsUpdatedEventArgs>? DiagnosticsUpdated
+        {
+            add => _ctrl.DiagnosticsUpdated += value;
+            remove => _ctrl.DiagnosticsUpdated -= value;
+        }
+
+        /// <summary>Raised when the text content of the script is modified by the user.</summary>
+        public event EventHandler? ScriptChanged
+        {
+            add => _ctrl.ScriptChanged += value;
+            remove => _ctrl.ScriptChanged -= value;
+        }
+
+        /// <summary>The underlying engine manager; <see langword="null"/> until <see cref="Environment"/> is set.</summary>
+        public Editors.EditorManager? Manager => _ctrl.Manager;
+
+        /// <summary>The scripting environment (assembly references, namespace imports, global type).</summary>
+        public ScriptEnvironment? Environment
+        {
+            get => _ctrl.Environment;
+            set => _ctrl.Environment = value;
+        }
+
+        /// <summary>Gets or sets the script text shown in the editor.</summary>
+        public string Script
+        {
+            get => _ctrl.Script;
+            set => _ctrl.Script = value;
+        }
+
+        /// <summary><see langword="true"/> when the most recent analysis found at least one error.</summary>
+        public bool HasErrors => _ctrl.HasErrors;
+
+        /// <summary>Diagnostics produced by the most recent live-analysis pass.</summary>
+        public IReadOnlyList<Diagnostic> CurrentDiagnostics => _ctrl.CurrentDiagnostics;
+
+        /// <summary>The last successfully compiled script, or <see langword="null"/> if the script has changed since the last <see cref="CompileAsync()"/> call.</summary>
+        public ExecutableScript? CurrentCompiledScript => _ctrl.CurrentCompiledScript;
+
+        /// <summary>Compiles the current script and returns the result.</summary>
+        /// <exception cref="InvalidOperationException">Thrown when <see cref="Environment"/> has not been set.</exception>
+        public Task<ExecutableScript> CompileAsync() => _ctrl.CompileAsync();
+
+        /// <summary>Compiles the current script and returns the result.</summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <exception cref="InvalidOperationException">Thrown when <see cref="Environment"/> has not been set.</exception>
+        public Task<ExecutableScript> CompileAsync(CancellationToken cancellationToken) =>
+            _ctrl.CompileAsync(cancellationToken);
+
+        /// <summary>Highlights the specified text range in the editor.</summary>
+        /// <param name="start">The zero-based start position.</param>
+        /// <param name="length">The length of the range to highlight.</param>
+        public void HighlightText(int start, int length) => _ctrl.HighlightText(start, length);
+
+        /// <summary>Clears any active highlight range from the editor.</summary>
+        public void ClearHighlightText() => _ctrl.ClearHighlightText();
     }
 }

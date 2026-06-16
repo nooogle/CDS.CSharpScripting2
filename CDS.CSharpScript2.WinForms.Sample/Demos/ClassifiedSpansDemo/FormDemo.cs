@@ -18,21 +18,21 @@ public partial class FormDemo : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
-        scintillaScriptEditor.Script = settings.Script;
+        scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
+        scintillaScriptEditor.API.Script = settings.Script;
         scintillaScriptEditor.ScriptChanged += async (_, _) => await RefreshList();
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         base.OnFormClosing(e);
-        settings.Script = scintillaScriptEditor.Script;
+        settings.Script = scintillaScriptEditor.API.Script;
     }
 
     // ScriptChanged fires after analysis completes, so Manager is ready immediately.
     private async Task RefreshList()
     {
-        var manager = scintillaScriptEditor.Manager;
+        var manager = scintillaScriptEditor.API.Manager;
         if (manager is null) return;
 
         var classifiedSpans = manager.LastClassifications;
@@ -70,7 +70,7 @@ public partial class FormDemo : Form
             var selectedItem = listViewInfo.SelectedItems[0];
             if (selectedItem.Tag is CDS.CSharpScript2.Classification.ClassifiedSymbol classifiedSymbol)
             {
-                scintillaScriptEditor.HighlightText(
+                scintillaScriptEditor.API.HighlightText(
                     classifiedSymbol.SpanStart,
                     classifiedSymbol.SpanLength);
             }
