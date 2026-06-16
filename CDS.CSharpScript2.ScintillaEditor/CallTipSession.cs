@@ -132,7 +132,9 @@ internal sealed class CallTipSession
                 sb.Append(", ");
 
             var param = member.Parameters[i];
-            var paramText = $"{param.Type} {param.Name}";
+            var paramText = string.IsNullOrEmpty(param.DefaultValue)
+                ? $"{param.Type} {param.Name}"
+                : $"{param.Type} {param.Name} = {param.DefaultValue}";
 
             if (i == activeParamIndex)
                 hltStart = sb.Length;

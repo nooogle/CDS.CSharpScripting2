@@ -99,6 +99,29 @@ public partial class UT_XMLDocInfo
     }
 
     [TestMethod]
+    public async Task ParameterInfo_IncludesDefaultValue_WhenMethodHasOptionalParameters()
+    {
+        var script = "void Greet(int count = 3, string prefix = \"Hi\") { }\nGreet(";
+        var context = await ScriptContext.CreateAsync();
+        context = context.ApplyScript(script);
+        var apiInfo = await new ScriptAnalyser(context).GetAPIInfoAsync(position: script.Length - 1);
+
+        apiInfo.Should().NotBeNull();
+        apiInfo!.MemberInfos.Should().NotBeEmpty("Greet should return method info");
+
+        var method = apiInfo.MemberInfos.First();
+        method.Parameters.Should().HaveCount(2);
+
+        var countParam = method.Parameters[0];
+        countParam.Name.Should().Be("count");
+        countParam.DefaultValue.Should().Be("3");
+
+        var prefixParam = method.Parameters[1];
+        prefixParam.Name.Should().Be("prefix");
+        prefixParam.DefaultValue.Should().Be("\"Hi\"");
+    }
+
+    [TestMethod]
     public async Task Should_ReturnAllOverloadedMethods_ForOpenCvSharpClone()
     {
         var environment =

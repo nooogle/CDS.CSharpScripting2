@@ -153,4 +153,18 @@ public partial class FormAPIInfo : Form
         }
     }
 
+    /// <inheritdoc/>
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+        if (e.CloseReason == CloseReason.UserClosing)
+        {
+            e.Cancel = true;
+            Hide();
+        }
+        else
+        {
+            base.OnFormClosing(e);
+        }
+    }
+
     }

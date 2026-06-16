@@ -100,6 +100,7 @@ internal static class TypeInfoBuilder
                 .Select(p => new ParameterInfo(
                     p.Name,
                     p.Type.ToDisplayString(_displayFormat),
+                    FormatDefaultValue(p),
                     docs.ParamDocs.TryGetValue(p.Name, out var d) ? d : null))
                 .ToList(),
         };
@@ -115,6 +116,7 @@ internal static class TypeInfoBuilder
                 .Select(p => new ParameterInfo(
                     p.Name,
                     p.Type.ToDisplayString(_displayFormat),
+                    FormatDefaultValue(p),
                     docs.ParamDocs.TryGetValue(p.Name, out var d) ? d : null))
                 .ToList<ParameterInfo>()
             : [];
@@ -212,6 +214,20 @@ internal static class TypeInfoBuilder
             Kind      = "Type Parameter",
             Signature = typeParam.ToDisplayString(_displayFormat),
             Summary   = typeParamDoc ?? string.Empty,
+        };
+    }
+
+    private static string? FormatDefaultValue(IParameterSymbol p)
+    {
+        if (!p.HasExplicitDefaultValue) return null;
+        var value = p.ExplicitDefaultValue;
+        return value switch
+        {
+            null     => "null",
+            string s => $"\"{s}\"",
+            char c   => $"'{c}'",
+            bool b   => b ? "true" : "false",
+            _        => value.ToString(),
         };
     }
 }

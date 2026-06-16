@@ -837,7 +837,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
         else if (_callTipSession is not null && !e.Control && !e.Alt)
         {
-            if (e.KeyCode == Keys.Up)
+            if (!scintilla.CallTipActive)
+            {
+                // The call tip was dismissed externally (focus change, mouse click, etc.)
+                // without going through our Cancel path. Drop the stale session so that
+                // Up/Down pass through to Scintilla for normal cursor movement.
+                _callTipSession = null;
+            }
+            else if (e.KeyCode == Keys.Up)
             {
                 _callTipSession.PreviousOverload();
                 e.Handled = true;
