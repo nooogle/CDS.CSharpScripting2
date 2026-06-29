@@ -1,6 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<MinVerTagPrefix>v</MinVerTagPrefix>
+		<MinVerTagPrefix>V</MinVerTagPrefix>
 
 		<!-- Common package metadata — override per-project as needed -->
 		<Authors>Jon Shadforth</Authors>
