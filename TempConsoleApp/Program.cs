@@ -1,5 +1,4 @@
-﻿
-Console.WriteLine(Math.Pow(3, 4));
+﻿Console.WriteLine(Math.Pow(3, 4));
 
 Console.WriteLine(Calc.Add(2, 3));
 
