@@ -70,10 +70,6 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="MinVer" Version="7.0.0" />
-  </ItemGroup>
-
   <!--This copies all the XML documentation files to the output folder! -->
   <PropertyGroup>
     <CopyDocumentationFilesFromPackages>true</CopyDocumentationFilesFromPackages>

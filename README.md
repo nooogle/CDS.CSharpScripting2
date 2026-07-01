@@ -1,7 +1,5 @@
 # CDS.CSharpScripting2
 
-> **Work in progress** — this documentation will be expanded soon.
-
 A Roslyn-powered C# scripting framework for .NET. Embed a full C# script engine — with compilation, execution, code completion, syntax highlighting, and signature help — into any .NET application.
 
 ## Packages

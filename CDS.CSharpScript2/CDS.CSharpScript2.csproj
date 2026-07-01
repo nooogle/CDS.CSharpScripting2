@@ -9,6 +9,8 @@
 
 		<!-- Package -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<Title>CDS C# Scripting Engine</Title>
 		<Description>Roslyn-powered C# scripting engine providing compilation, execution, IntelliSense (code completion, classification, signature help), and editor integration. Embed full C# scripting — including globals and assembly references — into any .NET 10 application.</Description>
 		<PackageIcon>script.png</PackageIcon>
@@ -38,8 +40,5 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <PackageReference Update="MinVer" Version="7.0.0" />
-	</ItemGroup>
 
 </Project>

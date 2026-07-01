@@ -11,29 +11,8 @@
     <Platforms>AnyCPU;ARM64;x64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
 
-    <!-- Package -->
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Title>CDS C# Scripting: RTF Editor</Title>
-    <Description>Lightweight RTF-based WinForms editor control for embedding C# script editing in .NET 10 Windows applications. Provides Roslyn-powered syntax highlighting and code completion without a dependency on the Scintilla native library.</Description>
-    <PackageIcon>script.png</PackageIcon>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageTags>roslyn;csharp;scripting;rtf;editor;winforms;intellisense;code-completion</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="readme.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="script.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="RTFOutputPanel.cs">
@@ -48,8 +27,5 @@
     <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="MinVer" Version="7.0.0" />
-  </ItemGroup>
 
 </Project>

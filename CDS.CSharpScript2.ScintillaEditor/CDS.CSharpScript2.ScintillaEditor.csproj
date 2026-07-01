@@ -13,6 +13,8 @@
 
     <!-- Package -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Title>CDS C# Scripting: Scintilla Editor</Title>
     <Description>Scintilla5-based WinForms editor control for embedding C# script editing in .NET 10 Windows applications. Provides syntax highlighting, IntelliSense, code completion, call tips, and hover info — all powered by Roslyn.</Description>
     <PackageIcon>script.png</PackageIcon>
@@ -52,8 +54,5 @@
     <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="MinVer" Version="7.0.0" />
-  </ItemGroup>
 
 </Project>
