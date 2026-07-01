@@ -181,22 +181,36 @@ public class ScriptContext : IDisposable
 
         foreach (var root in programFilesPaths)
         {
+            // .NET 5+ reference assemblies
             var packsRoot = Path.Combine(root, "dotnet", "packs", "Microsoft.NETCore.App.Ref");
-            if (!Directory.Exists(packsRoot)) continue;
-
-            foreach (var packDir in Directory.GetDirectories(packsRoot)
-                .OrderByDescending(d =>
-                {
-                    var name = Path.GetFileName(d);
-                    return Version.TryParse(name, out var v) ? v : new Version(0, 0);
-                }))
+            if (Directory.Exists(packsRoot))
             {
-                var refFolder = Path.Combine(packDir, "ref");
-                if (!Directory.Exists(refFolder)) continue;
-
-                foreach (var tfmDir in Directory.GetDirectories(refFolder).Where(f => Path.GetFileNameWithoutExtension(f).StartsWith("net")))
+                foreach (var packDir in Directory.GetDirectories(packsRoot)
+                    .OrderByDescending(d =>
+                    {
+                        var name = Path.GetFileName(d);
+                        return Version.TryParse(name, out var v) ? v : new Version(0, 0);
+                    }))
                 {
-                    var candidate = Path.Combine(tfmDir, xmlFileName);
+                    var refFolder = Path.Combine(packDir, "ref");
+                    if (!Directory.Exists(refFolder)) continue;
+
+                    foreach (var tfmDir in Directory.GetDirectories(refFolder).Where(f => Path.GetFileNameWithoutExtension(f).StartsWith("net")))
+                    {
+                        var candidate = Path.Combine(tfmDir, xmlFileName);
+                        if (File.Exists(candidate)) return candidate;
+                    }
+                }
+            }
+
+            // .NET Framework reference assemblies (xml docs are not shipped next to runtime dlls)
+            var netFxRoot = Path.Combine(root, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework");
+            if (Directory.Exists(netFxRoot))
+            {
+                foreach (var versionDir in Directory.GetDirectories(netFxRoot)
+                    .OrderByDescending(d => d))
+                {
+                    var candidate = Path.Combine(versionDir, xmlFileName);
                     if (File.Exists(candidate)) return candidate;
                 }
             }
