@@ -39,6 +39,24 @@ public partial class FormOpenCvSharpLiveDemo : Form
         scintillaScriptEditor.API.Script = _settings.Script;
 
         zoomPictureBoxSource.ViewportChanged += OnSourceViewportChanged;
+
+        // Fill the combo box with a list of available cameras using the camera names
+        var cameraList = new List<string>();
+        for (int i = 0; i < 10; i++)
+        {
+            using var tempCapture = new VideoCapture(i);
+            if (tempCapture.IsOpened())
+            {
+                cameraList.Add($"Camera {i}");
+
+                comboBoxCameras.Items.Add($"Camera {i}");
+            }
+        }
+
+        if (comboBoxCameras.Items.Count > 0)
+        {
+            comboBoxCameras.SelectedIndex = 0;
+        }
     }
 
     /// <inheritdoc/>
@@ -107,11 +125,11 @@ public partial class FormOpenCvSharpLiveDemo : Form
             return;
         }
 
-        _capture = new VideoCapture(0);
+        _capture = new VideoCapture(comboBoxCameras.SelectedIndex);
 
         if (!_capture.IsOpened())
         {
-            outputPanel.AppendLine("Could not open webcam at device index 0.");
+            outputPanel.AppendLine($"Could not open webcam at device index {comboBoxCameras.SelectedIndex}.");
             _capture.Dispose();
             _capture = null;
             SetWebcamCheckbox(isChecked: false);
@@ -121,6 +139,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
         _isFirstFrame = true;
         _lastScriptErrorMessage = null;
         scintillaScriptEditor.Enabled = false;
+        comboBoxCameras.Enabled = false;
         captureTimer.Start();
         outputPanel.AppendLine("Webcam running. Double-click either image to reset zoom.");
     }
@@ -131,6 +150,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
         _capture?.Dispose();
         _capture = null;
         scintillaScriptEditor.Enabled = true;
+        comboBoxCameras?.Enabled = true;
         outputPanel.AppendLine("Webcam stopped.");
     }
 
@@ -216,5 +236,10 @@ public partial class FormOpenCvSharpLiveDemo : Form
     {
         zoomPictureBoxSource.Image = _sharedData.Source.Empty() ? null : _sharedData.Source.ToBitmap();
         zoomPictureBoxDest.Image = _sharedData.Dest.Empty() ? null : _sharedData.Dest.ToBitmap();
+    }
+
+    private void tableLayoutPanelLeft_Paint(object sender, PaintEventArgs e)
+    {
+
     }
 }

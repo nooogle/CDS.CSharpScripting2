@@ -28,140 +28,185 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            tableLayoutPanelMain = new TableLayoutPanel();
-            tableLayoutPanelLeft = new TableLayoutPanel();
-            lblSource = new Label();
-            lblDest = new Label();
-            zoomPictureBoxSource = new ZoomPictureBox();
-            zoomPictureBoxDest = new ZoomPictureBox();
-            chkWebcamRunning = new CheckBox();
-            tableLayoutPanelRight = new TableLayoutPanel();
-            scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
-            outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
-            captureTimer = new System.Windows.Forms.Timer(components);
-            tableLayoutPanelMain.SuspendLayout();
-            tableLayoutPanelLeft.SuspendLayout();
-            tableLayoutPanelRight.SuspendLayout();
-            SuspendLayout();
-            //
+            this.components = new System.ComponentModel.Container();
+            this.tableLayoutPanelMain = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanelLeft = new System.Windows.Forms.TableLayoutPanel();
+            this.lblSource = new System.Windows.Forms.Label();
+            this.lblDest = new System.Windows.Forms.Label();
+            this.zoomPictureBoxSource = new CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo.ZoomPictureBox();
+            this.zoomPictureBoxDest = new CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo.ZoomPictureBox();
+            this.chkWebcamRunning = new System.Windows.Forms.CheckBox();
+            this.comboBoxCameras = new System.Windows.Forms.ComboBox();
+            this.tableLayoutPanelRight = new System.Windows.Forms.TableLayoutPanel();
+            this.scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
+            this.outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
+            this.captureTimer = new System.Windows.Forms.Timer(this.components);
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.tableLayoutPanelMain.SuspendLayout();
+            this.tableLayoutPanelLeft.SuspendLayout();
+            this.tableLayoutPanelRight.SuspendLayout();
+            this.panel1.SuspendLayout();
+            this.SuspendLayout();
+            // 
             // tableLayoutPanelMain
-            //
-            tableLayoutPanelMain.ColumnCount = 2;
-            tableLayoutPanelMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
-            tableLayoutPanelMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
-            tableLayoutPanelMain.Controls.Add(tableLayoutPanelLeft, 0, 0);
-            tableLayoutPanelMain.Controls.Add(tableLayoutPanelRight, 1, 0);
-            tableLayoutPanelMain.Dock = DockStyle.Fill;
-            tableLayoutPanelMain.Name = "tableLayoutPanelMain";
-            tableLayoutPanelMain.RowCount = 1;
-            tableLayoutPanelMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanelMain.TabIndex = 0;
-            //
+            // 
+            this.tableLayoutPanelMain.ColumnCount = 2;
+            this.tableLayoutPanelMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 60F));
+            this.tableLayoutPanelMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 40F));
+            this.tableLayoutPanelMain.Controls.Add(this.tableLayoutPanelLeft, 0, 0);
+            this.tableLayoutPanelMain.Controls.Add(this.tableLayoutPanelRight, 1, 0);
+            this.tableLayoutPanelMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanelMain.Location = new System.Drawing.Point(7, 7);
+            this.tableLayoutPanelMain.Name = "tableLayoutPanelMain";
+            this.tableLayoutPanelMain.RowCount = 1;
+            this.tableLayoutPanelMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanelMain.Size = new System.Drawing.Size(929, 523);
+            this.tableLayoutPanelMain.TabIndex = 0;
+            // 
             // tableLayoutPanelLeft
-            //
-            tableLayoutPanelLeft.ColumnCount = 2;
-            tableLayoutPanelLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanelLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanelLeft.Controls.Add(lblSource, 0, 0);
-            tableLayoutPanelLeft.Controls.Add(lblDest, 1, 0);
-            tableLayoutPanelLeft.Controls.Add(zoomPictureBoxSource, 0, 1);
-            tableLayoutPanelLeft.Controls.Add(zoomPictureBoxDest, 1, 1);
-            tableLayoutPanelLeft.Controls.Add(chkWebcamRunning, 0, 2);
-            tableLayoutPanelLeft.Dock = DockStyle.Fill;
-            tableLayoutPanelLeft.Name = "tableLayoutPanelLeft";
-            tableLayoutPanelLeft.RowCount = 3;
-            tableLayoutPanelLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanelLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanelLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
-            tableLayoutPanelLeft.TabIndex = 0;
-            //
+            // 
+            this.tableLayoutPanelLeft.ColumnCount = 2;
+            this.tableLayoutPanelLeft.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanelLeft.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanelLeft.Controls.Add(this.lblSource, 0, 0);
+            this.tableLayoutPanelLeft.Controls.Add(this.lblDest, 1, 0);
+            this.tableLayoutPanelLeft.Controls.Add(this.zoomPictureBoxSource, 0, 1);
+            this.tableLayoutPanelLeft.Controls.Add(this.zoomPictureBoxDest, 1, 1);
+            this.tableLayoutPanelLeft.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanelLeft.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanelLeft.Name = "tableLayoutPanelLeft";
+            this.tableLayoutPanelLeft.RowCount = 2;
+            this.tableLayoutPanelLeft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 17F));
+            this.tableLayoutPanelLeft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanelLeft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanelLeft.Size = new System.Drawing.Size(551, 517);
+            this.tableLayoutPanelLeft.TabIndex = 0;
+            this.tableLayoutPanelLeft.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanelLeft_Paint);
+            // 
             // lblSource
-            //
-            lblSource.AutoSize = true;
-            lblSource.Dock = DockStyle.Fill;
-            lblSource.Name = "lblSource";
-            lblSource.TabIndex = 0;
-            lblSource.Text = "Source";
-            //
+            // 
+            this.lblSource.AutoSize = true;
+            this.lblSource.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblSource.Location = new System.Drawing.Point(3, 0);
+            this.lblSource.Name = "lblSource";
+            this.lblSource.Size = new System.Drawing.Size(269, 17);
+            this.lblSource.TabIndex = 0;
+            this.lblSource.Text = "Source";
+            // 
             // lblDest
-            //
-            lblDest.AutoSize = true;
-            lblDest.Dock = DockStyle.Fill;
-            lblDest.Name = "lblDest";
-            lblDest.TabIndex = 1;
-            lblDest.Text = "Dest";
-            //
+            // 
+            this.lblDest.AutoSize = true;
+            this.lblDest.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblDest.Location = new System.Drawing.Point(278, 0);
+            this.lblDest.Name = "lblDest";
+            this.lblDest.Size = new System.Drawing.Size(270, 17);
+            this.lblDest.TabIndex = 1;
+            this.lblDest.Text = "Dest";
+            // 
             // zoomPictureBoxSource
-            //
-            zoomPictureBoxSource.Dock = DockStyle.Fill;
-            zoomPictureBoxSource.IsInteractive = true;
-            zoomPictureBoxSource.Name = "zoomPictureBoxSource";
-            zoomPictureBoxSource.TabIndex = 2;
-            //
+            // 
+            this.zoomPictureBoxSource.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.zoomPictureBoxSource.Location = new System.Drawing.Point(3, 20);
+            this.zoomPictureBoxSource.Name = "zoomPictureBoxSource";
+            this.zoomPictureBoxSource.Size = new System.Drawing.Size(269, 494);
+            this.zoomPictureBoxSource.TabIndex = 2;
+            // 
             // zoomPictureBoxDest
-            //
-            zoomPictureBoxDest.Dock = DockStyle.Fill;
-            zoomPictureBoxDest.IsInteractive = false;
-            zoomPictureBoxDest.Name = "zoomPictureBoxDest";
-            zoomPictureBoxDest.TabIndex = 3;
-            //
+            // 
+            this.zoomPictureBoxDest.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.zoomPictureBoxDest.Location = new System.Drawing.Point(278, 20);
+            this.zoomPictureBoxDest.Name = "zoomPictureBoxDest";
+            this.zoomPictureBoxDest.Size = new System.Drawing.Size(270, 494);
+            this.zoomPictureBoxDest.TabIndex = 3;
+            // 
             // chkWebcamRunning
-            //
-            chkWebcamRunning.AutoSize = true;
-            chkWebcamRunning.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Bottom;
-            chkWebcamRunning.Name = "chkWebcamRunning";
-            chkWebcamRunning.TabIndex = 4;
-            chkWebcamRunning.Text = "Webcam running";
-            chkWebcamRunning.UseVisualStyleBackColor = true;
-            chkWebcamRunning.CheckedChanged += chkWebcamRunning_CheckedChanged;
-            tableLayoutPanelLeft.SetColumnSpan(chkWebcamRunning, 2);
-            //
+            // 
+            this.chkWebcamRunning.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkWebcamRunning.AutoSize = true;
+            this.chkWebcamRunning.Location = new System.Drawing.Point(3, 7);
+            this.chkWebcamRunning.Name = "chkWebcamRunning";
+            this.chkWebcamRunning.Size = new System.Drawing.Size(46, 17);
+            this.chkWebcamRunning.TabIndex = 4;
+            this.chkWebcamRunning.Text = "Run";
+            this.chkWebcamRunning.UseVisualStyleBackColor = true;
+            this.chkWebcamRunning.CheckedChanged += new System.EventHandler(this.chkWebcamRunning_CheckedChanged);
+            // 
+            // comboBoxCameras
+            // 
+            this.comboBoxCameras.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxCameras.FormattingEnabled = true;
+            this.comboBoxCameras.Location = new System.Drawing.Point(55, 3);
+            this.comboBoxCameras.Name = "comboBoxCameras";
+            this.comboBoxCameras.Size = new System.Drawing.Size(270, 21);
+            this.comboBoxCameras.TabIndex = 1;
+            // 
             // tableLayoutPanelRight
-            //
-            tableLayoutPanelRight.ColumnCount = 1;
-            tableLayoutPanelRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanelRight.Controls.Add(scintillaScriptEditor, 0, 0);
-            tableLayoutPanelRight.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanelRight.Dock = DockStyle.Fill;
-            tableLayoutPanelRight.Name = "tableLayoutPanelRight";
-            tableLayoutPanelRight.RowCount = 2;
-            tableLayoutPanelRight.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
-            tableLayoutPanelRight.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanelRight.TabIndex = 1;
-            //
+            // 
+            this.tableLayoutPanelRight.ColumnCount = 1;
+            this.tableLayoutPanelRight.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanelRight.Controls.Add(this.scintillaScriptEditor, 0, 1);
+            this.tableLayoutPanelRight.Controls.Add(this.outputPanel, 0, 2);
+            this.tableLayoutPanelRight.Controls.Add(this.panel1, 0, 0);
+            this.tableLayoutPanelRight.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanelRight.Location = new System.Drawing.Point(560, 3);
+            this.tableLayoutPanelRight.Name = "tableLayoutPanelRight";
+            this.tableLayoutPanelRight.RowCount = 3;
+            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
+            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 66.66666F));
+            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanelRight.Size = new System.Drawing.Size(366, 517);
+            this.tableLayoutPanelRight.TabIndex = 1;
+            // 
             // scintillaScriptEditor
-            //
-            scintillaScriptEditor.Dock = DockStyle.Fill;
-            scintillaScriptEditor.Name = "scintillaScriptEditor";
-            scintillaScriptEditor.TabIndex = 5;
-            //
+            // 
+            this.scintillaScriptEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.scintillaScriptEditor.Location = new System.Drawing.Point(3, 44);
+            this.scintillaScriptEditor.Name = "scintillaScriptEditor";
+            this.scintillaScriptEditor.Size = new System.Drawing.Size(360, 311);
+            this.scintillaScriptEditor.TabIndex = 5;
+            // 
             // outputPanel
-            //
-            outputPanel.AllowClickLinks2 = true;
-            outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Name = "outputPanel";
-            outputPanel.TabIndex = 6;
-            //
+            // 
+            this.outputPanel.AllowClickLinks2 = true;
+            this.outputPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.outputPanel.Location = new System.Drawing.Point(3, 361);
+            this.outputPanel.Name = "outputPanel";
+            this.outputPanel.Size = new System.Drawing.Size(360, 153);
+            this.outputPanel.TabIndex = 6;
+            // 
             // captureTimer
-            //
-            captureTimer.Interval = 33;
-            captureTimer.Tick += captureTimer_Tick;
-            //
+            // 
+            this.captureTimer.Interval = 33;
+            this.captureTimer.Tick += new System.EventHandler(this.captureTimer_Tick);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.comboBoxCameras);
+            this.panel1.Controls.Add(this.chkWebcamRunning);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(3, 3);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(360, 35);
+            this.panel1.TabIndex = 7;
+            // 
             // FormOpenCvSharpLiveDemo
-            //
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1100, 620);
-            Controls.Add(tableLayoutPanelMain);
-            Name = "FormOpenCvSharpLiveDemo";
-            Padding = new Padding(8);
-            Text = "OpenCvSharp Live Demo";
-            tableLayoutPanelMain.ResumeLayout(false);
-            tableLayoutPanelLeft.ResumeLayout(false);
-            tableLayoutPanelLeft.PerformLayout();
-            tableLayoutPanelRight.ResumeLayout(false);
-            ResumeLayout(false);
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(943, 537);
+            this.Controls.Add(this.tableLayoutPanelMain);
+            this.Name = "FormOpenCvSharpLiveDemo";
+            this.Padding = new System.Windows.Forms.Padding(7);
+            this.Text = "OpenCvSharp Live Demo";
+            this.tableLayoutPanelMain.ResumeLayout(false);
+            this.tableLayoutPanelLeft.ResumeLayout(false);
+            this.tableLayoutPanelLeft.PerformLayout();
+            this.tableLayoutPanelRight.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
+            this.ResumeLayout(false);
+
         }
 
         #endregion
@@ -177,5 +222,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo
         private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
         private System.Windows.Forms.Timer captureTimer;
+        private ComboBox comboBoxCameras;
+        private Panel panel1;
     }
 }
