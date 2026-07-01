@@ -109,7 +109,7 @@ Result.VectorProduct = product.ToArray();
             .Default
             .WithAdditionalNamespaceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()
             .WithAdditionalReferenceForType<MathNet.Numerics.LinearAlgebra.Matrix<double>>()
-            .WithAdditionalReferenceName("System.Runtime.Numerics")
+            .WithAdditionalReferenceForType<System.Numerics.Complex>()
             .WithGlobalType<MathGlobals>();
 
         var context = await ScriptContext.CreateAsync(env);
