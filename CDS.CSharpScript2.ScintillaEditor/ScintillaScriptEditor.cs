@@ -16,6 +16,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaWarningIndicatorIndex = 4;
     private const int ScintillaHighlightIndicatorIndex = 5;
 
+    private static readonly TimeSpan CommentChordTimeout = TimeSpan.FromSeconds(2);
+
     private readonly ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
     private ImmutableArray<Diagnostic> _currentDiagnostics = [];
     private ExecutableScript? _currentCompiledScript;
@@ -34,6 +36,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private CallTipSession? _callTipSession;
     private CancellationTokenSource? _dwellCts;
     private FormFindReplace? _findReplaceForm;
+    private DateTime? _commentChordStartedAt;
 
     // ── IScriptEditor ────────────────────────────────────────────────────────
 
@@ -210,6 +213,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCOrder = ScintillaNET.Order.Custom;
         scintilla.AutoCMaxHeight = 12;
         scintilla.AutoCDropRestOfWord = true;
+
+        // Fill-up characters: typing one of these while the list is open accepts the
+        // highlighted entry and then inserts the character itself, matching Visual Studio's
+        // ".", "(" and "[" commit behavior.
+        scintilla.AutoCSetFillUps(".([");
 
         foreach (var entry in _classificationKindToScintillaStyle)
         {
@@ -794,6 +802,38 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private async void scintilla_KeyDown(object sender, KeyEventArgs e)
     {
+        if (_commentChordStartedAt is DateTime chordStartedAt)
+        {
+            _commentChordStartedAt = null;
+
+            if (DateTime.UtcNow - chordStartedAt <= CommentChordTimeout)
+            {
+                if (e.KeyCode == Keys.C && !e.Control && !e.Alt)
+                {
+                    CommentSelectedLines();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+
+                if (e.KeyCode == Keys.U && !e.Control && !e.Alt)
+                {
+                    UncommentSelectedLines();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+            }
+        }
+
+        if (e.KeyCode == Keys.E && e.Control && !e.Shift && !e.Alt)
+        {
+            _commentChordStartedAt = DateTime.UtcNow;
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            return;
+        }
+
         if (e.KeyCode == Keys.Space && e.Control && e.Shift)
         {
             _ = StartCallTipSessionAsync();
@@ -882,6 +922,111 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 e.SuppressKeyPress = true;
             }
         }
+    }
+
+    // ── Line commenting (Ctrl+E, C / Ctrl+E, U — matches Visual Studio) ──────
+
+    /// <summary>
+    /// Line-comments every line touched by the current selection, or the caret line when there is
+    /// no selection.
+    /// </summary>
+    private void CommentSelectedLines()
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        var (startLine, endLine) = GetSelectedLineRange();
+
+        scintilla.BeginUndoAction();
+
+        try
+        {
+            for (int line = startLine; line <= endLine; line++)
+            {
+                scintilla.InsertText(scintilla.Lines[line].Position, "//");
+            }
+        }
+        finally
+        {
+            scintilla.EndUndoAction();
+        }
+
+        SelectLines(startLine, endLine);
+        HandleTextChanged();
+    }
+
+    /// <summary>
+    /// Removes a leading "//" line-comment marker from every line touched by the current
+    /// selection, or the caret line when there is no selection.
+    /// </summary>
+    private void UncommentSelectedLines()
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        var (startLine, endLine) = GetSelectedLineRange();
+
+        scintilla.BeginUndoAction();
+
+        try
+        {
+            for (int line = startLine; line <= endLine; line++)
+            {
+                var scintillaLine = scintilla.Lines[line];
+                var text = scintillaLine.Text;
+                var trimmed = text.TrimStart(' ', '\t');
+
+                if (!trimmed.StartsWith("//", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var commentOffset = text.Length - trimmed.Length;
+                scintilla.DeleteRange(scintillaLine.Position + commentOffset, 2);
+            }
+        }
+        finally
+        {
+            scintilla.EndUndoAction();
+        }
+
+        SelectLines(startLine, endLine);
+        HandleTextChanged();
+    }
+
+    /// <summary>
+    /// Returns the zero-based first and last line touched by the current selection. A selection
+    /// that ends exactly at the start of a line excludes that trailing line, matching Visual
+    /// Studio's Comment/Uncomment Selection commands.
+    /// </summary>
+    private (int startLine, int endLine) GetSelectedLineRange()
+    {
+        int startLine = scintilla.LineFromPosition(scintilla.SelectionStart);
+        int endLine = scintilla.LineFromPosition(scintilla.SelectionEnd);
+
+        if (endLine > startLine && scintilla.Lines[endLine].Position == scintilla.SelectionEnd)
+        {
+            endLine--;
+        }
+
+        return (startLine, endLine);
+    }
+
+    /// <summary>
+    /// Selects the full text of the given line range, reflecting the document as it stands after
+    /// a comment/uncomment edit.
+    /// </summary>
+    private void SelectLines(int startLine, int endLine)
+    {
+        var start = scintilla.Lines[startLine].Position;
+        var endLineText = scintilla.Lines[endLine].Text.TrimEnd('\r', '\n');
+        var end = scintilla.Lines[endLine].Position + endLineText.Length;
+
+        scintilla.SetSelection(end, start);
     }
 
     /// <summary>
