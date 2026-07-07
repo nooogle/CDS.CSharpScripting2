@@ -43,7 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="6.1.2" />
+    <PackageReference Include="Scintilla5.NET" Version="6.1.2">
+      <PrivateAssets>analyzers</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
