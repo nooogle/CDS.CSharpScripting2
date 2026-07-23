@@ -77,6 +77,25 @@ public partial class UT_Compilation
     }
 
     [TestMethod]
+    [TestCategory("compilation")]
+    public async Task DualPath_UsingDeclaration_BothPathsReportNoErrors()
+    {
+        var context = await ScriptContext.CreateAsync(ScriptEnvironment.Default);
+        context = context.ApplyScript("{ using var f2 = System.IO.File.Create(\"x\"); }");
+
+        var analyser = new ScriptAnalyser(context);
+        var workspaceDiagnostics = await analyser.GetDiagnosticsAsync();
+        var executable = await new ScriptExecutor(context).CompileAsync();
+
+        workspaceDiagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+            .Should().BeEmpty("the workspace should parse scoped C# using declarations");
+
+        executable.HasErrors.Should().BeFalse("the execution compiler should parse scoped C# using declarations");
+
+        context.Dispose();
+    }
+
+    [TestMethod]
     public async Task MathNet_UsedInScript_PerformsCalculationCorrectly()
     {
         var globals = new MathGlobals();
