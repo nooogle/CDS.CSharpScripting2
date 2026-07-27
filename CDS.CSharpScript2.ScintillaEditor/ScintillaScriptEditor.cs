@@ -548,7 +548,17 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         var ch = (char)e.Char;
 
-        if (ch == '.')
+        if (ch == '\n')
+        {
+            var currentLine = scintilla.CurrentLine;
+
+            if (currentLine > 0)
+            {
+                scintilla.Lines[currentLine].Indentation = scintilla.Lines[currentLine - 1].Indentation;
+                scintilla.GotoPosition(scintilla.Lines[currentLine].IndentPosition);
+            }
+        }
+        else if (ch == '.')
         {
             // Member access — cancel any open session and immediately start a fresh one.
             scintilla.AutoCCancel();

@@ -40,11 +40,7 @@ The full pipeline (clean → restore → build → test) is in `build.cake`, run
 - **`ScriptRunner`** — executes a `CompiledScript` synchronously or asynchronously, returning a typed result.
 - **`ScriptManager`** — higher-level orchestrator that wires compilation, classification, completion, and API info together for editor use.
 
-### Sub-namespaces
-
-- **`Classification`** — maps Roslyn classification spans to `ClassificationColorScheme` entries for syntax highlighting.
-- **`CodeCompletion`** — wraps Roslyn's Completion API; `SingleLetterMatchSorter` applies smart prioritisation.
-- **`APIInfo`** — extracts type/member metadata and XML-doc for signature help and hover info.
+See `CDS.CSharpScript2/CLAUDE.md` for the sub-namespaces within the core engine (`Classification`, `CodeCompletion`, `APIInfo`).
 
 ### Editor Framework (`CDS.CSharpScript2.Core`)
 
@@ -63,20 +59,7 @@ Taken from `.github/copilot-instructions.md` — follow these strictly:
 - **Documentation:** XML-doc all public types, properties, and methods.
 - **Files:** One public type per file; filename matches the type name.
 
-## Versioning & Releasing
-
-Versions are managed by **MinVer** from Git tags. Patch increments happen automatically; bump minor/major by editing `version.json` then tagging.
-
-```shell
-# Bump major/minor
-# Edit version.json: { "version": "3.0" }
-git commit -am "breaking changes for 3.0"
-git tag v3.0.0
-git push --tags
-dotnet pack -c Release
-```
-
-CI (`.github/workflows/ci.yml`) triggers on `v*` tags, builds on `windows-latest`, runs tests, and uploads NuGet packages as artifacts.
+See the `release` skill for the version-bump and tagging workflow.
 
 ## Testing Notes
 
