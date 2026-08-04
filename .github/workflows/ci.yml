@@ -1,57 +1,52 @@
-name: Build, Test & Pack
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*' # Trigger on version tags like v1.0, v2.3.4
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs:
-  build_test_pack:
-    runs-on: windows-latest
+  build-and-test:
+    name: Build & Test
+    runs-on: windows-latest   # net48 + net10.0-windows targets require Windows
 
     steps:
-    - name: Checkout code (full history + tags)
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        fetch-tags: true
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0                # MinVer needs full history to compute version from tags
 
-    - name: Setup .NET 10
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
 
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.slnx') }}-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-${{ hashFiles('**/*.slnx') }}-
-          ${{ runner.os }}-nuget-
+      - name: Restore
+        run: dotnet restore --verbosity normal
 
-    - name: Restore dependencies
-      run: dotnet restore --verbosity normal
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
 
-    - name: Build solution
-      run: dotnet build --no-restore --configuration Release
+      - name: Test
+        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
-    - name: Run unit tests
-      run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./test-results
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
 
-    - name: Pack projects (only on tag pushes)
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: dotnet pack --no-build --configuration Release --output ./artifacts/packages
-
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-${{ runner.os }}
-        path: ./test-results/**/*.trx
-
-    - name: Upload NuGet Packages (only on tag pushes)
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: actions/upload-artifact@v4
-      with:
-        name: nuget-packages
-        path: ./artifacts/packages/**/*.nupkg
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/dependency-review-action@v5
