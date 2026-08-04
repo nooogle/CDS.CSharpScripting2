@@ -16,7 +16,8 @@ dotnet test UnitTests/UnitTests.csproj --configuration Release --filter "ClassNa
 dotnet pack -c Release
 ```
 
-The full pipeline (clean → restore → build → test) is in `build.cake`, runnable via `./build.ps1`.
+CI runs restore/build/test on every push/PR via `.github/workflows/ci.yml`; tagged
+releases are built, packed, and published via `.github/workflows/release.yml`.
 
 ## Project Layout
 

@@ -8,7 +8,7 @@ dotnet build --configuration Release
 dotnet test UnitTests/UnitTests.csproj --configuration Release
 ```
 
-The full pipeline (clean → restore → build → test) is in `build.cake`, runnable via `./build.ps1`.
+CI runs the same steps on every push/PR via `.github/workflows/ci.yml`.
 
 ## Coding conventions
 
