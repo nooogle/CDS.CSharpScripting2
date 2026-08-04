@@ -49,8 +49,15 @@ jobs:
       - name: Generate SBOMs
         run: |
           dotnet tool install --global CycloneDX
-          dotnet-CycloneDX CDS.CSharpScript2/CDS.CSharpScript2.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.json
-          dotnet-CycloneDX CDS.CSharpScript2.ScintillaEditor/CDS.CSharpScript2.ScintillaEditor.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.ScintillaEditor.json
+
+          # dotnet-CycloneDX inspects the dependency graph, not the MinVer-computed
+          # package version, and defaults metadata.component.version to 0.0.0 unless
+          # told otherwise — pull the real version back out of the .nupkg filename.
+          $csVersion = (Get-ChildItem -Path ./artifacts -Filter "*.nupkg" | Where-Object { $_.BaseName -match '^CDS\.CSharpScript2\.\d' } | Select-Object -First 1).BaseName.Substring('CDS.CSharpScript2.'.Length)
+          $scintillaVersion = (Get-ChildItem -Path ./artifacts -Filter "*.nupkg" | Where-Object { $_.BaseName -match '^CDS\.CSharpScript2\.ScintillaEditor\.\d' } | Select-Object -First 1).BaseName.Substring('CDS.CSharpScript2.ScintillaEditor.'.Length)
+
+          dotnet-CycloneDX CDS.CSharpScript2/CDS.CSharpScript2.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.json -sv $csVersion
+          dotnet-CycloneDX CDS.CSharpScript2.ScintillaEditor/CDS.CSharpScript2.ScintillaEditor.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.ScintillaEditor.json -sv $scintillaVersion
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
