@@ -1,6 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
-using System.Reflection;
 
 namespace CDS.CSharpScript2;
 
@@ -10,97 +9,34 @@ namespace CDS.CSharpScript2;
 internal static class ScriptCompiler
 {
     /// <summary>
-    /// Compile a C# script that doesn't return any data.
-    /// Default namespaces and assembly references are used (see <see cref="Defaults.TypesForNamespacesAndAssemblies"/>).
-    /// Global variables are not used.
-    /// </summary>
-    /// <param name="script">Script text to compile</param>
-    /// <returns>A compiled script</returns>
-    public static CompiledScript Compile(string script) =>
-        Compile<object>(script: script, typeOfGlobals: null);
-
-
-    /// <summary>
-    /// Compile a C# script that returns a specific type. 
-    /// Default namespaces and assembly references are used (see <see cref="Defaults.TypesForNamespacesAndAssemblies"/>).
-    /// Global variables are not used.
-    /// </summary>
-    /// <param name="script">Script text to compile</param>
-    /// <typeparam name="TReturn">The type of object returned from the script.</typeparam>
-    /// <returns>A compiled script.</returns>
-    public static CompiledScript Compile<TReturn>(string script) =>
-        Compile<TReturn>(script: script, typeOfGlobals: null);
-
-
-    /// <summary>
-    /// Compile a C# script that returns a specific type. 
-    /// Default namespaces and assembly references are used (see <see cref="Defaults.TypesForNamespacesAndAssemblies"/>).
-    /// </summary>
-    /// <param name="script">Script text to compile</param>
-    /// <param name="typeOfGlobals">Type of the Globals class used to provide global params to the script; null if not required.</param>
-    /// <typeparam name="TReturn">The type of object returned from the script.</typeparam>
-    /// <returns>A compiled script.</returns>
-    public static CompiledScript Compile<TReturn>(
-        string script,
-        Type? typeOfGlobals) =>
-        Compile<TReturn>(
-            script: script,
-            namespaceTypes: Defaults.TypesForNamespacesAndAssemblies,
-            referenceTypes: Defaults.TypesForNamespacesAndAssemblies,
-            typeOfGlobals: typeOfGlobals);
-
-    /// <summary>
-    /// Compile a C# script that returns a specific type. 
+    /// Compile a C# script that returns a specific type.
     /// </summary>
     /// <param name="script">Script text to compile.</param>
-    /// <param name="namespaceTypes">Types whose namespaces are imported into the script.</param>
-    /// <param name="referenceTypes">Types whose assemblies are referenced by the script.</param>
-    /// <param name="typeOfGlobals">Type of the globals class used to provide global parameters to the script; <see langword="null"/> if not required.</param>
+    /// <param name="environment">
+    /// Configuration supplying the namespace imports, assembly references, globals type, and the
+    /// resolvers used for <c>#r</c> and <c>#load</c> directives.
+    /// </param>
     /// <typeparam name="TReturn">The type of object returned from the script.</typeparam>
     /// <returns>A compiled script.</returns>
-    public static CompiledScript Compile<TReturn>(
-        string script,
-        Type[]? namespaceTypes,
-        Type[]? referenceTypes,
-        Type? typeOfGlobals)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="environment"/> is <see langword="null"/>.</exception>
+    public static CompiledScript Compile<TReturn>(string script, ScriptEnvironment environment)
     {
-        var namespaces = namespaceTypes?
-            .Where(t => t.Namespace != null)
-            .Select(t => t.Namespace!) ?? Enumerable.Empty<string>();
+        if (environment == null)
+        {
+            throw new ArgumentNullException(nameof(environment));
+        }
 
-        var references = referenceTypes?
-            .Select(t => t.Assembly) ?? Enumerable.Empty<Assembly>();
-
-        return Compile<TReturn>(
-            script: script,
-            namespaces: namespaces,
-            references: references,
-            typeOfGlobals: typeOfGlobals);
-    }
-
-
-    /// <summary>
-    /// Compile a C# script that returns a specific type. 
-    /// </summary>
-    /// <param name="script">Script text to compile.</param>
-    /// <param name="namespaces">Namespace strings to import (e.g. <c>"System.Math"</c>).</param>
-    /// <param name="references">Assemblies to reference within the script.</param>
-    /// <param name="typeOfGlobals">Type of the globals class used to provide global parameters to the script; <see langword="null"/> if not required.</param>
-    /// <typeparam name="TReturn">The type of object returned from the script.</typeparam>
-    /// <returns>A compiled script.</returns>
-    public static CompiledScript Compile<TReturn>(
-        string script,
-        IEnumerable<string> namespaces,
-        IEnumerable<Assembly> references,
-        Type? typeOfGlobals)
-    {
+        // Every setting comes from the environment, which is also what ScriptContext configures the
+        // editor's workspace from. That shared source is what keeps the two paths in agreement.
         var scriptOptions = ScriptOptions.Default
-            .WithImports(namespaces.Distinct())
-            .AddReferences(references.Distinct());
+            .WithImports(environment.NamespaceNames)
+            .AddReferences(environment.References)
+            .WithMetadataResolver(environment.MetadataResolver)
+            .WithSourceResolver(environment.SourceResolver);
 
         var compiledScript = CSharpScript.Create<TReturn>(
             script,
-            globalsType: typeOfGlobals,
+            globalsType: environment.GlobalType,
             options: scriptOptions);
 
         compiledScript.Compile();

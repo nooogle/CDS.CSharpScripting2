@@ -25,11 +25,9 @@ public class ScriptExecutor
     /// <summary>Compiles the script for execution with the specified return type.</summary>
     public async Task<ExecutableScript> CompileAsync<T>(CancellationToken ct = default)
     {
-        var compiled = await Task.Run(() => ScriptCompiler.Compile<T>(
-            _context.ScriptText,
-            namespaces: _context.Environment.NamespaceNames,
-            references: _context.Environment.References,
-            typeOfGlobals: _context.Environment.GlobalType), ct).ConfigureAwait(false);
+        var compiled = await Task.Run(
+            () => ScriptCompiler.Compile<T>(_context.ScriptText, _context.Environment),
+            ct).ConfigureAwait(false);
 
         return new ExecutableScript(compiled);
     }

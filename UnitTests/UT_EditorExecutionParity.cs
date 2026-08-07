@@ -80,13 +80,21 @@ public class UT_EditorExecutionParity
 
     private static IEnumerable<object[]> GetParityCases()
     {
-        // Resolves to System.Linq.dll on net10 and System.Core.dll on net48, so the case is
-        // configured correctly on both targets.
+        // The non-generic overload is required here: Enumerable is a static type, so it cannot be
+        // used as a generic type argument.
         var linqEnvironment = ScriptEnvironment.Default
             .WithAdditionalNamespaceName("System.Linq")
-            .WithAdditionalReferenceName(typeof(System.Linq.Enumerable).Assembly.FullName!);
+            .WithAdditionalReferenceForType(typeof(System.Linq.Enumerable));
+
         var globalsEnvironment = ScriptEnvironment.Default.WithGlobalType(typeof(ParityGlobals));
+
         var externalAssemblyPath = typeof(MathNet.Numerics.Distributions.Normal).Assembly.Location;
+
+        var assemblyDirectoryEnvironment = ScriptEnvironment.Default
+            .WithBaseDirectory(Path.GetDirectoryName(externalAssemblyPath)!);
+
+        var loadedScriptDirectoryEnvironment = ScriptEnvironment.Default
+            .WithBaseDirectory(Path.GetDirectoryName(s_loadedScriptPath)!);
 
         var cases = new[]
         {
@@ -119,6 +127,22 @@ public class UT_EditorExecutionParity
                 #load "{s_loadedScriptPath}"
                 var tripled = Triple(4);
                 """),
+
+            new ParityCase(
+                "Relative reference directive",
+                $"""
+                #r "{Path.GetFileName(externalAssemblyPath)}"
+                var distribution = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
+                """,
+                assemblyDirectoryEnvironment),
+
+            new ParityCase(
+                "Relative load directive",
+                $"""
+                #load "{Path.GetFileName(s_loadedScriptPath)}"
+                var tripled = Triple(4);
+                """,
+                loadedScriptDirectoryEnvironment),
 
             new ParityCase(
                 "Top-level return",

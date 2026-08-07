@@ -5,25 +5,18 @@ using System.Collections.Immutable;
 namespace CDS.CSharpScript2;
 
 /// <summary>
-/// Resolves <c>#r</c> directives for the editor's workspace compilation, attaching XML
-/// documentation to each resolved assembly so hover text and signature help work for
-/// externally referenced libraries.
+/// Resolves <c>#r</c> directives, attaching XML documentation to each resolved assembly so hover
+/// text and signature help work for externally referenced libraries.
 /// </summary>
 /// <remarks>
-/// Resolution is delegated to <see cref="ScriptMetadataResolver.Default"/> — the same resolver the
-/// execution path picks up from <c>ScriptOptions.Default</c>, so both paths accept the same
-/// <c>#r</c> forms. A compilation with no resolver at all rejects every <c>#r</c> with
-/// CS7099 ("Metadata references are not supported").
+/// Lookup itself is delegated to a <see cref="ScriptMetadataResolver"/> built by
+/// <see cref="ScriptEnvironment"/>, which hands the same instance to both compilation paths so
+/// they accept identical <c>#r</c> forms. A compilation with no resolver at all rejects every
+/// <c>#r</c> with CS7099 ("Metadata references are not supported").
 /// </remarks>
 internal sealed class DocumentedMetadataReferenceResolver : MetadataReferenceResolver
 {
     private readonly MetadataReferenceResolver _inner;
-
-    /// <summary>
-    /// Gets the shared instance wrapping <see cref="ScriptMetadataResolver.Default"/>.
-    /// </summary>
-    public static DocumentedMetadataReferenceResolver Default { get; } =
-        new DocumentedMetadataReferenceResolver(ScriptMetadataResolver.Default);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DocumentedMetadataReferenceResolver"/> class.

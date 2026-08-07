@@ -35,7 +35,7 @@ releases are built, packed, and published via `.github/workflows/release.yml`.
 
 ### Core Engine (`CDS.CSharpScript2`)
 
-- **`ScriptEnvironment`** — immutable configuration (namespace imports, assembly references, global type). Built with a fluent API; compose environments rather than mutating them.
+- **`ScriptEnvironment`** — immutable configuration (namespace imports, assembly references, global type, `#r`/`#load` resolvers). Built with a fluent API; compose environments rather than mutating them. **This is the single source of truth for both compilation paths** — anything that affects how a script compiles belongs here, not in `ScriptCompiler` or `ScriptContext`.
 - **`ScriptCompiler`** — static wrapper over `CSharpScript.Create()`. Takes a `ScriptEnvironment` and returns a `CompiledScript`.
 - **`CompiledScript`** — snapshot of a compiled script: syntax tree, semantic model, diagnostics, classified spans.
 - **`ScriptRunner`** — executes a `CompiledScript` synchronously or asynchronously, returning a typed result.
@@ -66,4 +66,5 @@ See the `release` skill for the version-bump and tagging workflow.
 
 - Framework: MSTest + FluentAssertions (also AwesomeAssertions in some files).
 - Test categories mirror the engine subsystems: compilation, classifications, completions, diagnostics, use-cases, XML doc info.
+- `UT_EditorExecutionParity` compiles a table of scripts through **both** paths (`ScriptAnalyser` and `ScriptExecutor`) and asserts they report the same errors. The two paths use different Roslyn APIs — a workspace project versus the scripting API — so anything configured in only one of them shows up as squiggles on code that compiles fine. Add a case here when you add a language or directive feature.
 - Test projects reference `MathNet.Numerics` and `OpenCvSharp4.Windows` to verify that real-world assembly references work inside compiled scripts.

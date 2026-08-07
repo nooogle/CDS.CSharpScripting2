@@ -13,6 +13,8 @@ syntax classification — into any .NET 10 application.
 - **IntelliSense** — code completion, symbol classification, and signature help (call tips).
 - **Diagnostics** — surface compiler errors and warnings back to your UI.
 - **Assembly references** — reference any managed assembly, including third-party NuGet packages.
+- **Script directives** — `#r` to reference an assembly and `#load` to pull in another script file,
+  honoured identically by the editor and the execution engine.
 - **Immutable configuration** — compose `ScriptEnvironment` instances fluently; safe to cache and share.
 
 ## Quick Start
@@ -57,11 +59,38 @@ var env = ScriptEnvironment.Default
 using var context = await ScriptContext.CreateAsync(env);
 ```
 
+### Script directives
+
+Scripts can reference assemblies and pull in other scripts themselves:
+
+```csharp
+using var context = await ScriptContext.CreateAsync();
+
+var ctx = context.ApplyScript("""
+    #r "C:\libs\MyLibrary.dll"
+    #load "C:\scripts\helpers.csx"
+    return Helper.Run(new MyLibrary.Thing());
+    """);
+```
+
+Set a base directory so scripts can use relative paths instead of hard-coding machine-specific
+ones — typically the folder the user's script file lives in:
+
+```csharp
+var env = ScriptEnvironment.Default.WithBaseDirectory(@"C:\scripts");
+
+using var context = await ScriptContext.CreateAsync(env);
+var ctx = context.ApplyScript("""
+    #r "libs/MyLibrary.dll"
+    #load "helpers.csx"
+    """);
+```
+
 ## Key Types
 
 | Type | Purpose |
 |------|---------|
-| `ScriptEnvironment` | Immutable configuration: namespace imports, assembly references, globals type |
+| `ScriptEnvironment` | Immutable configuration: namespace imports, assembly references, globals type, directive base directory |
 | `ScriptContext` | Roslyn workspace document paired with an environment; disposable |
 | `ScriptExecutor` | Compiles a `ScriptContext` into an `ExecutableScript` |
 | `ExecutableScript` | Compiled script ready to run; reports diagnostics and accepts a globals object |
