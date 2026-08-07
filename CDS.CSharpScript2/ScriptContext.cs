@@ -89,9 +89,14 @@ public class ScriptContext : IDisposable
             references.Add(GetMetadataReferenceForAssemblyName("System.Collections"));
         }
 
+        // Both resolvers mirror the defaults the execution path inherits from ScriptOptions.Default.
+        // Without them the workspace compilation rejects #r with CS7099 and #load with CS8099,
+        // so the editor squiggles directives that compile and run perfectly well.
         var compilationOptions = new CSharpCompilationOptions(
             OutputKind.DynamicallyLinkedLibrary,
-            usings: environment.NamespaceNames);
+            usings: environment.NamespaceNames,
+            metadataReferenceResolver: DocumentedMetadataReferenceResolver.Default,
+            sourceReferenceResolver: SourceFileResolver.Default);
 
         var projectInfo = ProjectInfo
             .Create(
