@@ -2,6 +2,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Reflection;
+using System.Text;
+using System.Xml.Linq;
 
 namespace CDS.CSharpScript2;
 
@@ -85,8 +87,18 @@ public class ScriptContext : IDisposable
         }
         else
         {
-            references.Add(GetMetadataReferenceForAssemblyName("System.Runtime"));
-            references.Add(GetMetadataReferenceForAssemblyName("System.Collections"));
+            // Gives a minimal environment (nothing but ScriptEnvironment.Default) enough of the BCL
+            // to compile ordinary code — corlib itself, not the System.Runtime/System.Collections
+            // reference-assembly facades from the Microsoft.NETCore.App.Ref pack this used to add.
+            // Those facades redeclare the whole BCL surface (Stopwatch included) as their own types
+            // rather than forwarding to CoreLib, so they collided with CoreLib itself the moment
+            // anything else in the compilation also referenced it — which a #r directive resolved via
+            // environment.MetadataResolver does for whatever it references, producing CS0433 on the
+            // editor's diagnostics path only, for any script that both uses #r and touches a type the
+            // facade duplicated. Referencing CoreLib directly means there is only ever one definition
+            // of any BCL type in play, so a #r-triggered CoreLib reference just coincides with this
+            // one instead of competing with it.
+            references.Add(GetCoreLibMetadataReference());
         }
 
         // Resolvers come from the environment so the editor and the execution path accept exactly
@@ -134,21 +146,64 @@ public class ScriptContext : IDisposable
         return MetadataReference.CreateFromFile(assembly.Location, documentation: provider);
     }
 
-    private static MetadataReference GetMetadataReferenceForAssemblyName(string assemblyName)
-    {
-        string xmlPath = TryFindXml($"{assemblyName}.xml") ?? string.Empty;
-        string assemblyPath = string.IsNullOrEmpty(xmlPath)
-            ? string.Empty
-            : Path.Combine(Path.GetDirectoryName(xmlPath) ?? string.Empty, $"{assemblyName}.dll");
+    private static readonly Lazy<byte[]?> s_coreLibDocumentationXml = new(BuildCoreLibDocumentationXml);
 
-        if (string.IsNullOrEmpty(assemblyPath) || !File.Exists(assemblyPath))
+    /// <summary>
+    /// References CoreLib itself, documented from the reference-assembly pack. CoreLib's own XML
+    /// doc file doesn't exist — the SDK ships its documentation split across several differently
+    /// named files (<c>System.Runtime.xml</c>, <c>System.Collections.xml</c>, ...), none of which
+    /// matches CoreLib's own assembly name, so <see cref="GetXmlDocumentationPath"/>'s filename-based
+    /// lookup finds nothing for it. Doc IDs are keyed by symbol rather than by source file, so
+    /// concatenating the &lt;member&gt; entries from each pack file into one in-memory document works
+    /// regardless of which physical assembly a symbol is now resolved from.
+    /// </summary>
+    private static MetadataReference GetCoreLibMetadataReference()
+    {
+        var assembly = typeof(object).Assembly;
+        var provider = s_coreLibDocumentationXml.Value is { } xml
+            ? XmlDocumentationProvider.CreateFromBytes(xml)
+            : XmlDocumentationProvider.CreateFromFile(GetXmlDocumentationPath(assembly.Location));
+
+        return MetadataReference.CreateFromFile(assembly.Location, documentation: provider);
+    }
+
+    private static byte[]? BuildCoreLibDocumentationXml()
+    {
+        var sourceFiles = new[] { "System.Runtime.xml", "System.Collections.xml" }
+            .Select(TryFindXml)
+            .Where(path => path != null)
+            .Cast<string>()
+            .ToList();
+
+        if (sourceFiles.Count == 0)
         {
-            assemblyPath = typeof(object).Assembly.Location;
-            xmlPath = GetXmlDocumentationPath(assemblyPath);
+            return null;
         }
 
-        var provider = XmlDocumentationProvider.CreateFromFile(xmlPath);
-        return MetadataReference.CreateFromFile(assemblyPath, documentation: provider);
+        var members = new XElement("members");
+
+        foreach (var sourceFile in sourceFiles)
+        {
+            try
+            {
+                var sourceMembers = XDocument.Load(sourceFile).Root?.Element("members")?.Elements("member");
+                if (sourceMembers != null)
+                {
+                    members.Add(sourceMembers);
+                }
+            }
+            catch (System.Xml.XmlException)
+            {
+                // Skip a source file that fails to parse; the rest still contribute.
+            }
+        }
+
+        var merged = new XDocument(
+            new XElement("doc",
+                new XElement("assembly", new XElement("name", "System.Private.CoreLib")),
+                members));
+
+        return Encoding.UTF8.GetBytes(merged.ToString());
     }
 
     private static string GetXmlDocumentationPath(string assemblyPath)

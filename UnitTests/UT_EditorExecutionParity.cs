@@ -122,6 +122,19 @@ public class UT_EditorExecutionParity
                 """),
 
             new ParityCase(
+                // Regression test: a #r directive resolved via environment.MetadataResolver used to
+                // pull in the real System.Private.CoreLib, which collided with the reference-assembly
+                // facade ScriptContext.CreateCore force-adds for System.Runtime — CS0433 on the editor
+                // path only, for any type (Stopwatch here) the facade defines independently rather
+                // than forwarding.
+                "Reference directive alongside a BCL type",
+                $"""
+                #r "{externalAssemblyPath}"
+                var distribution = new MathNet.Numerics.Distributions.Normal(0.0, 1.0);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                """),
+
+            new ParityCase(
                 "Load directive",
                 $"""
                 #load "{s_loadedScriptPath}"
