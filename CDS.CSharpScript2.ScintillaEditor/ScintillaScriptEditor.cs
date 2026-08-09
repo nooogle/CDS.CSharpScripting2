@@ -702,7 +702,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         else if (ch == '(')
         {
             scintilla.AutoCCancel();
-            _completionCts?.Cancel();
+            CancelCompletion();
             _ = StartCallTipSessionAsync();
         }
         else if (ch == ',')
@@ -728,7 +728,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         {
             // Non-identifier character while the list is open — dismiss.
             scintilla.AutoCCancel();
-            _completionCts?.Cancel();
+            CancelCompletion();
         }
     }
 
@@ -889,27 +889,72 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <summary>
     /// Cancels any pending completion request and starts a new one.
     /// </summary>
-    /// <param name="immediate">When <see langword="false"/> a 150 ms debounce is applied so rapid
-    /// typing only fires one Roslyn request per word, not one per character.</param>
+    /// <param name="immediate">
+    /// When <see langword="false"/> the request is debounced so rapid typing fires one Roslyn
+    /// request per word rather than one per character.
+    /// </param>
+    /// <remarks>
+    /// The debounce is a timer, not a cancelled <see cref="Task.Delay(int, CancellationToken)"/>.
+    /// Cancelling a delay throws, and with a request started on every letter that meant a
+    /// <see cref="TaskCanceledException"/> plus an <see cref="OperationCanceledException"/> per
+    /// keystroke — measured at ~2 per character, enough to bury a host application's own output.
+    /// Restarting a timer means a superseded request simply never begins.
+    /// </remarks>
     private void StartCompletionSession(bool immediate)
+    {
+        timerCompletion.Stop();
+
+        if (!immediate)
+        {
+            timerCompletion.Start();
+            return;
+        }
+
+        BeginCompletionRequest();
+    }
+
+    /// <summary>
+    /// Fires the debounced completion request once typing has paused.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void timerCompletion_Tick(object sender, EventArgs e)
+    {
+        timerCompletion.Stop();
+        BeginCompletionRequest();
+    }
+
+    /// <summary>
+    /// Cancels any request still in flight and issues a fresh one.
+    /// </summary>
+    private void BeginCompletionRequest()
     {
         CancelAndDispose(ref _completionCts);
         _completionCts = new CancellationTokenSource();
-        _ = ShowCompletionAsync(_completionCts.Token, immediate);
+        _ = ShowCompletionAsync(_completionCts.Token);
+    }
+
+    /// <summary>
+    /// Stops a debounced completion request that has not started yet, and cancels one that has.
+    /// </summary>
+    private void CancelCompletion()
+    {
+        timerCompletion.Stop();
+        _completionCts?.Cancel();
     }
 
     /// <summary>
     /// Fetches completions from Roslyn and populates the Scintilla autocomplete list.
-    /// Runs on the UI thread throughout; the debounce <see cref="Task.Delay(int)"/> simply
-    /// yields control without leaving the <see cref="System.Windows.Forms.WindowsFormsSynchronizationContext"/>.
     /// </summary>
-    private async Task ShowCompletionAsync(CancellationToken cancellationToken, bool immediate)
+    /// <remarks>
+    /// Debouncing happens before this is called — see <see cref="StartCompletionSession"/>. The
+    /// Roslyn work runs on the thread pool inside <see cref="Editors.EditorManager"/>; each await
+    /// returns here on the UI thread, so everything touching Scintilla is safe.
+    /// </remarks>
+    private async Task ShowCompletionAsync(CancellationToken cancellationToken)
     {
         try
         {
-            if (!immediate)
-                await Task.Delay(150, cancellationToken);
-
             var manager = _manager;
             var stateVersion = _editorStateVersion;
 
@@ -1055,7 +1100,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         else if (e.KeyCode == Keys.Escape)
         {
             scintilla.AutoCCancel();
-            _completionCts?.Cancel();
+            CancelCompletion();
             CancelAndDispose(ref _callTipCts);
             _callTipSession?.Cancel();
             _callTipSession = null;
@@ -1466,6 +1511,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private void CancelPendingAsyncOperations()
     {
+        timerCompletion.Stop();
         CancelAndDispose(ref _completionCts);
         CancelAndDispose(ref _dwellCts);
         CancelAndDispose(ref _callTipCts);

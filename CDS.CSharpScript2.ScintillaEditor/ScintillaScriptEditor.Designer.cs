@@ -1,4 +1,4 @@
-﻿namespace CDS.CSharpScript2.ScintillaEditor
+namespace CDS.CSharpScript2.ScintillaEditor
 {
     partial class ScintillaScriptEditor
     {
@@ -19,6 +19,7 @@
                 _editorStateVersion++;
                 timerChangeMonitor?.Stop();
                 timerSyntacticColour?.Stop();
+                timerCompletion?.Stop();
                 CancelPendingAsyncOperations();
                 _manager?.Dispose();
                 _manager = null;
@@ -41,6 +42,7 @@
             scintilla = new ScintillaNET.Scintilla();
             timerChangeMonitor = new System.Windows.Forms.Timer(components);
             timerSyntacticColour = new System.Windows.Forms.Timer(components);
+            timerCompletion = new System.Windows.Forms.Timer(components);
             toolTip = new ToolTip(components);
             SuspendLayout();
             // 
@@ -79,6 +81,13 @@
             timerSyntacticColour.Interval = 60;
             timerSyntacticColour.Tick += timerSyntacticColour_Tick;
             //
+            // timerCompletion
+            //
+            // Debounces the completion request so a burst of typing issues one Roslyn
+            // request per word. A timer rather than a cancelled delay: see StartCompletionSession.
+            timerCompletion.Interval = 150;
+            timerCompletion.Tick += timerCompletion_Tick;
+            //
             // ScintillaScriptEditor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -94,6 +103,7 @@
         private ScintillaNET.Scintilla scintilla;
         private System.Windows.Forms.Timer timerChangeMonitor;
         private System.Windows.Forms.Timer timerSyntacticColour;
+        private System.Windows.Forms.Timer timerCompletion;
         private ToolTip toolTip;
     }
 }
