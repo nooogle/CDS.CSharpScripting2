@@ -18,6 +18,7 @@
                 _disposed = true;
                 _editorStateVersion++;
                 timerChangeMonitor?.Stop();
+                timerSyntacticColour?.Stop();
                 CancelPendingAsyncOperations();
                 _manager?.Dispose();
                 _manager = null;
@@ -39,6 +40,7 @@
             components = new System.ComponentModel.Container();
             scintilla = new ScintillaNET.Scintilla();
             timerChangeMonitor = new System.Windows.Forms.Timer(components);
+            timerSyntacticColour = new System.Windows.Forms.Timer(components);
             toolTip = new ToolTip(components);
             SuspendLayout();
             // 
@@ -56,6 +58,7 @@
             scintilla.AutoCCharDeleted += scintilla_AutoCCharDeleted;
             scintilla.AutoCCompleted += scintilla_AutoCCompleted;
             scintilla.CharAdded += scintilla_CharAdded;
+            scintilla.Insert += scintilla_Insert;
             scintilla.Delete += scintilla_Delete;
             scintilla.DwellStart += scintilla_DwellStart;
             scintilla.DwellEnd += scintilla_DwellEnd;
@@ -68,7 +71,14 @@
             // 
             timerChangeMonitor.Interval = 500;
             timerChangeMonitor.Tick += timerChangeMonitor_Tick;
-            // 
+            //
+            // timerSyntacticColour
+            //
+            // Short enough that colour lands within the "feels live" budget, long enough that a
+            // burst of typing coalesces into one pass instead of one per character.
+            timerSyntacticColour.Interval = 60;
+            timerSyntacticColour.Tick += timerSyntacticColour_Tick;
+            //
             // ScintillaScriptEditor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -83,6 +93,7 @@
 
         private ScintillaNET.Scintilla scintilla;
         private System.Windows.Forms.Timer timerChangeMonitor;
+        private System.Windows.Forms.Timer timerSyntacticColour;
         private ToolTip toolTip;
     }
 }

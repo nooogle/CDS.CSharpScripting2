@@ -23,17 +23,31 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private ExecutableScript? _currentCompiledScript;
     private Editors.EditorManager? _manager;
     private ScriptEnvironment? _environment;
-    private string _lastScript = "";
     private bool _analysisInProgress;
+    private bool _suppressTextChangeHandling;
     private bool _disposed;
+
+    // Two counters, deliberately. _documentVersion tracks text edits and decides whether an
+    // analysis result is still current. _editorStateVersion tracks the editor itself being
+    // invalidated — environment swapped, control disposed. Merging them looks tempting but
+    // breaks call tips: those guard on _editorStateVersion and would abandon their session on
+    // every keystroke, which is precisely when the user is typing arguments.
+    private long _documentVersion;
+    private long _analysedDocumentVersion = -1;
+    private long _colouredDocumentVersion = -1;
     private int _editorStateVersion;
+
     private CancellationTokenSource? _completionCts;
+    private CancellationTokenSource? _analysisCts;
+    private CancellationTokenSource? _syntacticCts;
+    private bool _syntacticPassInProgress;
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
     private readonly FormAPIInfo _apiInfoForm = new();
     private readonly Classification.Coloriser _coloriser = new();
 
     private CallTipSession? _callTipSession;
+    private CancellationTokenSource? _callTipCts;
     private CancellationTokenSource? _dwellCts;
     private FormFindReplace? _findReplaceForm;
     private DateTime? _commentChordStartedAt;
@@ -61,6 +75,18 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             _environment = value;
             _manager = value is null ? null : new Editors.EditorManager(value);
             ResetAnalysisState();
+
+            // The debounce timer stops once a document has been analysed, so without this a
+            // host swapping the environment after load would get no fresh analysis until the
+            // next keystroke — the script compiles against different references but keeps the
+            // old squiggles.
+            if (_manager is not null && CanAccessEditor && !DesignMode)
+            {
+                timerChangeMonitor.Stop();
+                timerChangeMonitor.Start();
+                timerSyntacticColour.Stop();
+                timerSyntacticColour.Start();
+            }
         }
     }
 
@@ -167,6 +193,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
 
         timerChangeMonitor.Start();
+        timerSyntacticColour.Start();
 
         scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
         scintilla.Margins[0].Width = 40;
@@ -254,7 +281,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         _currentDiagnostics = [];
         _currentCompiledScript = null;
-        _lastScript = string.Empty;
+        _analysedDocumentVersion = -1;
+        _colouredDocumentVersion = -1;
 
         CancelAndDispose(ref _dwellCts);
 
@@ -273,15 +301,110 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// </summary>
     private void HandleTextChanged()
     {
-        if (!CanAccessEditor)
+        if (_suppressTextChangeHandling || !CanAccessEditor)
         {
             return;
         }
 
+        _documentVersion++;
         ResetAnalysisState();
+
+        // Two cadences. The fast timer colours what was just typed; the slow one produces
+        // diagnostics and semantically-refined colouring once typing pauses.
+        timerSyntacticColour.Stop();
+        timerSyntacticColour.Start();
 
         timerChangeMonitor.Stop();
         timerChangeMonitor.Start();
+    }
+
+    /// <summary>
+    /// Colours newly typed code from the syntax tree alone, without waiting for the full
+    /// analysis pass.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private async void timerSyntacticColour_Tick(object sender, EventArgs e)
+    {
+        timerSyntacticColour.Stop();
+
+        if (_colouredDocumentVersion != _documentVersion)
+        {
+            await PerformSyntacticPassAsync();
+        }
+    }
+
+    /// <summary>
+    /// Runs the cheap syntax-only classification pass and applies the result.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately does not touch diagnostics: squiggles stay the business of the full pass,
+    /// which alone can tell whether code is actually wrong. This only repaints colour.
+    /// </remarks>
+    private async Task PerformSyntacticPassAsync()
+    {
+        // Skip while the full pass is running: it is about to produce strictly better colouring,
+        // and letting both mutate the manager's context concurrently is asking for trouble. The
+        // finally block re-queues if the document has moved on by then.
+        if (_manager is null ||
+            _syntacticPassInProgress ||
+            _analysisInProgress ||
+            !TryGetScript(out var scriptSnapshot))
+        {
+            return;
+        }
+
+        var manager = _manager;
+        var stateVersion = _editorStateVersion;
+        var documentVersion = _documentVersion;
+
+        CancelAndDispose(ref _syntacticCts);
+        _syntacticCts = new CancellationTokenSource();
+        var ct = _syntacticCts.Token;
+
+        _syntacticPassInProgress = true;
+
+        try
+        {
+            var classifications = await manager.ApplySyntacticPassAsync(scriptSnapshot, ct);
+
+            if (documentVersion != _documentVersion ||
+                stateVersion != _editorStateVersion ||
+                !CanAccessEditor)
+            {
+                return;
+            }
+
+            // The full pass may already have coloured this same version more precisely; do not
+            // repaint over semantic colouring with the coarser syntactic result.
+            if (_analysedDocumentVersion == documentVersion)
+            {
+                return;
+            }
+
+            ApplyClassificationsToEditor(classifications);
+            _colouredDocumentVersion = documentVersion;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException) when (
+            stateVersion != _editorStateVersion ||
+            !ReferenceEquals(manager, _manager) ||
+            !CanAccessEditor)
+        {
+        }
+        finally
+        {
+            _syntacticPassInProgress = false;
+
+            if (CanAccessEditor &&
+                _colouredDocumentVersion != _documentVersion &&
+                !timerSyntacticColour.Enabled)
+            {
+                timerSyntacticColour.Start();
+            }
+        }
     }
 
     /// <summary>
@@ -293,7 +416,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         timerChangeMonitor.Stop();
 
-        if (TryGetScript(out var script) && _lastScript != script)
+        if (_analysedDocumentVersion != _documentVersion)
         {
             await PerformLiveAnalysisAsync();
         }
@@ -312,37 +435,47 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         var manager = _manager;
         var stateVersion = _editorStateVersion;
 
+        // The version this pass is about to analyse. Its result is applied only if the document
+        // still stands at this version when the pass returns — one rule, replacing the previous
+        // whole-document string comparison.
+        var documentVersion = _documentVersion;
+
+        CancelAndDispose(ref _analysisCts);
+        _analysisCts = new CancellationTokenSource();
+        var ct = _analysisCts.Token;
+
         _analysisInProgress = true;
 
         try
         {
             ClearWarningAndErrorIndicators();
 
-            await manager.ApplyScript(scriptSnapshot);
+            // Runs on the thread pool inside EditorManager; the await returns here on the UI
+            // thread, so everything below is safe to touch Scintilla with.
+            await manager.ApplyScript(scriptSnapshot, ct);
 
-            if (stateVersion != _editorStateVersion ||
-                !ReferenceEquals(manager, _manager) ||
-                !TryGetScript(out var currentScript))
-            {
-                return;
-            }
-
-            if (!string.Equals(scriptSnapshot, currentScript, StringComparison.Ordinal))
+            if (documentVersion != _documentVersion ||
+                stateVersion != _editorStateVersion ||
+                !CanAccessEditor)
             {
                 return;
             }
 
             _currentDiagnostics = manager.LastDiagnostics;
-            _lastScript = scriptSnapshot;
+            _analysedDocumentVersion = documentVersion;
+
+            // Semantic colouring supersedes whatever the syntactic pass painted, so this
+            // version counts as coloured too and the fast timer has nothing left to do.
+            _colouredDocumentVersion = documentVersion;
 
             ApplyDiagnosticsToEditor(_currentDiagnostics);
             ApplyClassificationsToEditor(manager.LastClassifications);
 
-            if (CanAccessEditor)
-            {
-                DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
-                ScriptChanged?.Invoke(this, EventArgs.Empty);
-            }
+            DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
+            ScriptChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -354,9 +487,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         {
             _analysisInProgress = false;
 
-            if (stateVersion == _editorStateVersion &&
-                TryGetScript(out var currentScript) &&
-                _lastScript != currentScript &&
+            // A superseded pass leaves the document unanalysed, so queue another one.
+            if (CanAccessEditor &&
+                _analysedDocumentVersion != _documentVersion &&
                 !timerChangeMonitor.Enabled)
             {
                 timerChangeMonitor.Start();
@@ -544,8 +677,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// <param name="e">The event arguments.</param>
     private void scintilla_CharAdded(object sender, ScintillaNET.CharAddedEventArgs e)
     {
-        HandleTextChanged();
-
+        // Text-change notification comes from Insert/Delete, not from here: CharAdded is a
+        // typing event, so it only reports characters the user typed. This handler is left
+        // with the behaviours that genuinely are typing-specific — auto-indent and the
+        // completion/call-tip triggers.
         var ch = (char)e.Char;
 
         if (ch == '\n')
@@ -598,7 +733,21 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     }
 
     /// <summary>
-    /// Handles character deletion events from Scintilla.
+    /// Handles text insertion events from Scintilla.
+    /// </summary>
+    /// <remarks>
+    /// Paired with <see cref="scintilla_Delete"/>, this is the single point at which the editor
+    /// learns that the document changed. Scintilla raises these for every modification whatever
+    /// its origin — typing, paste, undo, redo, autocomplete insertion, or a programmatic edit —
+    /// so no route into the document can leave the analysis stale.
+    /// </remarks>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_Insert(object sender, ScintillaNET.ModificationEventArgs e) =>
+        HandleTextChanged();
+
+    /// <summary>
+    /// Handles text deletion events from Scintilla.
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="e">The event arguments.</param>
@@ -710,7 +859,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         {
             try
             {
-                apiInfo = await manager.GetAPIInfo(position);
+                apiInfo = await manager.GetAPIInfo(position, ct);
             }
             catch (OperationCanceledException)
             {
@@ -770,7 +919,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 return;
 
             // Keep the Roslyn document current without paying for a full diagnostics pass.
-            await manager.UpdateScriptDocumentAsync(script);
+            await manager.UpdateScriptDocumentAsync(script, cancellationToken);
 
             if (cancellationToken.IsCancellationRequested ||
                 stateVersion != _editorStateVersion ||
@@ -781,7 +930,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             int wordStart = scintilla.WordStartPosition(currentPosition, onlyWordCharacters: true);
             int lenEntered = currentPosition - wordStart;
 
-            var completions = await manager.GetAutoCompletions(currentPosition);
+            var completions = await manager.GetAutoCompletions(currentPosition, cancellationToken);
 
             if (cancellationToken.IsCancellationRequested ||
                 stateVersion != _editorStateVersion ||
@@ -906,6 +1055,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         else if (e.KeyCode == Keys.Escape)
         {
             scintilla.AutoCCancel();
+            _completionCts?.Cancel();
+            CancelAndDispose(ref _callTipCts);
             _callTipSession?.Cancel();
             _callTipSession = null;
             _apiInfoForm.Hide();
@@ -950,6 +1101,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         var (startLine, endLine) = GetSelectedLineRange();
 
         scintilla.BeginUndoAction();
+        _suppressTextChangeHandling = true;
 
         try
         {
@@ -960,10 +1112,14 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
         finally
         {
+            _suppressTextChangeHandling = false;
             scintilla.EndUndoAction();
         }
 
         SelectLines(startLine, endLine);
+
+        // One notification for the whole block: each InsertText above raises its own Insert
+        // event, which would otherwise restart the debounce timer once per selected line.
         HandleTextChanged();
     }
 
@@ -981,6 +1137,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         var (startLine, endLine) = GetSelectedLineRange();
 
         scintilla.BeginUndoAction();
+        _suppressTextChangeHandling = true;
 
         try
         {
@@ -1001,10 +1158,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
         finally
         {
+            _suppressTextChangeHandling = false;
             scintilla.EndUndoAction();
         }
 
         SelectLines(startLine, endLine);
+
+        // One notification for the whole block, as in CommentSelectedLines.
         HandleTextChanged();
     }
 
@@ -1077,6 +1237,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _callTipSession?.Cancel();
         _callTipSession = null;
 
+        // Each session supersedes the last, so abandon the Roslyn work behind the old one
+        // rather than letting it run to completion and discarding the answer.
+        CancelAndDispose(ref _callTipCts);
+        _callTipCts = new CancellationTokenSource();
+        var ct = _callTipCts.Token;
+
         var manager = _manager;
         var stateVersion = _editorStateVersion;
 
@@ -1087,7 +1253,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            await manager.UpdateScriptDocumentAsync(script);
+            await manager.UpdateScriptDocumentAsync(script, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -1097,7 +1267,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             return;
         }
 
-        if (stateVersion != _editorStateVersion ||
+        if (ct.IsCancellationRequested ||
+            stateVersion != _editorStateVersion ||
             !ReferenceEquals(manager, _manager) ||
             !TryGetCurrentPosition(out var pos))
         {
@@ -1108,7 +1279,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            context = await manager.GetCallTipContext(pos);
+            context = await manager.GetCallTipContext(pos, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -1119,6 +1294,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
 
         if (context is null ||
+            ct.IsCancellationRequested ||
             stateVersion != _editorStateVersion ||
             !ReferenceEquals(manager, _manager) ||
             !CanAccessEditor)
@@ -1129,7 +1305,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            apiInfo = await manager.GetAPIInfo(Math.Max(0, context.OpenParenPosition - 1));
+            apiInfo = await manager.GetAPIInfo(Math.Max(0, context.OpenParenPosition - 1), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -1139,7 +1319,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             return;
         }
 
-        if (apiInfo?.MemberInfos is null ||
+        if (ct.IsCancellationRequested ||
+            apiInfo?.MemberInfos is null ||
             apiInfo.MemberInfos.Count == 0 ||
             stateVersion != _editorStateVersion ||
             !ReferenceEquals(manager, _manager) ||
@@ -1167,6 +1348,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         var callTipSession = _callTipSession;
         var stateVersion = _editorStateVersion;
 
+        // Shares the active session's token: starting a new session abandons this update too.
+        var ct = _callTipCts?.Token ?? CancellationToken.None;
+
         if (!TryGetScript(out var script))
         {
             return;
@@ -1174,7 +1358,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            await manager.UpdateScriptDocumentAsync(script);
+            await manager.UpdateScriptDocumentAsync(script, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -1184,7 +1372,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             return;
         }
 
-        if (stateVersion != _editorStateVersion ||
+        if (ct.IsCancellationRequested ||
+            stateVersion != _editorStateVersion ||
             !ReferenceEquals(manager, _manager) ||
             !ReferenceEquals(callTipSession, _callTipSession) ||
             !TryGetCurrentPosition(out var currentPosition))
@@ -1196,7 +1385,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            context = await manager.GetCallTipContext(currentPosition);
+            context = await manager.GetCallTipContext(currentPosition, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (ObjectDisposedException) when (
             stateVersion != _editorStateVersion ||
@@ -1275,6 +1468,9 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     {
         CancelAndDispose(ref _completionCts);
         CancelAndDispose(ref _dwellCts);
+        CancelAndDispose(ref _callTipCts);
+        CancelAndDispose(ref _analysisCts);
+        CancelAndDispose(ref _syntacticCts);
         _callTipSession?.Cancel();
         _callTipSession = null;
 
