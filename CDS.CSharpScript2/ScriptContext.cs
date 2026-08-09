@@ -40,8 +40,19 @@ public class ScriptContext : IDisposable
     public static Task<ScriptContext> CreateAsync() => CreateAsync(ScriptEnvironment.Default);
 
     /// <summary>Creates a context using the supplied environment.</summary>
-    public static async Task<ScriptContext> CreateAsync(ScriptEnvironment environment)
-        => await Task.Run(() => CreateCore(environment)).ConfigureAwait(false);
+    public static Task<ScriptContext> CreateAsync(ScriptEnvironment environment)
+        => CreateAsync(environment, CancellationToken.None);
+
+    /// <summary>Creates a context using the supplied environment.</summary>
+    /// <param name="environment">The environment to build the workspace from.</param>
+    /// <param name="cancellationToken">
+    /// A token that abandons the build. Worth honouring: this reads metadata for every
+    /// referenced assembly and is the slowest single step in the editor's lifetime.
+    /// </param>
+    public static async Task<ScriptContext> CreateAsync(
+        ScriptEnvironment environment,
+        CancellationToken cancellationToken)
+        => await Task.Run(() => CreateCore(environment), cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Returns a new context with the given script text applied.
