@@ -1,9 +1,10 @@
 # Editor responsiveness — findings and design direction
 
-Status: **steps 0–3 and 5 implemented; step 4 measured and dropped.** Worst-case typing
-hitch down ~4× (337 ms → 91 ms); colour latency down ~7× (551 ms → 77 ms). Written
-2026-08-08. See §10 for progress, §11 for the step 4/5 decisions, §9 for a parked
-investigation.
+Status: **complete and verified in a real host.** Steps 0–3, 5 and 6 implemented; step 4
+measured and dropped. Worst-case typing hitch down ~4× (337 ms → 91 ms); colour latency
+down ~7× (551 ms → 77 ms); per-keystroke exception churn down to zero. Written 2026-08-08.
+See §10 for progress, §11 for the step 4/5 decisions, §12 for test coverage, §9 for a
+parked investigation.
 
 Trigger: typing in the Scintilla editor hosted by CDS.OpenCvSharpPlayground feels
 noticeably laggier than the same control in this solution's WinForms sample.
@@ -771,3 +772,72 @@ Full solution builds; `UnitTests` 77/77 on net10.0 and net48.
 60 ms pass gets expensive (~25 ms of styling at 1500 lines). Viewport-scoped styling
 (§5.6) is the fix and is the natural next step; `ScriptAnalyser` already has the
 span-scoped `GetClassificationsAsync(spanStart, spanLength, ct)` overload it would need.
+
+### Step 6 — completion debounce moved onto a timer (2026-08-09)
+
+File: `ScintillaScriptEditor.cs` (+ designer). Found in Playground testing, not by any
+probe here: typing rapidly threw about **two first-chance exceptions per keystroke**.
+
+Caught, so behaviour was unaffected — but they flood the Output window of a host that is
+debugging its own scripts, which for a scripting IDE is the channel that matters most.
+
+**Diagnosis by elimination.** Completion only triggers on a letter or underscore, so a run
+of digits and operators exercises the colour and analysis passes without it:
+
+| typed | first-chance exceptions |
+|---|---|
+| letters (completion active) | 57 over 29 keystrokes — **1.97 each** |
+| digits and operators only | **0** |
+
+That cleared the offload and the two-tier passes entirely. The cause was the completion
+debounce implementing itself by *starting work and then cancelling it*: a request per
+letter, each awaiting `Task.Delay(150, ct)`, each superseded by the next keystroke — one
+`TaskCanceledException` from the delay, one `OperationCanceledException` from Roslyn
+aborting mid-request.
+
+Worth being precise about cause and sequence: those requests were **always** being thrown
+away. Threading a real token through in step 2 did not create the waste, it made
+previously-invisible waste noisy. The old code ran every superseded request to completion
+and silently discarded the answer — worse, but quieter.
+
+Completion now debounces on a timer, as the analysis and colour passes already did, so a
+superseded request never starts. Immediate triggers (`.`, Ctrl+Space, backspace
+re-trigger) bypass it. Every dismissal path routes through `CancelCompletion`, so a
+pending request cannot fire after the list has been dismissed. **57 → 0** exceptions.
+
+**General lesson worth carrying:** debounce by not starting work, not by starting it and
+cancelling. Cancellation is for work already in flight.
+
+---
+
+## 12. Test coverage added (2026-08-09)
+
+The behaviour above was verified with throwaway probes. These are the parts worth keeping
+as tests — 29 added, suite now 106 passing on net10.0 and net48.
+
+- **`UT_SyntacticClassifier`** — the hand-written classifier maps ~60 `SyntaxKind`s and
+  nothing else guards it. Covers keywords, control-flow keywords, literals, comments,
+  punctuation versus operators, ordering, empty and malformed input, and cancellation.
+- **`UT_EditorManagerCancellation`** — the two invariants that would break silently: a
+  cancelled pass leaves `LastDiagnostics` and `LastClassifications` untouched, and
+  cancellation genuinely aborts Roslyn rather than discarding a completed result.
+- **`UT_MetadataReferenceCache`** — a rebuilt assembly is picked up, a cached one keeps
+  resolving, and holding a reference does not lock the file. Fixtures are emitted at run
+  time into a temp directory, per §1: nothing is borrowed from a consuming application.
+
+**These tests immediately earned their keep.** Two real defects in `SyntacticClassifier`
+surfaced on the first run, both of which would have shipped as visibly wrong colouring:
+
+- `if` and `default` classified as **preprocessor keywords**. `SyntaxFacts.IsPreprocessorKeyword`
+  is true for `IfKeyword`, `ElseKeyword` and `DefaultKeyword`, because `#if` and `if` share
+  a `SyntaxKind`. The kind alone cannot separate them; the check now also requires the
+  token to sit inside a `DirectiveTriviaSyntax`.
+- `var` classified as an **identifier**. It is a contextual keyword, so the parser returns
+  an ordinary `IdentifierToken`. Now recognised via the surrounding declaration rather than
+  its text, so a variable named `var` is still an identifier.
+
+**Not covered, deliberately.** The Scintilla control's own behaviour — paste triggering
+analysis, the two timers, completion appearing — needs a live message pump and was
+verified by probe rather than by test. Worth revisiting if that area churns again, but
+pump-driven UI tests are flaky enough that adding them casually would cost more than it
+returns.
