@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CDS.CSharpScript2.Classification;
 
@@ -81,7 +82,11 @@ public static class SyntacticClassifier
         switch (kind)
         {
             case SyntaxKind.IdentifierToken:
-                return SymbolClassification.Identifier;
+                // "var" is a contextual keyword, so the parser hands it back as an ordinary
+                // identifier token. Colour it as a keyword the way every C# editor does.
+                return IsImplicitTypeKeyword(token)
+                    ? SymbolClassification.Keyword
+                    : SymbolClassification.Identifier;
 
             case SyntaxKind.NumericLiteralToken:
                 return SymbolClassification.NumericLiteral;
@@ -109,7 +114,10 @@ public static class SyntacticClassifier
                 return null;
         }
 
-        if (SyntaxFacts.IsPreprocessorKeyword(kind))
+        // Directive keywords share their SyntaxKind with ordinary language keywords — #if and
+        // if are both IfKeyword — so the kind alone cannot tell them apart. Only a token that
+        // actually sits inside a directive is a preprocessor keyword.
+        if (SyntaxFacts.IsPreprocessorKeyword(kind) && token.Parent is DirectiveTriviaSyntax)
         {
             return SymbolClassification.PreprocessorKeyword;
         }
@@ -152,6 +160,30 @@ public static class SyntacticClassifier
 
             _ => null,
         };
+
+    /// <summary>
+    /// Returns <see langword="true"/> when an identifier token is the contextual keyword
+    /// <c>var</c> standing in for a declared type.
+    /// </summary>
+    /// <remarks>
+    /// Checking the surrounding declaration rather than just the text keeps a variable that
+    /// happens to be named <c>var</c> from being coloured as a keyword.
+    /// </remarks>
+    private static bool IsImplicitTypeKeyword(SyntaxToken token)
+    {
+        if (token.Parent is not IdentifierNameSyntax { IsVar: true } name)
+        {
+            return false;
+        }
+
+        return name.Parent switch
+        {
+            VariableDeclarationSyntax declaration => declaration.Type == name,
+            ForEachStatementSyntax forEach => forEach.Type == name,
+            DeclarationExpressionSyntax declarationExpression => declarationExpression.Type == name,
+            _ => false,
+        };
+    }
 
     /// <summary>
     /// Returns <see langword="true"/> for keywords that direct control flow, which are styled
