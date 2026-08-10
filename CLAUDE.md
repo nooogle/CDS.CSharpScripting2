@@ -21,35 +21,51 @@ releases are built, packed, and published via `.github/workflows/release.yml`.
 
 ## Project Layout
 
+Every project except `ConsoleTest` multi-targets `net48` alongside its modern target,
+so a change that only compiles on .NET 10 will break the build.
+
 | Project | Target | Role |
 |---------|--------|------|
-| `CDS.CSharpScript2` | net10.0 | Core scripting engine (Roslyn-based) |
-| `CDS.CSharpScript2.Core` | net10.0 | Editor framework interfaces and abstractions — packaged |
-| `CDS.CSharpScript2.ScintillaEditor` | net10.0-windows | Scintilla5-based editor control — packaged |
-| `CDS.CSharpScript2.RTFEditor` | net10.0-windows | RTF-based editor control |
-| `CDS.CSharpScriptUtils` | net8.0-windows + net48 | Legacy dual-target library — packaged |
-| `UnitTests` | net10.0-windows | MSTest suite |
-| `CDS.CSharpScript2.WinForms.Sample` / `ConsoleTest` | net10.0-windows | Demo app / manual test harness |
+| `CDS.CSharpScript2` | net48 + net10.0 | Core scripting engine and editor framework (Roslyn-based) — packaged |
+| `CDS.CSharpScript2.ScintillaEditor` | net48 + net10.0-windows | Scintilla5-based editor control — packaged |
+| `CDS.CSharpScript2.RTFEditor` | net48 + net10.0-windows | RTF-based editor control |
+| `TestUtils` | net48 + net10.0-windows | Shared helpers for the sample and harness apps |
+| `UnitTests` | net48 + net10.0-windows | MSTest suite |
+| `CDS.CSharpScript2.WinForms.Sample` | net48 + net10.0-windows | Demo app |
+| `ConsoleTest` | net10.0-windows | Manual test harness |
+
+Only `CDS.CSharpScript2` and `CDS.CSharpScript2.ScintillaEditor` are packed; everything
+else sets `IsPackable=false`.
 
 ## Architecture
 
 ### Core Engine (`CDS.CSharpScript2`)
 
-- **`ScriptEnvironment`** — immutable configuration (namespace imports, assembly references, global type, `#r`/`#load` resolvers). Built with a fluent API; compose environments rather than mutating them. **This is the single source of truth for both compilation paths** — anything that affects how a script compiles belongs here, not in `ScriptCompiler` or `ScriptContext`.
-- **`ScriptCompiler`** — static wrapper over `CSharpScript.Create()`. Takes a `ScriptEnvironment` and returns a `CompiledScript`.
-- **`CompiledScript`** — snapshot of a compiled script: syntax tree, semantic model, diagnostics, classified spans.
-- **`ScriptRunner`** — executes a `CompiledScript` synchronously or asynchronously, returning a typed result.
-- **`ScriptManager`** — higher-level orchestrator that wires compilation, classification, completion, and API info together for editor use.
+The public surface is `ScriptEnvironment` → `ScriptContext` → either `ScriptAnalyser`
+(editor feedback) or `ScriptExecutor` → `ExecutableScript` (execution).
+
+- **`ScriptEnvironment`** — immutable configuration (namespace imports, assembly references, global type, `#r`/`#load` resolvers). Built with a fluent API; compose environments rather than mutating them. **This is the single source of truth for both compilation paths** — anything that affects how a script compiles belongs here, not in the paths themselves.
+- **`ScriptContext`** — pairs script text with a configured Roslyn workspace document. Create via `CreateAsync`, then produce updated contexts with `ApplyScript`. Only the instance from `CreateAsync` owns the workspace and should be disposed; those from `ApplyScript` share it and must not be.
+- **`ScriptAnalyser`** — the editor-facing path. Wraps a context to serve diagnostics, syntax tree, semantic model, classifications, completions, and API info. Construct a fresh one whenever the context changes.
+- **`ScriptExecutor`** — the execution path. Compiles a context through the Roslyn scripting API into an `ExecutableScript`. Intended for run-time, not per-keystroke.
+- **`ExecutableScript`** — a compiled script plus its diagnostics; `RunAsync` executes it, optionally with a globals object, and can be run repeatedly.
+
+`ScriptCompiler`, `CompiledScript`, and `ScriptRunner` are `internal` implementation
+details behind `ScriptExecutor` — not part of the package's API.
 
 See `CDS.CSharpScript2/CLAUDE.md` for the sub-namespaces within the core engine (`Classification`, `CodeCompletion`, `APIInfo`).
 
-### Editor Framework (`CDS.CSharpScript2.Core`)
+### Editor Framework (`CDS.CSharpScript2/Editors`)
 
-Defines `IEditor`, `EditorManager`, and three delegate signatures (`ApplyScriptDelegateAsync`, `GetAutoCompleteListDelegateAsync`, `GetAPIInfoDelegateAsync`) that decouple the engine from specific UI controls.
+Lives inside the core project rather than a separate assembly. Defines `IScriptEditor`
+(the contract a UI control implements), `EditorManager` (which drives analysis and raises
+`DiagnosticsUpdated`), and `VirtualScriptEditor` (a headless implementation used in tests).
+Editor controls wire directly to `EditorManager`; the delegate-based indirection that
+previously decoupled them was removed.
 
 ## Coding Conventions
 
-Taken from `.github/copilot-instructions.md` — follow these strictly:
+Follow these strictly:
 
 - **Braces:** Allman style (opening brace on its own line).
 - **Namespaces:** File-scoped (`namespace X;`).
@@ -64,7 +80,8 @@ See the `release` skill for the version-bump and tagging workflow.
 
 ## Testing Notes
 
-- Framework: MSTest + FluentAssertions (also AwesomeAssertions in some files).
+- Framework: MSTest + AwesomeAssertions (`using AwesomeAssertions;`). FluentAssertions is not referenced anywhere — don't reintroduce it.
 - Test categories mirror the engine subsystems: compilation, classifications, completions, diagnostics, use-cases, XML doc info.
 - `UT_EditorExecutionParity` compiles a table of scripts through **both** paths (`ScriptAnalyser` and `ScriptExecutor`) and asserts they report the same errors. The two paths use different Roslyn APIs — a workspace project versus the scripting API — so anything configured in only one of them shows up as squiggles on code that compiles fine. Add a case here when you add a language or directive feature.
-- Test projects reference `MathNet.Numerics` and `OpenCvSharp4.Windows` to verify that real-world assembly references work inside compiled scripts.
+- `UnitTests` references `MathNet.Numerics` and the `OpenCvSharp4` packages (`OpenCvSharp4`, `.Extensions`, and the matching `runtime.win` / `runtime.win-arm64`) to verify that real-world assembly references work inside compiled scripts.
+- `UnitTests` references only `CDS.CSharpScript2`; the editor controls have no direct test coverage. `VirtualScriptEditor` is the headless `IScriptEditor` used to exercise `EditorManager` without a UI.

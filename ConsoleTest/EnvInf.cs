@@ -11,5 +11,6 @@ class EnvInf
     public static void Run()
     {
         Console.WriteLine(TestUtils.RuntimeEnvironmentInfo.Get());
+        
     }
 }
