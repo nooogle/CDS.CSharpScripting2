@@ -220,9 +220,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.ExtraAscent = 1;
         scintilla.ExtraDescent = 1;
 
-        // Caret line highlight.
-        scintilla.CaretLineVisible = true;
-        scintilla.CaretLineBackColor = Color.FromArgb(236, 240, 255);
+        // Caret line highlight. Setting this colour is what makes the caret line render —
+        // Scintilla 5 turns the element on as a side effect of colouring it, which is why
+        // CaretLineVisible is obsolete. The alpha is explicit and opaque to match the
+        // previous behaviour; translucency would also need CaretLineLayer off Layer.Base.
+        scintilla.CaretLineBackColor = Color.FromArgb(255, 236, 240, 255);
 
         // Scroll width follows the longest line automatically.
         scintilla.ScrollWidthTracking = true;
