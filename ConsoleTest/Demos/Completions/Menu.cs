@@ -16,6 +16,7 @@ class Menu
                     .AddChoices(
                         new MenuItem("Built-in demos", BuiltInDemos.Run),
                         new MenuItem("User entered script", UserScript.Run),
+                        new MenuItem(TypingSessionDemo.Name, TypingSessionDemo.Run),
                         new MenuItem("Back", null)));
 
             if (selected.Action is null)

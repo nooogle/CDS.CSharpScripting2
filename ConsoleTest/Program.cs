@@ -35,6 +35,7 @@ class Scratch
                         new MenuItem(Demos.MathNetDemo.Name, Demos.MathNetDemo.Description, Demos.MathNetDemo.Run),
                         new MenuItem(Demos.OpenCvSharpDemo.Name, Demos.OpenCvSharpDemo.Description, Demos.OpenCvSharpDemo.Run),
                         new MenuItem("Code completion", "Completions sub-menu", Demos.Completions.Menu.Run),
+                        new MenuItem(Demos.ResponsivenessBenchmark.Name, Demos.ResponsivenessBenchmark.Description, Demos.ResponsivenessBenchmark.Run),
                         new MenuItem(Demos.XMLDocDemos.Name, Demos.XMLDocDemos.Description, Demos.XMLDocDemos.Run),
                         new MenuItem(EnvInf.Name, EnvInf.Description, EnvInf.Run),
                         new MenuItem("Exit", string.Empty, null)));
