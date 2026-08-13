@@ -34,6 +34,15 @@ internal static class ScriptCompiler
             .WithMetadataResolver(environment.MetadataResolver)
             .WithSourceResolver(environment.SourceResolver);
 
+        // ScriptContext.CreateCore adds the globals type's own assembly to the editor's references
+        // in addition to environment.References; mirrored here so a script naming another type from
+        // that assembly compiles the same way in both paths. Without it, this path alone reports
+        // CS0234/CS0246 on such a type with no corresponding editor squiggle.
+        if (environment.GlobalType != null)
+        {
+            scriptOptions = scriptOptions.AddReferences(environment.GlobalType.Assembly);
+        }
+
         var compiledScript = CSharpScript.Create<TReturn>(
             script,
             globalsType: environment.GlobalType,

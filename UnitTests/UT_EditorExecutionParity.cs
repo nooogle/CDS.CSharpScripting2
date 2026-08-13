@@ -59,6 +59,20 @@ public class UT_EditorExecutionParity
         public string Animal { get; set; } = "Donkey";
     }
 
+    /// <summary>
+    /// A second type in the same assembly as <see cref="ParityGlobals"/>, named explicitly by a
+    /// script rather than reached through inherited member access. Regression coverage for the
+    /// upstream bug recorded in <c>todo.md</c>: <c>ScriptContext.CreateCore</c> adds the globals
+    /// type's assembly to the editor's references, but <c>ScriptCompiler</c> did not do the same for
+    /// the execution path, so a script naming another type from that assembly compiled in the editor
+    /// and failed at run time with no squiggle to warn of it.
+    /// </summary>
+    public static class ParitySiblingType
+    {
+        /// <summary>A value read by the "globals assembly, sibling type" parity case.</summary>
+        public const int MagicNumber = 99;
+    }
+
     [TestMethod]
     [TestCategory("diagnostics")]
     [DynamicData(nameof(GetParityCases), DynamicDataDisplayName = nameof(GetParityCaseName))]
@@ -87,6 +101,9 @@ public class UT_EditorExecutionParity
             .WithAdditionalReferenceForType(typeof(System.Linq.Enumerable));
 
         var globalsEnvironment = ScriptEnvironment.Default.WithGlobalType(typeof(ParityGlobals));
+
+        var globalsAssemblyEnvironment = globalsEnvironment
+            .WithAdditionalNamespaceForType<ParityGlobals>();
 
         var externalAssemblyPath = typeof(MathNet.Numerics.Distributions.Normal).Assembly.Location;
 
@@ -199,6 +216,11 @@ public class UT_EditorExecutionParity
                 "Globals member access",
                 """Animal = Animal + " (modified)";""",
                 globalsEnvironment),
+
+            new ParityCase(
+                "Sibling type in the globals assembly, not otherwise referenced",
+                "var x = ParitySiblingType.MagicNumber;",
+                globalsAssemblyEnvironment),
         };
 
         return cases.Select(c => new object[] { c });
