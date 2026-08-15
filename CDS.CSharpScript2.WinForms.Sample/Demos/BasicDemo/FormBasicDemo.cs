@@ -28,12 +28,27 @@ public partial class FormBasicDemo : Form
         base.OnLoad(e);
 
         scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
+
+        // Fold levels are computed asynchronously, so the saved fold state can only be reapplied
+        // once the first analysis pass has landed — the first DiagnosticsUpdated after Script is
+        // set. Restoring it any earlier would have nothing to collapse yet.
+        scintillaScriptEditor.API.DiagnosticsUpdated += RestoreCollapsedFoldsOnce;
         scintillaScriptEditor.API.Script = _settings.Script;
     }
 
+    /// <summary>
+    /// Applies the saved fold state once the script has been analysed for the first time, then
+    /// stops listening — later analysis passes must not re-apply a now-stale snapshot over folds
+    /// the user has since changed by hand.
+    /// </summary>
+    private void RestoreCollapsedFoldsOnce(object? sender, CDS.CSharpScript2.Editors.DiagnosticsUpdatedEventArgs e)
+    {
+        scintillaScriptEditor.API.DiagnosticsUpdated -= RestoreCollapsedFoldsOnce;
+        scintillaScriptEditor.API.CollapsedFoldLines = _settings.CollapsedFoldLines;
+    }
 
     /// <summary>
-    /// Saves the current script to settings when the form is closing.
+    /// Saves the current script and fold state to settings when the form is closing.
     /// </summary>
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
@@ -44,6 +59,7 @@ public partial class FormBasicDemo : Form
         }
 
         _settings.Script = scintillaScriptEditor.API.Script;
+        _settings.CollapsedFoldLines = [.. scintillaScriptEditor.API.CollapsedFoldLines];
 
         base.OnFormClosing(e);
     }
@@ -116,4 +132,16 @@ public partial class FormBasicDemo : Form
             outputPanel.AppendLine($"\t{output.ErrorCount} errors");
         });
     }
+
+    /// <summary>
+    /// Handles the Expand All button click event to expand every folded region in the editor.
+    /// </summary>
+    private void btnExpandAllFolds_Click(object sender, EventArgs e) =>
+        scintillaScriptEditor.API.ExpandAllFolds();
+
+    /// <summary>
+    /// Handles the Collapse All button click event to collapse every foldable region in the editor.
+    /// </summary>
+    private void btnCollapseAllFolds_Click(object sender, EventArgs e) =>
+        scintillaScriptEditor.API.CollapseAllFolds();
 }

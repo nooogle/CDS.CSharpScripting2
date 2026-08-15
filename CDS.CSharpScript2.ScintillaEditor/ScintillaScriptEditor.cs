@@ -16,6 +16,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaWarningIndicatorIndex = 4;
     private const int ScintillaHighlightIndicatorIndex = 5;
 
+    private const int ScintillaFoldMarginIndex = 2;
+
+    // SC_FOLDLEVELBASE: Scintilla's zero-depth fold level. Line.FoldLevel is this value plus
+    // nesting depth; the numeric part tops out at 4095, so depth is clamped defensively.
+    private const int ScintillaFoldLevelBase = 1024;
+    private const int ScintillaMaxFoldDepth = 4095 - ScintillaFoldLevelBase;
+
     private static readonly TimeSpan CommentChordTimeout = TimeSpan.FromSeconds(2);
 
     private readonly ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
@@ -202,6 +209,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.Margins[1].Width = 8;
         scintilla.Margins[1].Sensitive = false;
         scintilla.Margins[1].Mask = 0;
+
+        scintilla.Margins[ScintillaFoldMarginIndex].Type = ScintillaNET.MarginType.Symbol;
+        scintilla.Margins[ScintillaFoldMarginIndex].Mask = ScintillaNET.Marker.MaskFolders;
+        scintilla.Margins[ScintillaFoldMarginIndex].Sensitive = true;
+        scintilla.Margins[ScintillaFoldMarginIndex].Width = 16;
+
+        // Show/Click: Scintilla reveals hidden lines and toggles folds on margin clicks itself,
+        // so no MarginClick handler is needed for the fold margin.
+        scintilla.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click;
     }
 
     /// <summary>
@@ -272,6 +288,45 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = Color.Green;
 
         scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+
+        ConfigureFoldMarkers();
+    }
+
+    /// <summary>
+    /// Configures the fold margin's marker glyphs (connected plus/minus boxes). No lexer is
+    /// attached — <see cref="ScintillaNET.Scintilla.LexerName"/> is left <see langword="null"/>,
+    /// same as classification — so these glyphs draw whatever fold levels
+    /// <see cref="ApplyFoldingToEditor"/> sets; Scintilla never derives them on its own.
+    /// </summary>
+    private void ConfigureFoldMarkers()
+    {
+        var markerForeColor = SystemColors.ControlLightLight;
+        var markerBackColor = SystemColors.ControlDark;
+
+        int[] foldMarkerIndexes =
+        [
+            ScintillaNET.Marker.FolderEnd,
+            ScintillaNET.Marker.FolderOpenMid,
+            ScintillaNET.Marker.FolderMidTail,
+            ScintillaNET.Marker.FolderTail,
+            ScintillaNET.Marker.FolderSub,
+            ScintillaNET.Marker.Folder,
+            ScintillaNET.Marker.FolderOpen,
+        ];
+
+        foreach (var markerIndex in foldMarkerIndexes)
+        {
+            scintilla.Markers[markerIndex].SetForeColor(markerForeColor);
+            scintilla.Markers[markerIndex].SetBackColor(markerBackColor);
+        }
+
+        scintilla.Markers[ScintillaNET.Marker.Folder].Symbol = ScintillaNET.MarkerSymbol.BoxPlus;
+        scintilla.Markers[ScintillaNET.Marker.FolderOpen].Symbol = ScintillaNET.MarkerSymbol.BoxMinus;
+        scintilla.Markers[ScintillaNET.Marker.FolderEnd].Symbol = ScintillaNET.MarkerSymbol.BoxPlusConnected;
+        scintilla.Markers[ScintillaNET.Marker.FolderMidTail].Symbol = ScintillaNET.MarkerSymbol.TCorner;
+        scintilla.Markers[ScintillaNET.Marker.FolderOpenMid].Symbol = ScintillaNET.MarkerSymbol.BoxMinusConnected;
+        scintilla.Markers[ScintillaNET.Marker.FolderSub].Symbol = ScintillaNET.MarkerSymbol.VLine;
+        scintilla.Markers[ScintillaNET.Marker.FolderTail].Symbol = ScintillaNET.MarkerSymbol.LCorner;
     }
 
     // ── Internal analysis cycle ───────────────────────────────────────────────
@@ -368,7 +423,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         try
         {
-            var classifications = await manager.ApplySyntacticPassAsync(scriptSnapshot, ct);
+            var syntacticResult = await manager.ApplySyntacticPassAsync(scriptSnapshot, ct);
 
             if (documentVersion != _documentVersion ||
                 stateVersion != _editorStateVersion ||
@@ -378,13 +433,16 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             }
 
             // The full pass may already have coloured this same version more precisely; do not
-            // repaint over semantic colouring with the coarser syntactic result.
+            // repaint over semantic colouring with the coarser syntactic result. Folding is
+            // syntax-only regardless of which pass computed it, so it is always applied.
+            ApplyFoldingToEditor(syntacticResult.FoldSpans);
+
             if (_analysedDocumentVersion == documentVersion)
             {
                 return;
             }
 
-            ApplyClassificationsToEditor(classifications);
+            ApplyClassificationsToEditor(syntacticResult.Classifications);
             _colouredDocumentVersion = documentVersion;
         }
         catch (OperationCanceledException)
@@ -472,6 +530,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
             ApplyDiagnosticsToEditor(_currentDiagnostics);
             ApplyClassificationsToEditor(manager.LastClassifications);
+            ApplyFoldingToEditor(manager.LastFoldSpans);
 
             DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
             ScriptChanged?.Invoke(this, EventArgs.Empty);
@@ -585,6 +644,150 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             {
                 scintilla.StartStyling(boundedStart);
                 scintilla.SetStyling(boundedLength, styleIndex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recomputes Scintilla's per-line fold levels from the given foldable ranges.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors the brace-depth algorithm classic C-like lexers use to derive fold levels: a
+    /// line's own level is its nesting depth <i>before</i> any block it opens on that line, and
+    /// it is marked a fold header exactly when that depth increases by the end of the line. Here
+    /// the depth changes come from Roslyn's <paramref name="foldSpans"/> rather than a raw
+    /// character scan, so braces inside strings, chars, and comments are never mistaken for
+    /// structure.
+    /// </remarks>
+    /// <param name="foldSpans">The foldable ranges for the current document, as character spans.</param>
+    private void ApplyFoldingToEditor(IReadOnlyList<Folding.FoldSpan> foldSpans)
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        var lineCount = scintilla.Lines.Count;
+        var opens = new int[lineCount];
+        var closes = new int[lineCount];
+
+        foreach (var span in foldSpans)
+        {
+            var startLine = scintilla.LineFromPosition(span.SpanStart);
+            var endLine = scintilla.LineFromPosition(span.SpanStart + span.SpanLength - 1);
+
+            // A span confined to one line has nothing to hide when folded, so it is not a fold
+            // point at all.
+            if (endLine <= startLine)
+            {
+                continue;
+            }
+
+            opens[startLine]++;
+            closes[endLine]++;
+        }
+
+        var depth = 0;
+
+        for (var line = 0; line < lineCount; line++)
+        {
+            var levelBeforeLine = depth;
+            depth = Math.Max(0, depth + opens[line] - closes[line]);
+
+            var scintillaLine = scintilla.Lines[line];
+            scintillaLine.FoldLevel = ScintillaFoldLevelBase + Math.Min(levelBeforeLine, ScintillaMaxFoldDepth);
+            scintillaLine.FoldLevelFlags = levelBeforeLine < depth
+                ? ScintillaNET.FoldLevelFlags.Header
+                : ScintillaNET.FoldLevelFlags.None;
+        }
+    }
+
+    /// <summary>
+    /// Expands every folded region in the editor.
+    /// </summary>
+    private void ExpandAllFolds()
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        scintilla.FoldAll(ScintillaNET.FoldAction.Expand);
+    }
+
+    /// <summary>
+    /// Collapses every foldable region in the editor, including regions nested inside an
+    /// already-collapsed one.
+    /// </summary>
+    private void CollapseAllFolds()
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        // ContractEveryLevel (rather than plain Contract) also collapses folds nested inside a
+        // fold that is itself collapsing, so re-expanding the outer one later does not reveal an
+        // inner region left expanded from before.
+        scintilla.FoldAll(ScintillaNET.FoldAction.ContractEveryLevel);
+    }
+
+    /// <summary>
+    /// Returns the 0-based line number of every fold header currently collapsed in the editor.
+    /// </summary>
+    private IReadOnlyList<int> GetCollapsedFoldLines()
+    {
+        if (!CanAccessEditor)
+        {
+            return [];
+        }
+
+        var collapsedLines = new List<int>();
+
+        for (var line = 0; line < scintilla.Lines.Count; line++)
+        {
+            var scintillaLine = scintilla.Lines[line];
+
+            if (scintillaLine.FoldLevelFlags.HasFlag(ScintillaNET.FoldLevelFlags.Header) && !scintillaLine.Expanded)
+            {
+                collapsedLines.Add(line);
+            }
+        }
+
+        return collapsedLines;
+    }
+
+    /// <summary>
+    /// Restores a previously captured set of collapsed fold lines (see <see cref="GetCollapsedFoldLines"/>).
+    /// </summary>
+    /// <remarks>
+    /// Everything is expanded first, so this is idempotent regardless of the editor's current fold
+    /// state. A line that is no longer a fold header — the script has changed since the lines were
+    /// captured — is silently skipped rather than treated as an error, the same tolerance
+    /// <see cref="Folding.FoldSpanCalculator"/> gives an unmatched brace or directive.
+    /// </remarks>
+    /// <param name="lines">The 0-based line numbers to collapse.</param>
+    private void SetCollapsedFoldLines(IReadOnlyList<int> lines)
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        scintilla.FoldAll(ScintillaNET.FoldAction.Expand);
+
+        foreach (var lineNumber in lines)
+        {
+            if (lineNumber < 0 || lineNumber >= scintilla.Lines.Count)
+            {
+                continue;
+            }
+
+            var scintillaLine = scintilla.Lines[lineNumber];
+
+            if (scintillaLine.FoldLevelFlags.HasFlag(ScintillaNET.FoldLevelFlags.Header))
+            {
+                scintillaLine.FoldLine(ScintillaNET.FoldAction.Contract);
             }
         }
     }
@@ -1654,5 +1857,29 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         /// <summary>Clears any active highlight range from the editor.</summary>
         public void ClearHighlightText() => _ctrl.ClearHighlightText();
+
+        /// <summary>Expands every folded region in the editor.</summary>
+        public void ExpandAllFolds() => _ctrl.ExpandAllFolds();
+
+        /// <summary>Collapses every foldable region in the editor, including nested ones.</summary>
+        public void CollapseAllFolds() => _ctrl.CollapseAllFolds();
+
+        /// <summary>
+        /// The 0-based line number of every fold currently collapsed in the editor. Setting this
+        /// expands everything else first, so it is safe to use to restore a previously saved
+        /// state regardless of what is currently folded.
+        /// </summary>
+        /// <remarks>
+        /// The host is responsible for persisting this alongside <see cref="Script"/> — a file on
+        /// disk, application settings, a database row — the same way it already owns persisting
+        /// the script text itself. Lines are only meaningful relative to the script text they were
+        /// captured against; a line that is no longer a fold header when restored is skipped
+        /// rather than treated as an error.
+        /// </remarks>
+        public IReadOnlyList<int> CollapsedFoldLines
+        {
+            get => _ctrl.GetCollapsedFoldLines();
+            set => _ctrl.SetCollapsedFoldLines(value);
+        }
     }
 }

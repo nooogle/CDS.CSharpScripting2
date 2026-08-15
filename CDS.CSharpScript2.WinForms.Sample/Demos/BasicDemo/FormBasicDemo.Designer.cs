@@ -33,6 +33,8 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
             btnCompile = new Button();
             btnRun = new Button();
+            btnExpandAllFolds = new Button();
+            btnCollapseAllFolds = new Button();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -87,12 +89,34 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             btnRun.Text = "Run";
             btnRun.UseVisualStyleBackColor = true;
             btnRun.Click += btnRun_Click;
-            // 
+            //
+            // btnExpandAllFolds
+            //
+            btnExpandAllFolds.Location = new Point(177, 15);
+            btnExpandAllFolds.Name = "btnExpandAllFolds";
+            btnExpandAllFolds.Size = new Size(100, 23);
+            btnExpandAllFolds.TabIndex = 9;
+            btnExpandAllFolds.Text = "Expand All";
+            btnExpandAllFolds.UseVisualStyleBackColor = true;
+            btnExpandAllFolds.Click += btnExpandAllFolds_Click;
+            //
+            // btnCollapseAllFolds
+            //
+            btnCollapseAllFolds.Location = new Point(283, 15);
+            btnCollapseAllFolds.Name = "btnCollapseAllFolds";
+            btnCollapseAllFolds.Size = new Size(100, 23);
+            btnCollapseAllFolds.TabIndex = 10;
+            btnCollapseAllFolds.Text = "Collapse All";
+            btnCollapseAllFolds.UseVisualStyleBackColor = true;
+            btnCollapseAllFolds.Click += btnCollapseAllFolds_Click;
+            //
             // FormBasicDemo
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(626, 465);
+            Controls.Add(btnCollapseAllFolds);
+            Controls.Add(btnExpandAllFolds);
             Controls.Add(btnRun);
             Controls.Add(btnCompile);
             Controls.Add(tableLayoutPanel1);
@@ -107,6 +131,8 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
         private TableLayoutPanel tableLayoutPanel1;
         private Button btnCompile;
         private Button btnRun;
+        private Button btnExpandAllFolds;
+        private Button btnCollapseAllFolds;
         private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
     }
