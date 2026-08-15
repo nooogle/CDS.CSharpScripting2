@@ -1,5 +1,12 @@
 # CDS.CSharpScripting2
 
+[![CI](https://github.com/nooogle/CDS.CSharpScripting2/actions/workflows/ci.yml/badge.svg)](https://github.com/nooogle/CDS.CSharpScripting2/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/nooogle/CDS.CSharpScripting2/actions/workflows/codeql.yml/badge.svg)](https://github.com/nooogle/CDS.CSharpScripting2/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/nooogle/CDS.CSharpScripting2/badge)](https://securityscorecards.dev/viewer/?uri=github.com/nooogle/CDS.CSharpScripting2)
+[![NuGet: CDS.CSharpScript2](https://img.shields.io/nuget/v/CDS.CSharpScript2?label=CDS.CSharpScript2)](https://www.nuget.org/packages/CDS.CSharpScript2)
+[![NuGet: CDS.CSharpScript2.ScintillaEditor](https://img.shields.io/nuget/v/CDS.CSharpScript2.ScintillaEditor?label=CDS.CSharpScript2.ScintillaEditor)](https://www.nuget.org/packages/CDS.CSharpScript2.ScintillaEditor)
+[![License](https://img.shields.io/github/license/nooogle/CDS.CSharpScripting2)](LICENSE)
+
 A Roslyn-powered C# scripting framework for .NET. Embed a full C# script engine — with compilation, execution, code completion, syntax highlighting, and signature help — into any .NET application.
 
 ## Packages

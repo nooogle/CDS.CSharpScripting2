@@ -135,6 +135,27 @@ public class ScriptAnalyser
     }
 
     /// <summary>
+    /// Returns foldable ranges (brace blocks and <c>#region</c>/<c>#endregion</c> pairs) for the
+    /// current script, derived from the syntax tree alone.
+    /// </summary>
+    public Task<IReadOnlyList<Folding.FoldSpan>> GetFoldSpansAsync()
+        => GetFoldSpansAsync(CancellationToken.None);
+
+    /// <summary>
+    /// Returns foldable ranges (brace blocks and <c>#region</c>/<c>#endregion</c> pairs) for the
+    /// current script, derived from the syntax tree alone.
+    /// </summary>
+    /// <param name="ct">A token that abandons the walk.</param>
+    public async Task<IReadOnlyList<Folding.FoldSpan>> GetFoldSpansAsync(CancellationToken ct)
+    {
+        var syntaxTree = await GetSyntaxTreeAsync(ct).ConfigureAwait(false);
+
+        return syntaxTree is null
+            ? []
+            : Folding.FoldSpanCalculator.Calculate(syntaxTree, ct);
+    }
+
+    /// <summary>
     /// Returns code completion suggestions at the given cursor position.
     /// </summary>
     /// <remarks>

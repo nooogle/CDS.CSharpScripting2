@@ -134,11 +134,13 @@ public class UT_EditorManagerCancellation
 
         var diagnostics = manager.LastDiagnostics;
         var classifications = manager.LastClassifications;
+        var foldSpans = manager.LastFoldSpans;
 
         var syntactic = await manager.ApplySyntacticPassAsync("var x = 1;", CancellationToken.None);
 
-        syntactic.Should().NotBeEmpty();
+        syntactic.Classifications.Should().NotBeEmpty();
         manager.LastDiagnostics.Should().BeEquivalentTo(diagnostics);
         manager.LastClassifications.Should().BeEquivalentTo(classifications);
+        manager.LastFoldSpans.Should().BeEquivalentTo(foldSpans);
     }
 }

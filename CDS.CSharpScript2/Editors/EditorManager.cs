@@ -27,6 +27,7 @@ public class EditorManager : IDisposable
 
     private ImmutableArray<Diagnostic> _lastDiagnostics = [];
     private IReadOnlyList<Classification.ClassifiedSymbol> _lastClassifications = [];
+    private IReadOnlyList<Folding.FoldSpan> _lastFoldSpans = [];
 
     /// <summary>True once the script context has been initialised (after the first <see cref="ApplyScript(string, CancellationToken)"/> call).</summary>
     public bool IsReady => _context != null;
@@ -36,6 +37,9 @@ public class EditorManager : IDisposable
 
     /// <summary>Classifications from the most recent <see cref="ApplyScript(string, CancellationToken)"/> call.</summary>
     public IReadOnlyList<Classification.ClassifiedSymbol> LastClassifications => _lastClassifications;
+
+    /// <summary>Foldable ranges from the most recent <see cref="ApplyScript(string, CancellationToken)"/> call.</summary>
+    public IReadOnlyList<Folding.FoldSpan> LastFoldSpans => _lastFoldSpans;
 
     /// <summary>Initialises a new manager for the given scripting environment.</summary>
     public EditorManager(ScriptEnvironment environment)
@@ -76,11 +80,13 @@ public class EditorManager : IDisposable
         var result = await RunAnalysisAsync(
             async analyser => (
                 Diagnostics: await analyser.GetDiagnosticsAsync(cancellationToken).ConfigureAwait(false),
-                Classifications: await analyser.GetClassificationsAsync(cancellationToken).ConfigureAwait(false)),
+                Classifications: await analyser.GetClassificationsAsync(cancellationToken).ConfigureAwait(false),
+                FoldSpans: await analyser.GetFoldSpansAsync(cancellationToken).ConfigureAwait(false)),
             cancellationToken).ConfigureAwait(false);
 
         _lastDiagnostics = result.Diagnostics;
         _lastClassifications = result.Classifications;
+        _lastFoldSpans = result.FoldSpans;
     }
 
     /// <summary>
@@ -201,19 +207,19 @@ public class EditorManager : IDisposable
     }
 
     /// <summary>
-    /// Applies the given script text and returns syntax-only classifications for it, without
-    /// running diagnostics or semantic analysis.
+    /// Applies the given script text and returns syntax-only classifications and fold spans for
+    /// it, without running diagnostics or semantic analysis.
     /// </summary>
     /// <param name="script">The script text to apply.</param>
     /// <param name="cancellationToken">A token that abandons a pass superseded by a newer edit.</param>
     /// <remarks>
     /// The cheap half of a two-tier scheme: fast enough to run while the user types, so newly
-    /// typed code is coloured immediately rather than waiting for the debounced
+    /// typed code is coloured and folded immediately rather than waiting for the debounced
     /// <see cref="ApplyScript(string, CancellationToken)"/> pass. Identifiers come back unresolved and are refined
-    /// when that pass lands. Does not touch <see cref="LastDiagnostics"/> or
-    /// <see cref="LastClassifications"/>, which continue to describe the last full pass.
+    /// when that pass lands. Does not touch <see cref="LastDiagnostics"/>, <see cref="LastClassifications"/>,
+    /// or <see cref="LastFoldSpans"/>, which continue to describe the last full pass.
     /// </remarks>
-    public async Task<IReadOnlyList<Classification.ClassifiedSymbol>> ApplySyntacticPassAsync(
+    public async Task<SyntacticPassResult> ApplySyntacticPassAsync(
         string script,
         CancellationToken cancellationToken)
     {
@@ -223,7 +229,9 @@ public class EditorManager : IDisposable
         _cachedExecutableScript = null;
 
         return await RunAnalysisAsync(
-            a => a.GetSyntacticClassificationsAsync(cancellationToken),
+            async analyser => new SyntacticPassResult(
+                await analyser.GetSyntacticClassificationsAsync(cancellationToken).ConfigureAwait(false),
+                await analyser.GetFoldSpansAsync(cancellationToken).ConfigureAwait(false)),
             cancellationToken).ConfigureAwait(false);
     }
 
