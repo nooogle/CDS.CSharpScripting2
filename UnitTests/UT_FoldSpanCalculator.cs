@@ -98,4 +98,37 @@ public class UT_FoldSpanCalculator
 
         spans.Should().BeEmpty();
     }
+
+    [TestMethod]
+    public async Task Calculate_InterpolatedString_DoesNotFoldTheInterpolationHole()
+    {
+        var script = "var x = 1;\nvar s = $\"value: {x}\";\n";
+
+        var spans = await CalculateAsync(script);
+
+        spans.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Calculate_InterpolatedStringInsideBlock_ReturnsOnlyTheBlockSpan()
+    {
+        var script = "int F()\n{\n    var x = 1;\n    return $\"{x}\".Length;\n}\n";
+
+        var spans = await CalculateAsync(script);
+
+        var openBrace = script.IndexOf('{');
+        var closeBrace = script.LastIndexOf('}');
+
+        spans.Should().ContainSingle(s => s.SpanStart == openBrace && s.SpanStart + s.SpanLength - 1 == closeBrace);
+    }
+
+    [TestMethod]
+    public async Task Calculate_MultiLineRawInterpolatedString_DoesNotFoldTheInterpolationHole()
+    {
+        var script = "var x = 1;\nvar s = $\"\"\"\n    value: {x}\n    \"\"\";\n";
+
+        var spans = await CalculateAsync(script);
+
+        spans.Should().BeEmpty();
+    }
 }

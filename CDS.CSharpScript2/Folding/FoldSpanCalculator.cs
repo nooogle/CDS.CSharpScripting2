@@ -35,6 +35,14 @@ public static class FoldSpanCalculator
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            // The '{' and '}' delimiting an interpolation hole (e.g. $"{expr}") are ordinary
+            // OpenBraceToken/CloseBraceToken tokens, not trivia, so they'd otherwise be matched
+            // as if they were a structural block.
+            if (token.Parent.IsKind(SyntaxKind.Interpolation))
+            {
+                continue;
+            }
+
             if (token.IsKind(SyntaxKind.OpenBraceToken))
             {
                 braceStarts.Push(token.Span.Start);
