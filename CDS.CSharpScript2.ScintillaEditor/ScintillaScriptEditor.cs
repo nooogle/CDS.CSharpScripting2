@@ -51,7 +51,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
     private readonly FormAPIInfo _apiInfoForm = new();
-    private readonly Classification.Coloriser _coloriser = new();
+    private Classification.EditorTheme _theme = Classification.EditorTheme.Light;
 
     private CallTipSession? _callTipSession;
     private CancellationTokenSource? _callTipCts;
@@ -157,6 +157,29 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ScintillaScriptEditorApi API { get; }
 
+    // ── Theming ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gets or sets the color theme applied to the Scintilla surface — default text, caret line,
+    /// selection, per-classification syntax colors, brace highlighting, diagnostic indicators,
+    /// the fold margin, and the autocomplete list. Setting this re-applies every theme-dependent
+    /// style immediately. The editor never follows the OS theme on its own; a host that wants
+    /// that assigns <see cref="Classification.EditorTheme.Light"/> or
+    /// <see cref="Classification.EditorTheme.Dark"/> here itself, e.g. in response to a system
+    /// theme change notification.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Classification.EditorTheme Theme
+    {
+        get => _theme;
+        set
+        {
+            _theme = value ?? throw new ArgumentNullException(nameof(value));
+            ApplyTheme();
+        }
+    }
+
     // ── Construction ─────────────────────────────────────────────────────────
 
     /// <summary>
@@ -230,17 +253,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Code";
         scintilla.Styles[ScintillaNET.Style.Default].SizeF = 9.5f;
-        scintilla.StyleClearAll();
 
         // Line spacing — adds a little breathing room without changing the font size.
         scintilla.ExtraAscent = 1;
         scintilla.ExtraDescent = 1;
-
-        // Caret line highlight. Setting this colour is what makes the caret line render —
-        // Scintilla 5 turns the element on as a side effect of colouring it, which is why
-        // CaretLineVisible is obsolete. The alpha is explicit and opaque to match the
-        // previous behaviour; translucency would also need CaretLineLayer off Layer.Base.
-        scintilla.CaretLineBackColor = Color.FromArgb(255, 236, 240, 255);
 
         // Scroll width follows the longest line automatically.
         scintilla.ScrollWidthTracking = true;
@@ -264,44 +280,85 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         // ".", "(" and "[" commit behavior.
         scintilla.AutoCSetFillUps(".([");
 
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+
+        ApplyTheme();
+    }
+
+    /// <summary>
+    /// Applies <see cref="Theme"/> to every themed Scintilla element: the default text style,
+    /// caret line, selection, per-classification syntax styles, brace highlighting, diagnostic
+    /// indicators, the fold margin, and the autocomplete list's selected-item background. Safe to
+    /// call repeatedly — e.g. when <see cref="Theme"/> is reassigned after construction.
+    /// </summary>
+    private void ApplyTheme()
+    {
+        // Caret line highlight. Setting this colour is what makes the caret line render —
+        // Scintilla 5 turns the element on as a side effect of colouring it, which is why
+        // CaretLineVisible is obsolete. The alpha is explicit and opaque to match the
+        // previous behaviour; translucency would also need CaretLineLayer off Layer.Base.
+        scintilla.CaretLineBackColor = _theme.CaretLineBackground;
+
+        scintilla.SelectionTextColor = _theme.SelectionForeground;
+        scintilla.SelectionBackColor = _theme.SelectionBackground;
+
+        // StyleClearAll copies Style.Default's colours to every style as a baseline, so it must
+        // run after Default is coloured and before per-classification overrides are applied.
+        scintilla.Styles[ScintillaNET.Style.Default].ForeColor = _theme.Foreground;
+        scintilla.Styles[ScintillaNET.Style.Default].BackColor = _theme.Background;
+        scintilla.StyleClearAll();
+
         foreach (var entry in _classificationKindToScintillaStyle)
         {
             var classificationName = entry.Key;
             var styleIndex = entry.Value;
-            var colorScheme = _coloriser.FromClassificationName(classificationName);
+            var colorScheme = _theme.GetClassificationColorScheme(classificationName);
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
-            scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
+
+            // Transparent means "no background override" — falling back to the theme background
+            // keeps classified text opaque instead of resolving to opaque white, which would show
+            // as a mismatched box behind every token on a dark theme.
+            scintilla.Styles[styleIndex].BackColor = colorScheme.Background == Color.Transparent
+                ? _theme.Background
+                : colorScheme.Background;
             scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
             scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
         }
 
         // Brace highlight styles: matching pair and unmatched brace.
-        scintilla.Styles[ScintillaNET.Style.BraceLight].ForeColor = Color.FromArgb(0, 120, 215);
+        scintilla.Styles[ScintillaNET.Style.BraceLight].ForeColor = _theme.BraceMatchForeground;
         scintilla.Styles[ScintillaNET.Style.BraceLight].Bold = true;
-        scintilla.Styles[ScintillaNET.Style.BraceBad].ForeColor = Color.Red;
+        scintilla.Styles[ScintillaNET.Style.BraceBad].ForeColor = _theme.BraceBadForeground;
         scintilla.Styles[ScintillaNET.Style.BraceBad].Bold = true;
 
-        scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = Color.Red;
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = _theme.ErrorIndicatorForeColor;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = _theme.WarningIndicatorForeColor;
 
-        scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = Color.Green;
-
-        scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+        scintilla.AutocompleteListSelectedBackColor = _theme.AutocompleteSelectedBackground;
 
         ConfigureFoldMarkers();
     }
 
     /// <summary>
-    /// Configures the fold margin's marker glyphs (connected plus/minus boxes). No lexer is
-    /// attached — <see cref="ScintillaNET.Scintilla.LexerName"/> is left <see langword="null"/>,
-    /// same as classification — so these glyphs draw whatever fold levels
-    /// <see cref="ApplyFoldingToEditor"/> sets; Scintilla never derives them on its own.
+    /// Configures the fold margin's own background and its marker glyphs (connected plus/minus
+    /// boxes), coloring both from <see cref="Theme"/>. No lexer is attached —
+    /// <see cref="ScintillaNET.Scintilla.LexerName"/> is left <see langword="null"/>, same as
+    /// classification — so these glyphs draw whatever fold levels <see cref="ApplyFoldingToEditor"/>
+    /// sets; Scintilla never derives them on its own.
     /// </summary>
     private void ConfigureFoldMarkers()
     {
-        var markerForeColor = SystemColors.ControlLightLight;
-        var markerBackColor = SystemColors.ControlDark;
+        var markerForeColor = _theme.FoldMarginForeground;
+        var markerBackColor = _theme.FoldMarginBackground;
+
+        // The fold margin's own background is separate from every marker glyph's back color above —
+        // Scintilla renders it from a dedicated "fold margin colour"/"highlight colour" pair rather
+        // than from Style.Default, so without this it stays whatever Scintilla's built-in default is
+        // regardless of theme.
+        scintilla.SetFoldMarginColor(true, markerBackColor);
+        scintilla.SetFoldMarginHighlightColor(true, markerBackColor);
 
         int[] foldMarkerIndexes =
         [
