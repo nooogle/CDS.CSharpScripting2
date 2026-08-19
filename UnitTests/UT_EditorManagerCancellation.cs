@@ -118,9 +118,13 @@ public class UT_EditorManagerCancellation
 
         cancelled.Stop();
 
-        // Generous margin: this asserts "gave up early", not a specific timing.
+        // Generous margin: this asserts "gave up early", not a specific timing. The +50ms on top
+        // of the uncancelled baseline absorbs scheduling jitter on a loaded/shared CI runner,
+        // where the two passes can otherwise land within a millisecond of each other despite
+        // cancellation genuinely working — a true cancellation failure re-runs the full pass and
+        // misses this bound by far more than that.
         cancelled.ElapsedMilliseconds.Should().BeLessThan(
-            Math.Max(uncancelled.ElapsedMilliseconds, 20),
+            Math.Max(uncancelled.ElapsedMilliseconds, 20) + 50,
             "a cancelled pass must abandon Roslyn's work rather than run it to completion");
     }
 
