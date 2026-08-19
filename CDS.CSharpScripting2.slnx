@@ -32,4 +32,5 @@
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="Debug|x64" Project="x64" />
   </Project>
+  <Project Path="UITests/UITests.csproj" />
 </Solution>

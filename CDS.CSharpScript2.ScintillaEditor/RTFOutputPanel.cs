@@ -21,6 +21,24 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowClickLinks2 { get; set; } = true;
 
+    private Classification.EditorTheme _theme = Classification.EditorTheme.Light;
+
+    /// <summary>
+    /// Gets or sets the color theme applied to the output panel's background and text. Setting
+    /// this re-applies the colors immediately. As with <see cref="ScintillaScriptEditor.Theme"/>,
+    /// this panel never follows the OS theme on its own.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Classification.EditorTheme Theme
+    {
+        get => _theme;
+        set
+        {
+            _theme = value ?? throw new ArgumentNullException(nameof(value));
+            ApplyTheme();
+        }
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RTFOutputPanel"/> class.
@@ -28,6 +46,20 @@ public partial class RTFOutputPanel : UserControl, IOutputPanel
     public RTFOutputPanel()
     {
         InitializeComponent();
+        ApplyTheme();
+    }
+
+    /// <summary>
+    /// Applies <see cref="Theme"/> to the panel and its rich text box. Plain <see cref="Append"/>/
+    /// <see cref="AppendLine"/> text carries no explicit color, so it always renders in the rich
+    /// text box's current <see cref="Control.ForeColor"/>.
+    /// </summary>
+    private void ApplyTheme()
+    {
+        BackColor = _theme.Background;
+        ForeColor = _theme.Foreground;
+        richTextBox.BackColor = _theme.Background;
+        richTextBox.ForeColor = _theme.Foreground;
     }
 
     /// <summary>

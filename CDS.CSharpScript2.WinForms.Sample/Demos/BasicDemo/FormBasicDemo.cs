@@ -9,6 +9,7 @@ public partial class FormBasicDemo : Form
 {
     private readonly Settings _settings;
     private bool _isRunningOrCompiling;
+    private CDS.CSharpScript2.ScintillaEditor.OsThemeWatcher? _osThemeWatcher;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FormBasicDemo"/> class.
@@ -34,6 +35,112 @@ public partial class FormBasicDemo : Form
         // set. Restoring it any earlier would have nothing to collapse yet.
         scintillaScriptEditor.API.DiagnosticsUpdated += RestoreCollapsedFoldsOnce;
         scintillaScriptEditor.API.Script = _settings.Script;
+
+        // Checking the radio button here (rather than from the designer) fires rbThemeSystem_CheckedChanged,
+        // which starts following the OS theme, since by now InitializeComponent has already wired up
+        // the event handler.
+        rbThemeSystem.Checked = true;
+    }
+
+    /// <summary>
+    /// Stops following the OS theme and switches to <see cref="CDS.CSharpScript2.Classification.EditorTheme.Light"/>.
+    /// </summary>
+    private void rbThemeLight_CheckedChanged(object sender, EventArgs e)
+    {
+        if (!rbThemeLight.Checked)
+        {
+            return;
+        }
+
+        StopFollowingSystemTheme();
+        ApplyTheme(CDS.CSharpScript2.Classification.EditorTheme.Light);
+    }
+
+    /// <summary>
+    /// Stops following the OS theme and switches to <see cref="CDS.CSharpScript2.Classification.EditorTheme.Dark"/>.
+    /// </summary>
+    private void rbThemeDark_CheckedChanged(object sender, EventArgs e)
+    {
+        if (!rbThemeDark.Checked)
+        {
+            return;
+        }
+
+        StopFollowingSystemTheme();
+        ApplyTheme(CDS.CSharpScript2.Classification.EditorTheme.Dark);
+    }
+
+    /// <summary>
+    /// Applies the given theme to the script editor, the output panel, and the form itself — the
+    /// buttons and theme picker sit directly on the form, so its background and the group box's
+    /// foreground follow the theme too rather than staying a fixed light strip.
+    /// </summary>
+    private void ApplyTheme(CDS.CSharpScript2.Classification.EditorTheme theme)
+    {
+        scintillaScriptEditor.Theme = theme;
+        outputPanel.Theme = theme;
+        BackColor = theme.Background;
+        groupBoxTheme.ForeColor = theme.Foreground;
+    }
+
+    /// <summary>
+    /// Starts following the OS theme, applying it immediately and again on every live OS toggle.
+    /// </summary>
+    private void rbThemeSystem_CheckedChanged(object sender, EventArgs e)
+    {
+        if (!rbThemeSystem.Checked)
+        {
+            return;
+        }
+
+        StartFollowingSystemTheme();
+    }
+
+    private void StartFollowingSystemTheme()
+    {
+        if (_osThemeWatcher is not null)
+        {
+            return;
+        }
+
+        _osThemeWatcher = new CDS.CSharpScript2.ScintillaEditor.OsThemeWatcher();
+        _osThemeWatcher.ThemeChanged += OsThemeWatcher_ThemeChanged;
+        ApplyOsTheme();
+    }
+
+    private void StopFollowingSystemTheme()
+    {
+        if (_osThemeWatcher is null)
+        {
+            return;
+        }
+
+        _osThemeWatcher.ThemeChanged -= OsThemeWatcher_ThemeChanged;
+        _osThemeWatcher.Dispose();
+        _osThemeWatcher = null;
+    }
+
+    private void OsThemeWatcher_ThemeChanged(object? sender, EventArgs e) => ApplyOsTheme();
+
+    private void ApplyOsTheme()
+    {
+        if (_osThemeWatcher is null)
+        {
+            return;
+        }
+
+        ApplyTheme(_osThemeWatcher.IsDarkThemeActive
+            ? CDS.CSharpScript2.Classification.EditorTheme.Dark
+            : CDS.CSharpScript2.Classification.EditorTheme.Light);
+    }
+
+    /// <summary>
+    /// Stops watching the OS theme once the form is actually closing.
+    /// </summary>
+    protected override void OnFormClosed(FormClosedEventArgs e)
+    {
+        StopFollowingSystemTheme();
+        base.OnFormClosed(e);
     }
 
     /// <summary>

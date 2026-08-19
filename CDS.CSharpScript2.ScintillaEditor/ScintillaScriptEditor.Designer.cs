@@ -66,8 +66,10 @@ namespace CDS.CSharpScript2.ScintillaEditor
             scintilla.DwellEnd += scintilla_DwellEnd;
             scintilla.CallTipClick += scintilla_CallTipClick;
             scintilla.KeyDown += scintilla_KeyDown;
+            scintilla.MarginClick += scintilla_MarginClick;
             scintilla.MouseMove += scintilla_MouseMove;
             scintilla.UpdateUI += scintilla_UpdateUI;
+            scintilla.UpdateUI += scintilla_UpdateUI_DiagnosticMarkers;
             // 
             // timerChangeMonitor
             // 

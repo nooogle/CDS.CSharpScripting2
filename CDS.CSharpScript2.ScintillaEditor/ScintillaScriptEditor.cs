@@ -16,7 +16,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaWarningIndicatorIndex = 4;
     private const int ScintillaHighlightIndicatorIndex = 5;
 
+    private const int ScintillaDiagnosticsMarginIndex = 1;
     private const int ScintillaFoldMarginIndex = 2;
+
+    // Marker numbers below Scintilla's reserved fold-marker range (25-31, see Marker.MaskFolders).
+    private const int ScintillaErrorMarkerIndex = 0;
+    private const int ScintillaWarningMarkerIndex = 1;
 
     // SC_FOLDLEVELBASE: Scintilla's zero-depth fold level. Line.FoldLevel is this value plus
     // nesting depth; the numeric part tops out at 4095, so depth is clamped defensively.
@@ -51,7 +56,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
     private readonly ToolTipDiagnostics _diagnosticsToolTipManager;
     private readonly FormAPIInfo _apiInfoForm = new();
-    private readonly Classification.Coloriser _coloriser = new();
+    private Classification.EditorTheme _theme = Classification.EditorTheme.Light;
 
     private CallTipSession? _callTipSession;
     private CancellationTokenSource? _callTipCts;
@@ -157,6 +162,29 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ScintillaScriptEditorApi API { get; }
 
+    // ── Theming ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Gets or sets the color theme applied to the Scintilla surface — default text, caret line,
+    /// selection, per-classification syntax colors, brace highlighting, diagnostic indicators,
+    /// the fold margin, and the autocomplete list. Setting this re-applies every theme-dependent
+    /// style immediately. The editor never follows the OS theme on its own; a host that wants
+    /// that assigns <see cref="Classification.EditorTheme.Light"/> or
+    /// <see cref="Classification.EditorTheme.Dark"/> here itself, e.g. in response to a system
+    /// theme change notification.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Classification.EditorTheme Theme
+    {
+        get => _theme;
+        set
+        {
+            _theme = value ?? throw new ArgumentNullException(nameof(value));
+            ApplyTheme();
+        }
+    }
+
     // ── Construction ─────────────────────────────────────────────────────────
 
     /// <summary>
@@ -205,19 +233,23 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
         scintilla.Margins[0].Width = 40;
 
-        scintilla.Margins[1].Type = ScintillaNET.MarginType.Symbol;
-        scintilla.Margins[1].Width = 8;
-        scintilla.Margins[1].Sensitive = false;
-        scintilla.Margins[1].Mask = 0;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Type = ScintillaNET.MarginType.Symbol;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Width = 14;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Sensitive = false;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Mask =
+            (1 << ScintillaErrorMarkerIndex) | (1 << ScintillaWarningMarkerIndex);
 
         scintilla.Margins[ScintillaFoldMarginIndex].Type = ScintillaNET.MarginType.Symbol;
         scintilla.Margins[ScintillaFoldMarginIndex].Mask = ScintillaNET.Marker.MaskFolders;
         scintilla.Margins[ScintillaFoldMarginIndex].Sensitive = true;
         scintilla.Margins[ScintillaFoldMarginIndex].Width = 16;
 
-        // Show/Click: Scintilla reveals hidden lines and toggles folds on margin clicks itself,
-        // so no MarginClick handler is needed for the fold margin.
-        scintilla.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click;
+        // Show: Scintilla still auto-reveals a line hidden by a collapsed fold, e.g. when the
+        // caret is moved into it programmatically. Click is deliberately NOT set — Scintilla
+        // would then toggle the fold entirely internally and suppress MarginClick for that click
+        // (confirmed live), leaving no way to know a fold changed and reposition diagnostic
+        // markers. scintilla_MarginClick below does the toggle itself instead.
+        scintilla.AutomaticFold = ScintillaNET.AutomaticFold.Show;
     }
 
     /// <summary>
@@ -230,17 +262,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
         scintilla.Styles[ScintillaNET.Style.Default].Font = "Cascadia Code";
         scintilla.Styles[ScintillaNET.Style.Default].SizeF = 9.5f;
-        scintilla.StyleClearAll();
 
         // Line spacing — adds a little breathing room without changing the font size.
         scintilla.ExtraAscent = 1;
         scintilla.ExtraDescent = 1;
-
-        // Caret line highlight. Setting this colour is what makes the caret line render —
-        // Scintilla 5 turns the element on as a side effect of colouring it, which is why
-        // CaretLineVisible is obsolete. The alpha is explicit and opaque to match the
-        // previous behaviour; translucency would also need CaretLineLayer off Layer.Base.
-        scintilla.CaretLineBackColor = Color.FromArgb(255, 236, 240, 255);
 
         // Scroll width follows the longest line automatically.
         scintilla.ScrollWidthTracking = true;
@@ -264,44 +289,102 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         // ".", "(" and "[" commit behavior.
         scintilla.AutoCSetFillUps(".([");
 
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
+        scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+
+        ApplyTheme();
+    }
+
+    /// <summary>
+    /// Applies <see cref="Theme"/> to every themed Scintilla element: the default text style,
+    /// caret line, selection, per-classification syntax styles, brace highlighting, diagnostic
+    /// indicators, the fold margin, and the autocomplete list's selected-item background. Safe to
+    /// call repeatedly — e.g. when <see cref="Theme"/> is reassigned after construction.
+    /// </summary>
+    private void ApplyTheme()
+    {
+        // Caret line highlight. Setting this colour is what makes the caret line render —
+        // Scintilla 5 turns the element on as a side effect of colouring it, which is why
+        // CaretLineVisible is obsolete. The alpha is explicit and opaque to match the
+        // previous behaviour; translucency would also need CaretLineLayer off Layer.Base.
+        scintilla.CaretLineBackColor = _theme.CaretLineBackground;
+
+        scintilla.SelectionTextColor = _theme.SelectionForeground;
+        scintilla.SelectionBackColor = _theme.SelectionBackground;
+
+        // StyleClearAll copies Style.Default's colours to every style as a baseline, so it must
+        // run after Default is coloured and before per-classification overrides are applied.
+        scintilla.Styles[ScintillaNET.Style.Default].ForeColor = _theme.Foreground;
+        scintilla.Styles[ScintillaNET.Style.Default].BackColor = _theme.Background;
+        scintilla.StyleClearAll();
+
         foreach (var entry in _classificationKindToScintillaStyle)
         {
             var classificationName = entry.Key;
             var styleIndex = entry.Value;
-            var colorScheme = _coloriser.FromClassificationName(classificationName);
+            var colorScheme = _theme.GetClassificationColorScheme(classificationName);
             scintilla.Styles[styleIndex].ForeColor = colorScheme.Foreground;
-            scintilla.Styles[styleIndex].BackColor = colorScheme.Background;
+
+            // Transparent means "no background override" — falling back to the theme background
+            // keeps classified text opaque instead of resolving to opaque white, which would show
+            // as a mismatched box behind every token on a dark theme.
+            scintilla.Styles[styleIndex].BackColor = colorScheme.Background == Color.Transparent
+                ? _theme.Background
+                : colorScheme.Background;
             scintilla.Styles[styleIndex].Bold = colorScheme.Bold;
             scintilla.Styles[styleIndex].Italic = colorScheme.Italics;
         }
 
         // Brace highlight styles: matching pair and unmatched brace.
-        scintilla.Styles[ScintillaNET.Style.BraceLight].ForeColor = Color.FromArgb(0, 120, 215);
+        scintilla.Styles[ScintillaNET.Style.BraceLight].ForeColor = _theme.BraceMatchForeground;
         scintilla.Styles[ScintillaNET.Style.BraceLight].Bold = true;
-        scintilla.Styles[ScintillaNET.Style.BraceBad].ForeColor = Color.Red;
+        scintilla.Styles[ScintillaNET.Style.BraceBad].ForeColor = _theme.BraceBadForeground;
         scintilla.Styles[ScintillaNET.Style.BraceBad].Bold = true;
 
-        scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = Color.Red;
+        scintilla.Indicators[ScintillaErrorIndicatorIndex].ForeColor = _theme.ErrorIndicatorForeColor;
+        scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = _theme.WarningIndicatorForeColor;
 
-        scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
-        scintilla.Indicators[ScintillaWarningIndicatorIndex].ForeColor = Color.Green;
-
-        scintilla.Indicators[ScintillaHighlightIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Box;
+        scintilla.AutocompleteListSelectedBackColor = _theme.AutocompleteSelectedBackground;
 
         ConfigureFoldMarkers();
+        ConfigureDiagnosticMarkers();
     }
 
     /// <summary>
-    /// Configures the fold margin's marker glyphs (connected plus/minus boxes). No lexer is
-    /// attached — <see cref="ScintillaNET.Scintilla.LexerName"/> is left <see langword="null"/>,
-    /// same as classification — so these glyphs draw whatever fold levels
-    /// <see cref="ApplyFoldingToEditor"/> sets; Scintilla never derives them on its own.
+    /// Colors the error/warning gutter marker glyphs from <see cref="Theme"/>. Recoloring an
+    /// existing marker number restyles every line it is already placed on, so this does not need
+    /// to touch which lines currently carry a marker.
+    /// </summary>
+    private void ConfigureDiagnosticMarkers()
+    {
+        scintilla.Markers[ScintillaErrorMarkerIndex].Symbol = ScintillaNET.MarkerSymbol.Circle;
+        scintilla.Markers[ScintillaErrorMarkerIndex].SetForeColor(_theme.ErrorIndicatorForeColor);
+        scintilla.Markers[ScintillaErrorMarkerIndex].SetBackColor(_theme.ErrorIndicatorForeColor);
+
+        scintilla.Markers[ScintillaWarningMarkerIndex].Symbol = ScintillaNET.MarkerSymbol.Circle;
+        scintilla.Markers[ScintillaWarningMarkerIndex].SetForeColor(_theme.WarningIndicatorForeColor);
+        scintilla.Markers[ScintillaWarningMarkerIndex].SetBackColor(_theme.WarningIndicatorForeColor);
+    }
+
+    /// <summary>
+    /// Configures the fold margin's own background and its marker glyphs (connected plus/minus
+    /// boxes), coloring both from <see cref="Theme"/>. No lexer is attached —
+    /// <see cref="ScintillaNET.Scintilla.LexerName"/> is left <see langword="null"/>, same as
+    /// classification — so these glyphs draw whatever fold levels <see cref="ApplyFoldingToEditor"/>
+    /// sets; Scintilla never derives them on its own.
     /// </summary>
     private void ConfigureFoldMarkers()
     {
-        var markerForeColor = SystemColors.ControlLightLight;
-        var markerBackColor = SystemColors.ControlDark;
+        var markerForeColor = _theme.FoldMarginForeground;
+        var markerBackColor = _theme.FoldMarginBackground;
+
+        // The fold margin's own background is separate from every marker glyph's back color above —
+        // Scintilla renders it from a dedicated "fold margin colour"/"highlight colour" pair rather
+        // than from Style.Default, so without this it stays whatever Scintilla's built-in default is
+        // regardless of theme.
+        scintilla.SetFoldMarginColor(true, markerBackColor);
+        scintilla.SetFoldMarginHighlightColor(true, markerBackColor);
 
         int[] foldMarkerIndexes =
         [
@@ -434,8 +517,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
             // The full pass may already have coloured this same version more precisely; do not
             // repaint over semantic colouring with the coarser syntactic result. Folding is
-            // syntax-only regardless of which pass computed it, so it is always applied.
+            // syntax-only regardless of which pass computed it, so it is always applied — and
+            // since it can change which lines are hidden, diagnostic markers are repositioned
+            // from the last-known diagnostics even though this pass does not recompute them.
             ApplyFoldingToEditor(syntacticResult.FoldSpans);
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
 
             if (_analysedDocumentVersion == documentVersion)
             {
@@ -531,6 +617,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             ApplyDiagnosticsToEditor(_currentDiagnostics);
             ApplyClassificationsToEditor(manager.LastClassifications);
             ApplyFoldingToEditor(manager.LastFoldSpans);
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
 
             DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
             ScriptChanged?.Invoke(this, EventArgs.Empty);
@@ -703,6 +790,80 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     }
 
     /// <summary>
+    /// Places error/warning gutter markers for the given diagnostics. A diagnostic hidden inside
+    /// a collapsed fold is aggregated onto its nearest visible ancestor header line instead, so it
+    /// stays visible while the region containing it is collapsed; where more than one diagnostic
+    /// lands on the same line, the worse severity wins.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics to render as gutter markers.</param>
+    private void ApplyDiagnosticMarkersToEditor(ImmutableArray<Diagnostic> diagnostics)
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        scintilla.MarkerDeleteAll(ScintillaErrorMarkerIndex);
+        scintilla.MarkerDeleteAll(ScintillaWarningMarkerIndex);
+
+        Dictionary<int, DiagnosticSeverity>? worstSeverityByLine = null;
+
+        foreach (var diagnostic in diagnostics)
+        {
+            if (!diagnostic.Location.IsInSource ||
+                diagnostic.Severity is not (DiagnosticSeverity.Error or DiagnosticSeverity.Warning))
+            {
+                continue;
+            }
+
+            var line = GetNearestVisibleLine(scintilla.LineFromPosition(diagnostic.Location.SourceSpan.Start));
+
+            if (line < 0)
+            {
+                continue;
+            }
+
+            worstSeverityByLine ??= [];
+
+            if (!worstSeverityByLine.TryGetValue(line, out var existingSeverity) || diagnostic.Severity > existingSeverity)
+            {
+                worstSeverityByLine[line] = diagnostic.Severity;
+            }
+        }
+
+        if (worstSeverityByLine is null)
+        {
+            return;
+        }
+
+        foreach (var entry in worstSeverityByLine)
+        {
+            var markerIndex = entry.Value == DiagnosticSeverity.Error
+                ? ScintillaErrorMarkerIndex
+                : ScintillaWarningMarkerIndex;
+
+            scintilla.Lines[entry.Key].MarkerAdd(markerIndex);
+        }
+    }
+
+    /// <summary>
+    /// Walks up through collapsed ancestor folds from <paramref name="line"/> until reaching a
+    /// line that is actually visible, so a marker placed there is never silently hidden by
+    /// Scintilla's own fold-aware rendering.
+    /// </summary>
+    /// <param name="line">The 0-based line to start from.</param>
+    /// <returns>The nearest visible line at or above <paramref name="line"/>, or -1 if none.</returns>
+    private int GetNearestVisibleLine(int line)
+    {
+        while (line >= 0 && !scintilla.Lines[line].Visible)
+        {
+            line = scintilla.Lines[line].FoldParent;
+        }
+
+        return line;
+    }
+
+    /// <summary>
     /// Expands every folded region in the editor.
     /// </summary>
     private void ExpandAllFolds()
@@ -713,6 +874,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
 
         scintilla.FoldAll(ScintillaNET.FoldAction.Expand);
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -730,6 +892,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         // fold that is itself collapsing, so re-expanding the outer one later does not reveal an
         // inner region left expanded from before.
         scintilla.FoldAll(ScintillaNET.FoldAction.ContractEveryLevel);
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -790,6 +953,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 scintillaLine.FoldLine(ScintillaNET.FoldAction.Contract);
             }
         }
+
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -1002,6 +1167,43 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// Returns <see langword="true"/> when the character is a recognised brace glyph.
     /// </summary>
     private static bool IsBrace(int c) => c is '(' or ')' or '{' or '}' or '[' or ']';
+
+    /// <summary>
+    /// Repositions diagnostic gutter markers after any UI update that might change which lines
+    /// are visible — most importantly the user manually expanding or collapsing a fold.
+    /// Scintilla's <see cref="ScintillaNET.AutomaticFold.Click"/> handles that toggle entirely
+    /// internally and raises no dedicated fold-changed notification, so <c>UpdateUI</c> (which
+    /// Scintilla does reliably raise afterwards) is the hook used instead. It also fires on far
+    /// more than just fold toggles — every caret move and scroll — but re-placing markers from
+    /// the already-known diagnostics is cheap enough that filtering those out isn't worthwhile.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_UpdateUI_DiagnosticMarkers(object sender, ScintillaNET.UpdateUIEventArgs e) =>
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
+
+    /// <summary>
+    /// Toggles the fold under a fold-margin click. <see cref="ScintillaNET.AutomaticFold.Click"/>
+    /// is deliberately not used (see <see cref="InitialiseScintilla"/>) specifically so this
+    /// handler runs and can reposition diagnostic markers after the toggle.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_MarginClick(object sender, ScintillaNET.MarginClickEventArgs e)
+    {
+        if (e.Margin != ScintillaFoldMarginIndex)
+        {
+            return;
+        }
+
+        var line = scintilla.Lines[scintilla.LineFromPosition(e.Position)];
+
+        if (line.FoldLevelFlags.HasFlag(ScintillaNET.FoldLevelFlags.Header))
+        {
+            line.ToggleFold();
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
+        }
+    }
 
     /// <summary>
     /// Handles mouse movement over the editor.

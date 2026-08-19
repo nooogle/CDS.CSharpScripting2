@@ -35,7 +35,12 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             btnRun = new Button();
             btnExpandAllFolds = new Button();
             btnCollapseAllFolds = new Button();
+            groupBoxTheme = new GroupBox();
+            rbThemeLight = new RadioButton();
+            rbThemeDark = new RadioButton();
+            rbThemeSystem = new RadioButton();
             tableLayoutPanel1.SuspendLayout();
+            groupBoxTheme.SuspendLayout();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -110,11 +115,57 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             btnCollapseAllFolds.UseVisualStyleBackColor = true;
             btnCollapseAllFolds.Click += btnCollapseAllFolds_Click;
             //
+            // groupBoxTheme
+            //
+            groupBoxTheme.Controls.Add(rbThemeLight);
+            groupBoxTheme.Controls.Add(rbThemeDark);
+            groupBoxTheme.Controls.Add(rbThemeSystem);
+            groupBoxTheme.Location = new Point(399, 8);
+            groupBoxTheme.Name = "groupBoxTheme";
+            groupBoxTheme.Size = new Size(210, 40);
+            groupBoxTheme.TabIndex = 11;
+            groupBoxTheme.TabStop = false;
+            groupBoxTheme.Text = "Theme";
+            //
+            // rbThemeLight
+            //
+            rbThemeLight.AutoSize = true;
+            rbThemeLight.Location = new Point(10, 17);
+            rbThemeLight.Name = "rbThemeLight";
+            rbThemeLight.Size = new Size(51, 19);
+            rbThemeLight.TabIndex = 0;
+            rbThemeLight.Text = "Light";
+            rbThemeLight.UseVisualStyleBackColor = true;
+            rbThemeLight.CheckedChanged += rbThemeLight_CheckedChanged;
+            //
+            // rbThemeDark
+            //
+            rbThemeDark.AutoSize = true;
+            rbThemeDark.Location = new Point(72, 17);
+            rbThemeDark.Name = "rbThemeDark";
+            rbThemeDark.Size = new Size(52, 19);
+            rbThemeDark.TabIndex = 1;
+            rbThemeDark.Text = "Dark";
+            rbThemeDark.UseVisualStyleBackColor = true;
+            rbThemeDark.CheckedChanged += rbThemeDark_CheckedChanged;
+            //
+            // rbThemeSystem
+            //
+            rbThemeSystem.AutoSize = true;
+            rbThemeSystem.Location = new Point(135, 17);
+            rbThemeSystem.Name = "rbThemeSystem";
+            rbThemeSystem.Size = new Size(68, 19);
+            rbThemeSystem.TabIndex = 2;
+            rbThemeSystem.Text = "System";
+            rbThemeSystem.UseVisualStyleBackColor = true;
+            rbThemeSystem.CheckedChanged += rbThemeSystem_CheckedChanged;
+            //
             // FormBasicDemo
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(626, 465);
+            Controls.Add(groupBoxTheme);
             Controls.Add(btnCollapseAllFolds);
             Controls.Add(btnExpandAllFolds);
             Controls.Add(btnRun);
@@ -124,6 +175,8 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             Padding = new Padding(12);
             Text = "Basic demo";
             tableLayoutPanel1.ResumeLayout(false);
+            groupBoxTheme.ResumeLayout(false);
+            groupBoxTheme.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -135,5 +188,9 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
         private Button btnCollapseAllFolds;
         private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private GroupBox groupBoxTheme;
+        private RadioButton rbThemeLight;
+        private RadioButton rbThemeDark;
+        private RadioButton rbThemeSystem;
     }
 }

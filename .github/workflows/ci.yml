@@ -34,7 +34,11 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+        # Scoped to UnitTests specifically: it's the classic VSTest-based project. UITests uses
+        # Microsoft.Testing.Platform (MTP), which dotnet test/VSTest can no longer run at all on
+        # the .NET 10 SDK, and it drives a real WinForms UI via FlaUI rather than being a
+        # headless suite — not (yet) wired into unattended CI.
+        run: dotnet test UnitTests/UnitTests.csproj --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
       - name: Upload test results
         if: always()
