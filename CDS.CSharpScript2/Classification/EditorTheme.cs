@@ -16,8 +16,8 @@ namespace CDS.CSharpScript2.Classification;
 /// <param name="SelectionForeground">The foreground color of selected text.</param>
 /// <param name="BraceMatchForeground">The foreground color used to highlight a matched brace pair.</param>
 /// <param name="BraceBadForeground">The foreground color used to highlight an unmatched brace.</param>
-/// <param name="ErrorIndicatorForeColor">The color of the squiggle drawn under error diagnostics.</param>
-/// <param name="WarningIndicatorForeColor">The color of the squiggle drawn under warning diagnostics.</param>
+/// <param name="ErrorIndicatorForeColor">The color of the squiggle and gutter marker for error diagnostics.</param>
+/// <param name="WarningIndicatorForeColor">The color of the squiggle and gutter marker for warning diagnostics.</param>
 /// <param name="FoldMarginForeground">The foreground (glyph) color of the fold margin markers.</param>
 /// <param name="FoldMarginBackground">The background (box) color of the fold margin markers.</param>
 /// <param name="AutocompleteSelectedBackground">The background color of the highlighted entry in the autocomplete list.</param>
@@ -68,7 +68,7 @@ public sealed record EditorTheme(
         BraceMatchForeground: Color.FromArgb(0, 120, 215),
         BraceBadForeground: Color.Red,
         ErrorIndicatorForeColor: Color.Red,
-        WarningIndicatorForeColor: Color.Green,
+        WarningIndicatorForeColor: Color.DarkOrange,
         FoldMarginForeground: SystemColors.ControlLightLight,
         FoldMarginBackground: SystemColors.ControlDark,
         AutocompleteSelectedBackground: Color.FromArgb(0, 120, 212),
@@ -87,7 +87,7 @@ public sealed record EditorTheme(
         BraceMatchForeground: Color.FromArgb(97, 175, 239),
         BraceBadForeground: Color.FromArgb(255, 92, 92),
         ErrorIndicatorForeColor: Color.FromArgb(244, 71, 71),
-        WarningIndicatorForeColor: Color.FromArgb(180, 216, 110),
+        WarningIndicatorForeColor: Color.FromArgb(255, 167, 38),
         FoldMarginForeground: Color.FromArgb(133, 133, 133),
         FoldMarginBackground: Color.FromArgb(60, 60, 60),
         AutocompleteSelectedBackground: Color.FromArgb(4, 93, 158),

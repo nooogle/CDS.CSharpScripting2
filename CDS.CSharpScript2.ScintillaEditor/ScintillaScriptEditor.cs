@@ -16,7 +16,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaWarningIndicatorIndex = 4;
     private const int ScintillaHighlightIndicatorIndex = 5;
 
+    private const int ScintillaDiagnosticsMarginIndex = 1;
     private const int ScintillaFoldMarginIndex = 2;
+
+    // Marker numbers below Scintilla's reserved fold-marker range (25-31, see Marker.MaskFolders).
+    private const int ScintillaErrorMarkerIndex = 0;
+    private const int ScintillaWarningMarkerIndex = 1;
 
     // SC_FOLDLEVELBASE: Scintilla's zero-depth fold level. Line.FoldLevel is this value plus
     // nesting depth; the numeric part tops out at 4095, so depth is clamped defensively.
@@ -228,19 +233,23 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.Margins[0].Type = ScintillaNET.MarginType.Number;
         scintilla.Margins[0].Width = 40;
 
-        scintilla.Margins[1].Type = ScintillaNET.MarginType.Symbol;
-        scintilla.Margins[1].Width = 8;
-        scintilla.Margins[1].Sensitive = false;
-        scintilla.Margins[1].Mask = 0;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Type = ScintillaNET.MarginType.Symbol;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Width = 14;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Sensitive = false;
+        scintilla.Margins[ScintillaDiagnosticsMarginIndex].Mask =
+            (1 << ScintillaErrorMarkerIndex) | (1 << ScintillaWarningMarkerIndex);
 
         scintilla.Margins[ScintillaFoldMarginIndex].Type = ScintillaNET.MarginType.Symbol;
         scintilla.Margins[ScintillaFoldMarginIndex].Mask = ScintillaNET.Marker.MaskFolders;
         scintilla.Margins[ScintillaFoldMarginIndex].Sensitive = true;
         scintilla.Margins[ScintillaFoldMarginIndex].Width = 16;
 
-        // Show/Click: Scintilla reveals hidden lines and toggles folds on margin clicks itself,
-        // so no MarginClick handler is needed for the fold margin.
-        scintilla.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click;
+        // Show: Scintilla still auto-reveals a line hidden by a collapsed fold, e.g. when the
+        // caret is moved into it programmatically. Click is deliberately NOT set — Scintilla
+        // would then toggle the fold entirely internally and suppress MarginClick for that click
+        // (confirmed live), leaving no way to know a fold changed and reposition diagnostic
+        // markers. scintilla_MarginClick below does the toggle itself instead.
+        scintilla.AutomaticFold = ScintillaNET.AutomaticFold.Show;
     }
 
     /// <summary>
@@ -339,6 +348,23 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutocompleteListSelectedBackColor = _theme.AutocompleteSelectedBackground;
 
         ConfigureFoldMarkers();
+        ConfigureDiagnosticMarkers();
+    }
+
+    /// <summary>
+    /// Colors the error/warning gutter marker glyphs from <see cref="Theme"/>. Recoloring an
+    /// existing marker number restyles every line it is already placed on, so this does not need
+    /// to touch which lines currently carry a marker.
+    /// </summary>
+    private void ConfigureDiagnosticMarkers()
+    {
+        scintilla.Markers[ScintillaErrorMarkerIndex].Symbol = ScintillaNET.MarkerSymbol.Circle;
+        scintilla.Markers[ScintillaErrorMarkerIndex].SetForeColor(_theme.ErrorIndicatorForeColor);
+        scintilla.Markers[ScintillaErrorMarkerIndex].SetBackColor(_theme.ErrorIndicatorForeColor);
+
+        scintilla.Markers[ScintillaWarningMarkerIndex].Symbol = ScintillaNET.MarkerSymbol.Circle;
+        scintilla.Markers[ScintillaWarningMarkerIndex].SetForeColor(_theme.WarningIndicatorForeColor);
+        scintilla.Markers[ScintillaWarningMarkerIndex].SetBackColor(_theme.WarningIndicatorForeColor);
     }
 
     /// <summary>
@@ -491,8 +517,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
 
             // The full pass may already have coloured this same version more precisely; do not
             // repaint over semantic colouring with the coarser syntactic result. Folding is
-            // syntax-only regardless of which pass computed it, so it is always applied.
+            // syntax-only regardless of which pass computed it, so it is always applied — and
+            // since it can change which lines are hidden, diagnostic markers are repositioned
+            // from the last-known diagnostics even though this pass does not recompute them.
             ApplyFoldingToEditor(syntacticResult.FoldSpans);
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
 
             if (_analysedDocumentVersion == documentVersion)
             {
@@ -588,6 +617,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             ApplyDiagnosticsToEditor(_currentDiagnostics);
             ApplyClassificationsToEditor(manager.LastClassifications);
             ApplyFoldingToEditor(manager.LastFoldSpans);
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
 
             DiagnosticsUpdated?.Invoke(this, new Editors.DiagnosticsUpdatedEventArgs(_currentDiagnostics));
             ScriptChanged?.Invoke(this, EventArgs.Empty);
@@ -760,6 +790,80 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     }
 
     /// <summary>
+    /// Places error/warning gutter markers for the given diagnostics. A diagnostic hidden inside
+    /// a collapsed fold is aggregated onto its nearest visible ancestor header line instead, so it
+    /// stays visible while the region containing it is collapsed; where more than one diagnostic
+    /// lands on the same line, the worse severity wins.
+    /// </summary>
+    /// <param name="diagnostics">The diagnostics to render as gutter markers.</param>
+    private void ApplyDiagnosticMarkersToEditor(ImmutableArray<Diagnostic> diagnostics)
+    {
+        if (!CanAccessEditor)
+        {
+            return;
+        }
+
+        scintilla.MarkerDeleteAll(ScintillaErrorMarkerIndex);
+        scintilla.MarkerDeleteAll(ScintillaWarningMarkerIndex);
+
+        Dictionary<int, DiagnosticSeverity>? worstSeverityByLine = null;
+
+        foreach (var diagnostic in diagnostics)
+        {
+            if (!diagnostic.Location.IsInSource ||
+                diagnostic.Severity is not (DiagnosticSeverity.Error or DiagnosticSeverity.Warning))
+            {
+                continue;
+            }
+
+            var line = GetNearestVisibleLine(scintilla.LineFromPosition(diagnostic.Location.SourceSpan.Start));
+
+            if (line < 0)
+            {
+                continue;
+            }
+
+            worstSeverityByLine ??= [];
+
+            if (!worstSeverityByLine.TryGetValue(line, out var existingSeverity) || diagnostic.Severity > existingSeverity)
+            {
+                worstSeverityByLine[line] = diagnostic.Severity;
+            }
+        }
+
+        if (worstSeverityByLine is null)
+        {
+            return;
+        }
+
+        foreach (var entry in worstSeverityByLine)
+        {
+            var markerIndex = entry.Value == DiagnosticSeverity.Error
+                ? ScintillaErrorMarkerIndex
+                : ScintillaWarningMarkerIndex;
+
+            scintilla.Lines[entry.Key].MarkerAdd(markerIndex);
+        }
+    }
+
+    /// <summary>
+    /// Walks up through collapsed ancestor folds from <paramref name="line"/> until reaching a
+    /// line that is actually visible, so a marker placed there is never silently hidden by
+    /// Scintilla's own fold-aware rendering.
+    /// </summary>
+    /// <param name="line">The 0-based line to start from.</param>
+    /// <returns>The nearest visible line at or above <paramref name="line"/>, or -1 if none.</returns>
+    private int GetNearestVisibleLine(int line)
+    {
+        while (line >= 0 && !scintilla.Lines[line].Visible)
+        {
+            line = scintilla.Lines[line].FoldParent;
+        }
+
+        return line;
+    }
+
+    /// <summary>
     /// Expands every folded region in the editor.
     /// </summary>
     private void ExpandAllFolds()
@@ -770,6 +874,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
 
         scintilla.FoldAll(ScintillaNET.FoldAction.Expand);
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -787,6 +892,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         // fold that is itself collapsing, so re-expanding the outer one later does not reveal an
         // inner region left expanded from before.
         scintilla.FoldAll(ScintillaNET.FoldAction.ContractEveryLevel);
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -847,6 +953,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 scintillaLine.FoldLine(ScintillaNET.FoldAction.Contract);
             }
         }
+
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
     }
 
     /// <summary>
@@ -1059,6 +1167,43 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     /// Returns <see langword="true"/> when the character is a recognised brace glyph.
     /// </summary>
     private static bool IsBrace(int c) => c is '(' or ')' or '{' or '}' or '[' or ']';
+
+    /// <summary>
+    /// Repositions diagnostic gutter markers after any UI update that might change which lines
+    /// are visible — most importantly the user manually expanding or collapsing a fold.
+    /// Scintilla's <see cref="ScintillaNET.AutomaticFold.Click"/> handles that toggle entirely
+    /// internally and raises no dedicated fold-changed notification, so <c>UpdateUI</c> (which
+    /// Scintilla does reliably raise afterwards) is the hook used instead. It also fires on far
+    /// more than just fold toggles — every caret move and scroll — but re-placing markers from
+    /// the already-known diagnostics is cheap enough that filtering those out isn't worthwhile.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_UpdateUI_DiagnosticMarkers(object sender, ScintillaNET.UpdateUIEventArgs e) =>
+        ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
+
+    /// <summary>
+    /// Toggles the fold under a fold-margin click. <see cref="ScintillaNET.AutomaticFold.Click"/>
+    /// is deliberately not used (see <see cref="InitialiseScintilla"/>) specifically so this
+    /// handler runs and can reposition diagnostic markers after the toggle.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void scintilla_MarginClick(object sender, ScintillaNET.MarginClickEventArgs e)
+    {
+        if (e.Margin != ScintillaFoldMarginIndex)
+        {
+            return;
+        }
+
+        var line = scintilla.Lines[scintilla.LineFromPosition(e.Position)];
+
+        if (line.FoldLevelFlags.HasFlag(ScintillaNET.FoldLevelFlags.Header))
+        {
+            line.ToggleFold();
+            ApplyDiagnosticMarkersToEditor(_currentDiagnostics);
+        }
+    }
 
     /// <summary>
     /// Handles mouse movement over the editor.
