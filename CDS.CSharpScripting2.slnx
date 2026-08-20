@@ -1,9 +1,4 @@
 <Solution>
-  <Configurations>
-    <Platform Name="Any CPU" />
-    <Platform Name="ARM64" />
-    <Platform Name="x64" />
-  </Configurations>
   <Folder Name="/Solution Items/">
     <File Path=".github/workflows/ci.yml" />
     <File Path="Directory.Build.props" />
@@ -12,25 +7,12 @@
   <Folder Name="/Solution Items/Docs/">
     <File Path="architecture.md" />
   </Folder>
-  <Project Path="CDS.CSharpScript2.RTFEditor/CDS.CSharpScript2.RTFEditor.csproj">
-    <Platform Solution="Debug|x64" Project="x64" />
-  </Project>
-  <Project Path="CDS.CSharpScript2.ScintillaEditor/CDS.CSharpScript2.ScintillaEditor.csproj">
-    <Platform Solution="Debug|x64" Project="x64" />
-  </Project>
+  <Project Path="CDS.CSharpScript2.RTFEditor/CDS.CSharpScript2.RTFEditor.csproj" />
+  <Project Path="CDS.CSharpScript2.ScintillaEditor/CDS.CSharpScript2.ScintillaEditor.csproj" />
   <Project Path="CDS.CSharpScript2/CDS.CSharpScript2.csproj" />
-  <Project Path="ConsoleTest/ConsoleTest.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-  </Project>
+  <Project Path="ConsoleTest/ConsoleTest.csproj" />
   <Project Path="TestUtils/TestUtils.csproj" />
-  <Project Path="UnitTests/UnitTests.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-  </Project>
-  <Project Path="CDS.CSharpScript2.WinForms.Sample/CDS.CSharpScript2.WinForms.Sample.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="Debug|x64" Project="x64" />
-  </Project>
+  <Project Path="UnitTests/UnitTests.csproj" />
+  <Project Path="CDS.CSharpScript2.WinForms.Sample/CDS.CSharpScript2.WinForms.Sample.csproj" />
   <Project Path="UITests/UITests.csproj" />
 </Solution>
