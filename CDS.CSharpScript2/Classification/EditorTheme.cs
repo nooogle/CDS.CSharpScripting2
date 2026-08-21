@@ -69,8 +69,8 @@ public sealed record EditorTheme(
         BraceBadForeground: Color.Red,
         ErrorIndicatorForeColor: Color.Red,
         WarningIndicatorForeColor: Color.DarkOrange,
-        FoldMarginForeground: SystemColors.ControlLightLight,
-        FoldMarginBackground: SystemColors.ControlDark,
+        FoldMarginForeground: SystemColors.ControlDark,
+        FoldMarginBackground: Color.WhiteSmoke,
         AutocompleteSelectedBackground: Color.FromArgb(0, 120, 212),
         ClassificationColors: CreateLightClassificationColors());
 
