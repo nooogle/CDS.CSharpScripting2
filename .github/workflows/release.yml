@@ -63,19 +63,23 @@ jobs:
           dotnet-CycloneDX CDS.CSharpScript2/CDS.CSharpScript2.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.json -sv $csVersion
           dotnet-CycloneDX CDS.CSharpScript2.ScintillaEditor/CDS.CSharpScript2.ScintillaEditor.csproj -o ./artifacts -F json -fn bom-CDS.CSharpScript2.ScintillaEditor.json -sv $scintillaVersion
 
+      # actions/attest-build-provenance and actions/attest-sbom are both now thin wrappers over
+      # actions/attest (which auto-detects provenance vs. SBOM mode from whether sbom-path is
+      # set) - attest-sbom specifically logs a runtime deprecation warning, so all three steps
+      # below use the unified action directly instead.
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest@v4
         with:
           subject-path: ./artifacts/*.nupkg
 
       - name: Attest SBOM — CDS.CSharpScript2
-        uses: actions/attest-sbom@v4
+        uses: actions/attest@v4
         with:
           subject-path: ./artifacts/CDS.CSharpScript2.*.nupkg
           sbom-path: ./artifacts/bom-CDS.CSharpScript2.json
 
       - name: Attest SBOM — CDS.CSharpScript2.ScintillaEditor
-        uses: actions/attest-sbom@v4
+        uses: actions/attest@v4
         with:
           subject-path: ./artifacts/CDS.CSharpScript2.ScintillaEditor.*.nupkg
           sbom-path: ./artifacts/bom-CDS.CSharpScript2.ScintillaEditor.json
