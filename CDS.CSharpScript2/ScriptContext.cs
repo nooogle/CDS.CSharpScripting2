@@ -140,7 +140,8 @@ public class ScriptContext : IDisposable
             DocumentId.CreateNewId(project.Id),
             "Script",
             sourceCodeKind: SourceCodeKind.Script,
-            loader: TextLoader.From(TextAndVersion.Create(SourceText.From(""), VersionStamp.Create())));
+            loader: TextLoader.From(TextAndVersion.Create(SourceText.From(""), VersionStamp.Create())),
+            filePath: environment.ScriptFilePath);
 
         var document = workspace.AddDocument(documentInfo);
 

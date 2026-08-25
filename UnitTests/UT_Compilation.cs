@@ -96,6 +96,59 @@ public partial class UT_Compilation
     }
 
     [TestMethod]
+    [TestCategory("compilation")]
+    public async Task RunAsync_ScriptThrowsWithFilePathConfigured_StackTraceNamesFileAndLine()
+    {
+        // Fixed, deliberately nonexistent path: ScriptFilePath is a label, not something Roslyn
+        // reads from disk, so a path with nothing behind it must still produce a correct line number.
+        var scriptPath = Path.Combine(Path.GetTempPath(), "UT_Compilation_DoesNotExist.csx");
+        var env = ScriptEnvironment.Default.WithScriptFilePath(scriptPath);
+
+        // The throw sits on line 3 so an off-by-one in the mapping cannot pass by accident.
+        var script =
+            "var a = 1;\n" +
+            "var b = 2;\n" +
+            "throw new InvalidOperationException(\"boom\");\n";
+
+        var context = await ScriptContext.CreateAsync(env);
+        context = context.ApplyScript(script);
+
+        var executable = await new ScriptExecutor(context).CompileAsync();
+        executable.HasErrors.Should().BeFalse("the script is valid C# even though it throws at run time");
+
+        var act = async () => await executable.RunAsync();
+
+        var assertion = await act.Should().ThrowAsync<InvalidOperationException>();
+        assertion.Which.StackTrace.Should().Contain(
+            $"{scriptPath}:line 3",
+            "the stack trace should name the configured script path and the exact throwing line");
+
+        context.Dispose();
+    }
+
+    [TestMethod]
+    [TestCategory("compilation")]
+    public async Task RunAsync_ScriptThrowsWithNoFilePathConfigured_StackTraceUsesDefaultLabel()
+    {
+        var script =
+            "var a = 1;\n" +
+            "throw new InvalidOperationException(\"boom\");\n";
+
+        var context = await ScriptContext.CreateAsync(ScriptEnvironment.Default);
+        context = context.ApplyScript(script);
+
+        var executable = await new ScriptExecutor(context).CompileAsync();
+        var act = async () => await executable.RunAsync();
+
+        var assertion = await act.Should().ThrowAsync<InvalidOperationException>();
+        assertion.Which.StackTrace.Should().Contain(
+            "script.csx:line 2",
+            "an unset ScriptFilePath should still emit debug info, under the default label");
+
+        context.Dispose();
+    }
+
+    [TestMethod]
     public async Task MathNet_UsedInScript_PerformsCalculationCorrectly()
     {
         var globals = new MathGlobals();

@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using System.Text;
 
 namespace CDS.CSharpScript2;
 
@@ -28,11 +29,20 @@ internal static class ScriptCompiler
 
         // Every setting comes from the environment, which is also what ScriptContext configures the
         // editor's workspace from. That shared source is what keeps the two paths in agreement.
+        //
+        // Debug info is unconditional: without it, an exception thrown from the script reports an
+        // unlocatable "Submission#0" frame with no file or line, which is close to useless for a
+        // host trying to tell a user where their script failed. WithFileEncoding is mandatory
+        // alongside WithEmitDebugInformation — Roslyn silently emits no debug info for source text
+        // with no encoding, turning this into a missing line number rather than a compile failure.
         var scriptOptions = ScriptOptions.Default
             .WithImports(environment.NamespaceNames)
             .AddReferences(environment.References)
             .WithMetadataResolver(environment.MetadataResolver)
-            .WithSourceResolver(environment.SourceResolver);
+            .WithSourceResolver(environment.SourceResolver)
+            .WithEmitDebugInformation(true)
+            .WithFilePath(environment.ScriptFilePath ?? "script.csx")
+            .WithFileEncoding(Encoding.UTF8);
 
         // ScriptContext.CreateCore adds the globals type's own assembly to the editor's references
         // in addition to environment.References; mirrored here so a script naming another type from
