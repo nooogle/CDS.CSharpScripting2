@@ -86,16 +86,19 @@ public class UT_ScriptEnvironment
     }
 
     /// <summary>
-    /// The base directory has to survive every other builder call. Each <c>With…</c> method
-    /// constructs a fresh instance by hand, so a missed argument would silently drop it.
+    /// The base directory and script file path have to survive every other builder call. Each
+    /// <c>With…</c> method constructs a fresh instance by hand, so a missed argument would
+    /// silently drop one of them.
     /// </summary>
     [TestMethod]
     public void WithBaseDirectory_FollowedByOtherBuilderCalls_IsPreserved()
     {
         var directory = Path.GetTempPath().TrimEnd(Path.DirectorySeparatorChar);
+        var scriptPath = Path.Combine(directory, "MyScript.csx");
 
         var environment = ScriptEnvironment.Default
             .WithBaseDirectory(directory)
+            .WithScriptFilePath(scriptPath)
             .WithAdditionalNamespaceName("System.Text")
             .WithAdditionalNamespaceType(typeof(System.Collections.ArrayList))
             .WithAdditionalNamespaceForType<System.Text.StringBuilder>()
@@ -107,6 +110,7 @@ public class UT_ScriptEnvironment
             .WithDrawingReferences();
 
         environment.BaseDirectory.Should().Be(directory);
+        environment.ScriptFilePath.Should().Be(scriptPath);
     }
 
     [TestMethod]
@@ -117,6 +121,36 @@ public class UT_ScriptEnvironment
         original.WithBaseDirectory(Path.GetTempPath());
 
         original.BaseDirectory.Should().BeNull("environments are immutable");
+    }
+
+    [TestMethod]
+    public void WithScriptFilePath_SetsScriptFilePath()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "MyScript.csx");
+
+        var environment = ScriptEnvironment.Default.WithScriptFilePath(path);
+
+        environment.ScriptFilePath.Should().Be(path);
+    }
+
+    [TestMethod]
+    public void WithScriptFilePath_Null_ClearsAPreviouslySetPath()
+    {
+        var environment = ScriptEnvironment.Default
+            .WithScriptFilePath(Path.Combine(Path.GetTempPath(), "MyScript.csx"))
+            .WithScriptFilePath(null);
+
+        environment.ScriptFilePath.Should().BeNull();
+    }
+
+    [TestMethod]
+    public void WithScriptFilePath_DoesNotMutateTheOriginal()
+    {
+        var original = ScriptEnvironment.Default;
+
+        original.WithScriptFilePath(Path.Combine(Path.GetTempPath(), "MyScript.csx"));
+
+        original.ScriptFilePath.Should().BeNull("environments are immutable");
     }
 
     [TestMethod]

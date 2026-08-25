@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using System.Collections.Immutable;
 using System.Reflection;
@@ -16,6 +16,7 @@ public class ScriptEnvironment
     private ImmutableList<Assembly> references;
     private Type? globalType;
     private string? baseDirectory;
+    private string? scriptFilePath;
     private static readonly ScriptEnvironment defaultInstance;
     private static readonly bool isNetFramework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains(".NET Framework");
 
@@ -54,6 +55,17 @@ public class ScriptEnvironment
     public string? BaseDirectory => baseDirectory;
 
     /// <summary>
+    /// Gets the path used to label the compiled script, or <see langword="null"/> when unset.
+    /// </summary>
+    /// <remarks>
+    /// Used for run-time debug information: with it set, an exception thrown from the script
+    /// reports a file and line number instead of an unlocatable <c>Submission#0</c> frame. The path
+    /// need not exist on disk — Roslyn takes line numbers from the compiled text and uses this
+    /// purely as a label, so the path a host would save an unsaved buffer to works fine.
+    /// </remarks>
+    public string? ScriptFilePath => scriptFilePath;
+
+    /// <summary>
     /// Gets the resolver used for <c>#r</c> directives.
     /// </summary>
     /// <remarks>
@@ -85,19 +97,22 @@ public class ScriptEnvironment
             namespaceNames: defaultNamespaces,
             references: defaultReferences,
             globalType: null,
-            baseDirectory: null);
+            baseDirectory: null,
+            scriptFilePath: null);
     }
 
     private ScriptEnvironment(
         ImmutableList<string> namespaceNames,
         ImmutableList<Assembly> references,
         Type? globalType,
-        string? baseDirectory)
+        string? baseDirectory,
+        string? scriptFilePath)
     {
         this.namespaceNames = namespaceNames.Distinct().ToImmutableList();
         this.references = references.Distinct().ToImmutableList();
         this.globalType = globalType;
         this.baseDirectory = baseDirectory;
+        this.scriptFilePath = scriptFilePath;
 
         // Built once here so both compilation paths share one configuration. The resolvers
         // compare by value, so two environments with the same base directory stay interchangeable
@@ -132,7 +147,8 @@ public class ScriptEnvironment
             namespaceNames.Add(typeNamespace),
             references,
             globalType,
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -153,7 +169,8 @@ public class ScriptEnvironment
                 namespaceNames,
                 references.Add(systemDrawingFullName),
                 globalType,
-                baseDirectory);
+                baseDirectory,
+                scriptFilePath);
         }
 
         var newReferenceNames = new[] { "System.Drawing", "System.Drawing.Primitives" };
@@ -163,7 +180,8 @@ public class ScriptEnvironment
             namespaceNames: namespaceNames,
             references: references.AddRange(newAssemblies),
             globalType: globalType,
-            baseDirectory: baseDirectory);
+            baseDirectory: baseDirectory,
+            scriptFilePath: scriptFilePath);
     }
 
     /// <summary>
@@ -177,7 +195,8 @@ public class ScriptEnvironment
             namespaceNames.Add(namespaceName),
             references,
             globalType,
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -201,7 +220,8 @@ public class ScriptEnvironment
             namespaceNames,
             references.Add(LoadAssembly(referenceName)),
             globalType,
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -235,7 +255,8 @@ public class ScriptEnvironment
             namespaceNames,
             references,
             globalType,
-            Path.GetFullPath(directory));
+            Path.GetFullPath(directory),
+            scriptFilePath);
     }
 
     /// <summary>
@@ -254,7 +275,8 @@ public class ScriptEnvironment
             namespaceNames,
             references,
             globalType,
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -268,7 +290,8 @@ public class ScriptEnvironment
             namespaceNames,
             references,
             typeof(T),
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -300,7 +323,8 @@ public class ScriptEnvironment
             namespaceNames,
             references.Add(type.Assembly),
             globalType,
-            baseDirectory);
+            baseDirectory,
+            scriptFilePath);
     }
 
     /// <summary>
@@ -315,6 +339,26 @@ public class ScriptEnvironment
         if (namespaceName == null)
             throw new InvalidOperationException($"The namespace for type {typeof(T).Name} is null.");
         return WithAdditionalNamespaceName(namespaceName);
+    }
+
+    /// <summary>
+    /// Returns a new instance with the given script file path used to label the compiled script for
+    /// run-time stack traces and diagnostics.
+    /// </summary>
+    /// <param name="path">
+    /// The path to label the script with, or <see langword="null"/> to clear a previously set path.
+    /// The file need not exist on disk: Roslyn takes line numbers from the compiled text and uses
+    /// this purely as a label, so the path a host would save an unsaved buffer to works fine.
+    /// </param>
+    /// <returns>A new instance of <see cref="ScriptEnvironment"/>.</returns>
+    public ScriptEnvironment WithScriptFilePath(string? path)
+    {
+        return new ScriptEnvironment(
+            namespaceNames,
+            references,
+            globalType,
+            baseDirectory,
+            path);
     }
 
     /// <summary>
