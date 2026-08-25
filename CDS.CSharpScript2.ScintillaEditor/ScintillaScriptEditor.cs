@@ -1466,6 +1466,8 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         else if (e.KeyCode == Keys.Space && e.Control)
         {
             TryRunAutoComplete();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
         }
         else if (e.KeyCode == Keys.F1)
         {
