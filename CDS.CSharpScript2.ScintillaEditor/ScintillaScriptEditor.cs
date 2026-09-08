@@ -28,6 +28,12 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaFoldLevelBase = 1024;
     private const int ScintillaMaxFoldDepth = 4095 - ScintillaFoldLevelBase;
 
+    // Fill-up characters always active while the completion list is open: typing one accepts the
+    // highlighted entry and then inserts the character itself, matching Visual Studio's ".", "("
+    // and "[" commit behaviour. The closing bracket matching whatever encloses the caret is
+    // appended per session — see ShowCompletionAsync.
+    private const string CompletionFillUpCharacters = ".([";
+
     private static readonly TimeSpan CommentChordTimeout = TimeSpan.FromSeconds(2);
 
     private readonly ImmutableDictionary<Classification.SymbolClassification, int> _classificationKindToScintillaStyle;
@@ -284,10 +290,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCMaxHeight = 12;
         scintilla.AutoCDropRestOfWord = true;
 
-        // Fill-up characters: typing one of these while the list is open accepts the
-        // highlighted entry and then inserts the character itself, matching Visual Studio's
-        // ".", "(" and "[" commit behavior.
-        scintilla.AutoCSetFillUps(".([");
+        scintilla.AutoCSetFillUps(CompletionFillUpCharacters);
 
         scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
         scintilla.Indicators[ScintillaWarningIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
@@ -1399,6 +1402,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             var list = string.Join(
                 scintilla.AutoCSeparator.ToString(),
                 completions.Select(c => c.DisplayText));
+
+            // Typing the closing bracket of whatever encloses the caret commits the highlighted
+            // entry too, the way Visual Studio does. It is added per session rather than once at
+            // setup so that ")" stays an ordinary character when the caret is not inside brackets.
+            var closingBracket = CodeCompletion.EnclosingBracket.GetClosingCharacter(script, currentPosition);
+
+            scintilla.AutoCSetFillUps(closingBracket is char bracket
+                ? CompletionFillUpCharacters + bracket
+                : CompletionFillUpCharacters);
 
             scintilla.AutoCShow(lenEntered, list);
         }
