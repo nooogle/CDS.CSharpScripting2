@@ -29,10 +29,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaMaxFoldDepth = 4095 - ScintillaFoldLevelBase;
 
     // Fill-up characters always active while the completion list is open: typing one accepts the
-    // highlighted entry and then inserts the character itself, matching Visual Studio's ".", "("
-    // and "[" commit behaviour. The closing bracket matching whatever encloses the caret is
-    // appended per session — see ShowCompletionAsync.
-    private const string CompletionFillUpCharacters = ".([";
+    // highlighted entry and then inserts the character itself, matching Visual Studio's ".", "(",
+    // "[" and ";" commit behaviour. Those four suit any caret position; the closing bracket
+    // matching whatever encloses the caret is appended per session — see ShowCompletionAsync.
+    private const string CompletionFillUpCharacters = ".([;";
 
     private static readonly TimeSpan CommentChordTimeout = TimeSpan.FromSeconds(2);
 
