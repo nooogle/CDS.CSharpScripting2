@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.ComponentModel;
 
@@ -29,10 +29,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
     private const int ScintillaMaxFoldDepth = 4095 - ScintillaFoldLevelBase;
 
     // Fill-up characters always active while the completion list is open: typing one accepts the
-    // highlighted entry and then inserts the character itself, matching Visual Studio's ".", "("
-    // and "[" commit behaviour. The closing bracket matching whatever encloses the caret is
-    // appended per session — see ShowCompletionAsync.
-    private const string CompletionFillUpCharacters = ".([";
+    // highlighted entry and then inserts the character itself, matching Visual Studio's ".", "(",
+    // "[" and ";" commit behaviour. Those four suit any caret position; the closing bracket
+    // matching whatever encloses the caret is appended per session — see ShowCompletionAsync.
+    private const string CompletionFillUpCharacters = ".([;";
 
     private static readonly TimeSpan CommentChordTimeout = TimeSpan.FromSeconds(2);
 
@@ -289,6 +289,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCOrder = ScintillaNET.Order.Custom;
         scintilla.AutoCMaxHeight = 12;
         scintilla.AutoCDropRestOfWord = true;
+
+        // Roslyn hands us items that merely contain what has been typed — "Window" also offers
+        // SetWindowSize — so Scintilla must not close the list just because nothing in it starts
+        // with the typed word. The highlighted entry is chosen explicitly in ShowCompletionAsync.
+        scintilla.AutoCAutoHide = false;
 
         scintilla.AutoCSetFillUps(CompletionFillUpCharacters);
 
@@ -1091,10 +1096,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             _callTipSession = null;
             _ = StartCallTipSessionAsync();  // restore the enclosing call's tip if one exists
         }
-        else if (!scintilla.AutoCActive && (char.IsLetter(ch) || ch == '_'))
+        else if (char.IsLetter(ch) || ch == '_' || (scintilla.AutoCActive && char.IsDigit(ch)))
         {
-            // First identifier character of a new word — trigger after a short delay so
-            // rapid typists don't fire a Roslyn request on every single keystroke.
+            // An identifier character, either starting a new word or extending the one an open
+            // list is filtering. Both need a request of their own: Scintilla narrows the list it
+            // was handed by prefix alone, so a substring or word-initial match stops being offered
+            // the moment the user types on unless the request is re-run through CompletionMatcher.
+            // Debounced so rapid typists don't fire a Roslyn request on every single keystroke.
             StartCompletionSession(immediate: false);
         }
         else if (scintilla.AutoCActive && !char.IsLetterOrDigit(ch) && ch != '_')
@@ -1385,7 +1393,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             int wordStart = scintilla.WordStartPosition(currentPosition, onlyWordCharacters: true);
             int lenEntered = currentPosition - wordStart;
 
-            var completions = await manager.GetAutoCompletions(currentPosition, cancellationToken);
+            var completions = (await manager.GetAutoCompletions(currentPosition, cancellationToken)).ToList();
 
             if (cancellationToken.IsCancellationRequested ||
                 stateVersion != _editorStateVersion ||
@@ -1393,7 +1401,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 !CanAccessEditor)
                 return;
 
-            if (!completions.Any())
+            if (completions.Count == 0)
             {
                 scintilla.AutoCCancel();
                 return;
@@ -1413,6 +1421,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 : CompletionFillUpCharacters);
 
             scintilla.AutoCShow(lenEntered, list);
+
+            // Scintilla highlights the first entry starting with the typed word, and highlights
+            // nothing when no entry does. Our list is already ranked best match first, so say so.
+            scintilla.AutoCSelect(completions[0].DisplayText);
         }
         catch (OperationCanceledException) { }
         catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested || !CanAccessEditor) { }
