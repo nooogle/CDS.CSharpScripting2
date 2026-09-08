@@ -1,4 +1,4 @@
-using AwesomeAssertions;
+﻿using AwesomeAssertions;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Input;
 using FlaUI.Core.WindowsAPI;
@@ -57,6 +57,29 @@ public class UT_BasicDemoSubstringCompletion
             var text = BasicDemo.CopyEditorText();
             text.Should().Be("Console.WindowHeight",
                 "substring matches must not displace the items that start with the typed text; got {0}", text);
+        });
+    }
+
+    [TestMethod]
+    public void TextTypedWhileTheListIsOpen_StillOffersSubstringMatches()
+    {
+        RunInBasicDemo(() =>
+        {
+            // The dot opens the list, so "rite" is typed into a list that is already showing —
+            // the case where Scintilla's own prefix filtering is the only thing narrowing it
+            // unless each keystroke re-runs the request.
+            Keyboard.Type("Console.");
+            Thread.Sleep(700);
+            Keyboard.Type("rite");
+            Thread.Sleep(700);
+
+            Keyboard.Type(VirtualKeyShort.RETURN);
+            Thread.Sleep(300);
+
+            var text = BasicDemo.CopyEditorText();
+            text.Should().Be("Console.Write",
+                "typing into an open list must re-rank it through the matcher rather than leave " +
+                "Scintilla's prefix filtering in charge; got {0}", text);
         });
     }
 

@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.ComponentModel;
 
@@ -1096,10 +1096,13 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             _callTipSession = null;
             _ = StartCallTipSessionAsync();  // restore the enclosing call's tip if one exists
         }
-        else if (!scintilla.AutoCActive && (char.IsLetter(ch) || ch == '_'))
+        else if (char.IsLetter(ch) || ch == '_' || (scintilla.AutoCActive && char.IsDigit(ch)))
         {
-            // First identifier character of a new word — trigger after a short delay so
-            // rapid typists don't fire a Roslyn request on every single keystroke.
+            // An identifier character, either starting a new word or extending the one an open
+            // list is filtering. Both need a request of their own: Scintilla narrows the list it
+            // was handed by prefix alone, so a substring or word-initial match stops being offered
+            // the moment the user types on unless the request is re-run through CompletionMatcher.
+            // Debounced so rapid typists don't fire a Roslyn request on every single keystroke.
             StartCompletionSession(immediate: false);
         }
         else if (scintilla.AutoCActive && !char.IsLetterOrDigit(ch) && ch != '_')
