@@ -290,6 +290,11 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         scintilla.AutoCMaxHeight = 12;
         scintilla.AutoCDropRestOfWord = true;
 
+        // Roslyn hands us items that merely contain what has been typed — "Window" also offers
+        // SetWindowSize — so Scintilla must not close the list just because nothing in it starts
+        // with the typed word. The highlighted entry is chosen explicitly in ShowCompletionAsync.
+        scintilla.AutoCAutoHide = false;
+
         scintilla.AutoCSetFillUps(CompletionFillUpCharacters);
 
         scintilla.Indicators[ScintillaErrorIndicatorIndex].Style = ScintillaNET.IndicatorStyle.Squiggle;
@@ -1385,7 +1390,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
             int wordStart = scintilla.WordStartPosition(currentPosition, onlyWordCharacters: true);
             int lenEntered = currentPosition - wordStart;
 
-            var completions = await manager.GetAutoCompletions(currentPosition, cancellationToken);
+            var completions = (await manager.GetAutoCompletions(currentPosition, cancellationToken)).ToList();
 
             if (cancellationToken.IsCancellationRequested ||
                 stateVersion != _editorStateVersion ||
@@ -1393,7 +1398,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 !CanAccessEditor)
                 return;
 
-            if (!completions.Any())
+            if (completions.Count == 0)
             {
                 scintilla.AutoCCancel();
                 return;
@@ -1413,6 +1418,10 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
                 : CompletionFillUpCharacters);
 
             scintilla.AutoCShow(lenEntered, list);
+
+            // Scintilla highlights the first entry starting with the typed word, and highlights
+            // nothing when no entry does. Our list is already ranked best match first, so say so.
+            scintilla.AutoCSelect(completions[0].DisplayText);
         }
         catch (OperationCanceledException) { }
         catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested || !CanAccessEditor) { }
