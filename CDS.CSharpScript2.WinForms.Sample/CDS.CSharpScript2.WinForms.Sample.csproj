@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CDS.WinFormsMenus" Version="1.1.5" />
+    <PackageReference Include="CDS.WinFormsMenus" Version="1.1.6" />
     <PackageReference Include="Humanizer.Core" Version="3.0.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
@@ -74,3 +74,4 @@
   </PropertyGroup>
   
 </Project>
+
