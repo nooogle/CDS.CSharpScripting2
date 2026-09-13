@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -23,6 +23,11 @@ public static class Manager
     /// <param name="cursorPosition">The caret offset within the document.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A filtered and sorted array of <see cref="CompletionItem"/> values, or an empty array if none are available.</returns>
+    /// <remarks>
+    /// Items are matched against the text typed so far with <see cref="CompletionMatcher"/>, so the
+    /// typed characters need not be a prefix — see that type for what counts as a match. The
+    /// strongest matches come first, which is what an editor should highlight.
+    /// </remarks>
     public static async Task<ImmutableArray<CompletionItem>> GetAsync(
         string scriptText,
         Document document,
@@ -47,18 +52,11 @@ public static class Manager
                 return ImmutableArray<CompletionItem>.Empty;
             }
 
-            Mode completionMode = DetermineCompletionMode(completionList.ItemsList[0]);
-            
-            var spanText = GetSpanTextForCodeCompletion(
-                scriptText: scriptText,
-                mode: completionMode,
-                firstItem: completionList.ItemsList[0]);
+            var typedText = GetTypedText(scriptText, completionList.ItemsList[0]);
 
-            var filteredItems = FilterCompletionItems(completionList.ItemsList.ToImmutableArray(), completionMode, spanText);
-
-            SortCompletionItems(filteredItems, completionMode, spanText);
-
-            return filteredItems.ToImmutableArray();
+            return typedText.Length == 0
+                ? SortAlphabetically(completionList.ItemsList)
+                : MatchAndRank(completionList.ItemsList, typedText);
         }
         catch (Exception ex)
         {
@@ -68,54 +66,52 @@ public static class Manager
         }
     }
 
-    private static Mode DetermineCompletionMode(CompletionItem firstItem)
+    /// <summary>
+    /// Returns the text the user has already typed at the caret — the span the completion list is
+    /// filtered against. Empty when the caret sits at the start of a fresh identifier, as it does
+    /// straight after a dot.
+    /// </summary>
+    private static string GetTypedText(string scriptText, CompletionItem firstItem)
     {
-        int spanLength = firstItem.Span.Length;
+        var span = firstItem.Span;
 
-        if (spanLength == 0)
-        {
-            return Mode.AllInAlphabeticalOrder;
-        }
-        else if (spanLength == 1)
-        {
-            return Mode.AllWithSingleLetterMatch;
-        }
-        else
-        {
-            return Mode.MatchingFirstTwoOrMoreOnly;
-        }
-    }
-
-    private static string GetSpanTextForCodeCompletion(
-        string scriptText,
-        Mode mode, 
-        CompletionItem firstItem)
-    {
-        return mode == Mode.AllInAlphabeticalOrder
+        return span.Length == 0
             ? string.Empty
-            : scriptText.Substring(firstItem.Span.Start, firstItem.Span.Length);
+            : scriptText.Substring(span.Start, span.Length);
     }
 
-    private static List<CompletionItem> FilterCompletionItems(ImmutableArray<CompletionItem> items, Mode mode, string spanText)
+    private static ImmutableArray<CompletionItem> SortAlphabetically(IReadOnlyList<CompletionItem> items)
     {
-        if (mode != Mode.MatchingFirstTwoOrMoreOnly)
-        {
-            return items.ToList();
-        }
-
-        return items.Where(item => item.DisplayText.StartsWith(spanText, StringComparison.OrdinalIgnoreCase)).ToList();
+        var sorted = items.ToList();
+        sorted.Sort();
+        return sorted.ToImmutableArray();
     }
 
-    private static void SortCompletionItems(List<CompletionItem> items, Mode mode, string spanText)
+    /// <summary>
+    /// Keeps the items that match the typed text and orders them best match first, falling back to
+    /// Roslyn's own ordering between items that match equally well.
+    /// </summary>
+    private static ImmutableArray<CompletionItem> MatchAndRank(IReadOnlyList<CompletionItem> items, string typedText)
     {
-        if (mode == Mode.AllWithSingleLetterMatch && !string.IsNullOrEmpty(spanText))
+        var matched = new List<(CompletionItem Item, CompletionMatch Match)>();
+
+        foreach (var item in items)
         {
-            var sorter = new SingleLetterMatchSorter(spanText[0]);
-            items.Sort(sorter.Compare);
+            var match = CompletionMatcher.Match(item.DisplayText, typedText);
+            if (match.IsMatch)
+            {
+                matched.Add((item, match));
+            }
         }
-        else
+
+        matched.Sort((left, right) =>
         {
-            items.Sort(); // Use default sort
-        }
+            int byQuality = left.Match.CompareQualityTo(right.Match);
+            return byQuality != 0
+                ? byQuality
+                : Comparer<CompletionItem>.Default.Compare(left.Item, right.Item);
+        });
+
+        return matched.Select(entry => entry.Item).ToImmutableArray();
     }
 }

@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Input;
 using FlaUI.Core.WindowsAPI;
@@ -15,9 +14,6 @@ namespace UITests;
 [TestClass]
 public class UT_BasicDemoCodeCompletion
 {
-    private static string SampleAppPath =>
-        Path.Combine(AppContext.BaseDirectory, "CDS.CSharpScript2.WinForms.Sample.exe");
-
     /// <remarks>
     /// Regression test: Windows translates Ctrl+Space into a normal WM_CHAR space unless the
     /// KeyDown handler sets <c>SuppressKeyPress</c>. Without it, the leaked space reaches
@@ -31,7 +27,7 @@ public class UT_BasicDemoCodeCompletion
     {
         StaThreadRunner.Run(() =>
         {
-            using var app = Application.Launch(SampleAppPath, "--demo=basic");
+            using var app = BasicDemo.Launch();
             using var automation = new UIA3Automation();
 
             var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(10));
@@ -39,23 +35,19 @@ public class UT_BasicDemoCodeCompletion
 
             try
             {
-                var scintillaEditor = window!.FindFirstDescendant(cf => cf.ByAutomationId("scintillaScriptEditor"));
+                var scintillaEditor = BasicDemo.FocusEditor(window!);
                 scintillaEditor.Should().NotBeNull("the Scintilla editor control should be reachable by its AutomationId");
 
-                scintillaEditor!.Click();
-                Thread.Sleep(300);
-
-                SelectAllAndDelete();
+                BasicDemo.SelectAllAndDelete();
                 Keyboard.Type("Consol");
                 Thread.Sleep(500);
 
-                PressCtrlKey(VirtualKeyShort.SPACE);
-                Thread.Sleep(700);
+                BasicDemo.InvokeCompletionList();
 
                 Keyboard.Type(VirtualKeyShort.RETURN);
                 Thread.Sleep(300);
 
-                var text = CopyEditorText();
+                var text = BasicDemo.CopyEditorText();
                 text.Should().Be("Console",
                     "Ctrl+Space should reopen the completion list on the partial keyword so Enter " +
                     "accepts 'Console', with no stray space inserted by the shortcut itself; got {0}", text);
@@ -65,28 +57,5 @@ public class UT_BasicDemoCodeCompletion
                 app.Close();
             }
         });
-    }
-
-    private static void SelectAllAndDelete()
-    {
-        PressCtrlKey(VirtualKeyShort.KEY_A);
-        Thread.Sleep(100);
-        Keyboard.Press(VirtualKeyShort.DELETE);
-        Thread.Sleep(100);
-    }
-
-    private static string CopyEditorText()
-    {
-        PressCtrlKey(VirtualKeyShort.KEY_A);
-        PressCtrlKey(VirtualKeyShort.KEY_C);
-        Thread.Sleep(300);
-        return System.Windows.Forms.Clipboard.GetText();
-    }
-
-    private static void PressCtrlKey(VirtualKeyShort key)
-    {
-        Keyboard.Press(VirtualKeyShort.CONTROL);
-        Keyboard.Type(key);
-        Keyboard.Release(VirtualKeyShort.CONTROL);
     }
 }
