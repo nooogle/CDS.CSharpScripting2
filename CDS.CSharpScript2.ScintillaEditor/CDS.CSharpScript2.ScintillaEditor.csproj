@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="7.0.0">
+    <PackageReference Include="Scintilla5.NET" Version="7.0.1">
       <PrivateAssets>analyzers</PrivateAssets>
     </PackageReference>
   </ItemGroup>
