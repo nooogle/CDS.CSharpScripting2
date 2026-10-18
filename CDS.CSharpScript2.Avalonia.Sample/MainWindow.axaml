@@ -9,21 +9,44 @@
       <MenuItem Header="_File">
         <MenuItem Header="E_xit" Click="OnExitClick" />
       </MenuItem>
+      <MenuItem Header="_Script">
+        <MenuItem Header="_Run" InputGesture="F5" HotKey="F5" Click="OnRunClick" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="_Theme">
+          <MenuItem x:Name="ThemeSystemItem" Header="_System" ToggleType="Radio" GroupName="Theme"
+                    IsChecked="True" Click="OnThemeSystemClick" />
+          <MenuItem x:Name="ThemeLightItem" Header="_Light" ToggleType="Radio" GroupName="Theme"
+                    Click="OnThemeLightClick" />
+          <MenuItem x:Name="ThemeDarkItem" Header="_Dark" ToggleType="Radio" GroupName="Theme"
+                    Click="OnThemeDarkClick" />
+        </MenuItem>
+      </MenuItem>
     </Menu>
+
+    <Border DockPanel.Dock="Bottom" Padding="8,3"
+            BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <TextBlock x:Name="StatusText" Text="Analysing…" />
+    </Border>
 
     <Grid RowDefinitions="3*,Auto,*">
       <editor:AvaloniaScriptEditor x:Name="ScriptEditor" Grid.Row="0" />
 
       <GridSplitter Grid.Row="1" Height="5" ResizeDirection="Rows" />
 
-      <DockPanel Grid.Row="2">
-        <TextBlock DockPanel.Dock="Top" Text="Output" Margin="6,4" FontWeight="SemiBold" />
-        <TextBox x:Name="OutputBox"
-                 IsReadOnly="True"
-                 AcceptsReturn="True"
-                 TextWrapping="NoWrap"
-                 FontFamily="Cascadia Mono, Menlo, Consolas, monospace" />
-      </DockPanel>
+      <TabControl x:Name="BottomTabs" Grid.Row="2" Padding="0">
+        <TabItem Header="Output" FontSize="14">
+          <TextBox x:Name="OutputBox"
+                   IsReadOnly="True"
+                   AcceptsReturn="True"
+                   TextWrapping="NoWrap"
+                   FontFamily="Cascadia Mono, Menlo, Consolas, monospace" />
+        </TabItem>
+        <TabItem x:Name="ProblemsTab" Header="Problems" FontSize="14">
+          <ListBox x:Name="ProblemsList"
+                   FontFamily="Cascadia Mono, Menlo, Consolas, monospace" />
+        </TabItem>
+      </TabControl>
     </Grid>
   </DockPanel>
 </Window>
