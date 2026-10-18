@@ -37,6 +37,7 @@ and cross-platform (they build and run on macOS/Linux as well as Windows).
 | `ConsoleTest` | net10.0-windows | Manual test harness |
 | `CDS.CSharpScript2.AvaloniaEditor` | net10.0 | Cross-platform AvaloniaEdit-based `IScriptEditor`: classification colouring, diagnostic squiggles, light/dark themes (no completion, call tips, or folding yet) |
 | `CDS.CSharpScript2.Avalonia.Sample` | net10.0 | Cross-platform Avalonia demo shell (menu, editor, output/problems panel, run, theme switch) |
+| `CDS.CSharpScript2.Avalonia.UITests` | net10.0 | Headless MSTest UI tests driving the Avalonia sample window (runs on macOS, Linux and Windows) |
 
 Only `CDS.CSharpScript2` and `CDS.CSharpScript2.ScintillaEditor` are packed; everything
 else sets `IsPackable=false`.
@@ -88,4 +89,6 @@ See the `release` skill for the version-bump and tagging workflow.
 - Test categories mirror the engine subsystems: compilation, classifications, completions, diagnostics, use-cases, XML doc info.
 - `UT_EditorExecutionParity` compiles a table of scripts through **both** paths (`ScriptAnalyser` and `ScriptExecutor`) and asserts they report the same errors. The two paths use different Roslyn APIs — a workspace project versus the scripting API — so anything configured in only one of them shows up as squiggles on code that compiles fine. Add a case here when you add a language or directive feature.
 - `UnitTests` references `MathNet.Numerics` and the `OpenCvSharp4` packages (`OpenCvSharp4`, `.Extensions`, and the matching `runtime.win` / `runtime.win-arm64`) to verify that real-world assembly references work inside compiled scripts.
-- `UnitTests` references only `CDS.CSharpScript2`; the editor controls have no direct test coverage. `VirtualScriptEditor` is the headless `IScriptEditor` used to exercise `EditorManager` without a UI.
+- `UnitTests` references only `CDS.CSharpScript2`; the WinForms editor controls have no direct test coverage. `VirtualScriptEditor` is the headless `IScriptEditor` used to exercise `EditorManager` without a UI.
+- `CDS.CSharpScript2.Avalonia.UITests` runs the real Avalonia sample window under Avalonia.Headless (Skia rendering, simulated keyboard/mouse), so it works on the Mac and in CI with no display. Write tests through `HeadlessTestSession.RunAsync` and `SampleWindowDriver`; wait with `WaitUntilAsync`, never fixed sleeps. Two traps it already works around: passing a `Func<Task>` straight to `HeadlessUnitTestSession.Dispatch` binds the wrong overload and lets every test "pass" without awaiting it, and the synchronous `Dispose()` of the session hangs the test host — use `DisposeAsync()`.
+- FlaUI (`UITests`) is Windows-only (it wraps Windows UI Automation) and can't drive anything on macOS.
