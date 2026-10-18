@@ -38,19 +38,78 @@ internal sealed class SampleWindowDriver : IDisposable
 
     public TextBlock Status { get; }
 
-    /// <summary>Focuses the editor, moves the caret to the end, and types <paramref name="text"/>.</summary>
+    /// <summary>
+    /// Focuses the editor, moves the caret to the end, and types <paramref name="text"/> one
+    /// character at a time, as a user would (each character is its own text-input event).
+    /// </summary>
     public void TypeAtEnd(string text)
     {
         TextEditor.TextArea.Focus();
         TextEditor.CaretOffset = TextEditor.Document.TextLength;
-        Window.KeyTextInput(text);
+        Type(text);
+    }
+
+    /// <summary>Types <paramref name="text"/> at the caret, one character at a time.</summary>
+    public void Type(string text)
+    {
+        foreach (var ch in text)
+        {
+            Window.KeyTextInput(ch.ToString());
+        }
+    }
+
+    /// <summary>Replaces the script and puts the caret at its end, with the editor focused.</summary>
+    public void SetScriptWithCaretAtEnd(string script)
+    {
+        Editor.Script = script;
+        TextEditor.TextArea.Focus();
+        TextEditor.CaretOffset = TextEditor.Document.TextLength;
     }
 
     /// <summary>Presses and releases a key with no modifiers.</summary>
     public void PressKey(Key key, PhysicalKey physicalKey)
     {
-        Window.KeyPress(key, RawInputModifiers.None, physicalKey, null);
-        Window.KeyRelease(key, RawInputModifiers.None, physicalKey, null);
+        PressKey(key, physicalKey, RawInputModifiers.None);
+    }
+
+    /// <summary>Presses and releases a key with the given modifiers held.</summary>
+    public void PressKey(Key key, PhysicalKey physicalKey, RawInputModifiers modifiers)
+    {
+        Window.KeyPress(key, modifiers, physicalKey, null);
+        Window.KeyRelease(key, modifiers, physicalKey, null);
+    }
+
+    /// <summary>
+    /// The entries the open completion list is actually displaying, or empty when it is closed.
+    /// </summary>
+    /// <remarks>
+    /// Bounded by the list box's <c>ItemCount</c>, which is what it lays out and renders. Neither
+    /// <c>CompletionData</c> nor enumerating <c>Items</c> will do: both read the underlying
+    /// collection directly, so they still list entries the list box was never notified of — the
+    /// exact failure where the popup holds data but renders empty.
+    /// </remarks>
+    public IReadOnlyList<string> CompletionItems
+    {
+        get
+        {
+            if (Editor.ActiveCompletionWindow?.CompletionList.ListBox is not { } listBox)
+            {
+                return [];
+            }
+
+            return Enumerable.Range(0, listBox.ItemCount)
+                .Select(i => ((AvaloniaEdit.CodeCompletion.ICompletionData)listBox.Items[i]!).Text)
+                .ToList();
+        }
+    }
+
+    /// <summary>The highlighted entry in the open completion list, if any.</summary>
+    public string? SelectedCompletion => Editor.ActiveCompletionWindow?.CompletionList.SelectedItem?.Text;
+
+    /// <summary>Waits until the completion list is open with <paramref name="text"/> highlighted.</summary>
+    public Task WaitForSelectedCompletionAsync(string text)
+    {
+        return WaitUntilAsync(() => SelectedCompletion == text, $"completion list with '{text}' highlighted");
     }
 
     /// <summary>Moves the pointer over the character at <paramref name="offset"/> in the script.</summary>

@@ -35,7 +35,7 @@ and cross-platform (they build and run on macOS/Linux as well as Windows).
 | `UnitTests` | net48 + net10.0-windows | MSTest suite |
 | `CDS.CSharpScript2.WinForms.Sample` | net48 + net10.0-windows | Demo app |
 | `ConsoleTest` | net10.0-windows | Manual test harness |
-| `CDS.CSharpScript2.AvaloniaEditor` | net10.0 | Cross-platform AvaloniaEdit-based `IScriptEditor`: classification colouring, diagnostic squiggles, light/dark themes (no completion, call tips, or folding yet) |
+| `CDS.CSharpScript2.AvaloniaEditor` | net10.0 | Cross-platform AvaloniaEdit-based `IScriptEditor`: classification colouring, diagnostic squiggles, code completion, light/dark themes (no call tips, API info, or folding yet) |
 | `CDS.CSharpScript2.Avalonia.Sample` | net10.0 | Cross-platform Avalonia demo shell (menu, editor, output/problems panel, run, theme switch) |
 | `CDS.CSharpScript2.Avalonia.UITests` | net10.0 | Headless MSTest UI tests driving the Avalonia sample window (runs on macOS, Linux and Windows) |
 

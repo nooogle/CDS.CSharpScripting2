@@ -22,7 +22,7 @@ namespace CDS.CSharpScript2.AvaloniaEditor;
 /// full pass produces diagnostics and semantically refined colouring once typing pauses.
 /// Dispose the control when it is no longer needed to release the underlying Roslyn workspace.
 /// </remarks>
-public class AvaloniaScriptEditor : UserControl, IScriptEditor
+public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
 {
     private static readonly TimeSpan SyntacticPassDelay = TimeSpan.FromMilliseconds(60);
     private static readonly TimeSpan FullPassDelay = TimeSpan.FromMilliseconds(500);
@@ -94,6 +94,8 @@ public class AvaloniaScriptEditor : UserControl, IScriptEditor
         _fullPassTimer = new DispatcherTimer { Interval = FullPassDelay };
         _fullPassTimer.Tick += OnFullPassTimerTick;
 
+        InitialiseCompletion();
+
         ActualThemeVariantChanged += (_, _) => ApplyTheme();
 
         Content = _textEditor;
@@ -137,6 +139,8 @@ public class AvaloniaScriptEditor : UserControl, IScriptEditor
         set
         {
             ThrowIfDisposed();
+            CloseCompletionWindow();
+            CancelCompletion();
             _textEditor.Text = value ?? string.Empty;
         }
     }
@@ -235,6 +239,12 @@ public class AvaloniaScriptEditor : UserControl, IScriptEditor
 
         _colorizer.SetTheme(theme);
         _diagnosticRenderer.SetTheme(theme);
+
+        if (_completionWindow is not null)
+        {
+            ApplyCompletionTheme(_completionWindow, theme);
+        }
+
         textView.Redraw();
     }
 
@@ -447,6 +457,7 @@ public class AvaloniaScriptEditor : UserControl, IScriptEditor
         _textEditor.TextChanged -= OnTextChanged;
         _textEditor.PointerHover -= OnPointerHover;
         _textEditor.PointerHoverStopped -= OnPointerHoverStopped;
+        DetachCompletion();
 
         _manager?.Dispose();
         _manager = null;
@@ -458,6 +469,10 @@ public class AvaloniaScriptEditor : UserControl, IScriptEditor
     {
         CancelAndDispose(ref _syntacticCts);
         CancelAndDispose(ref _analysisCts);
+
+        _completionTimer.Stop();
+        CancelAndDispose(ref _completionCts);
+        CloseCompletionWindow();
     }
 
     private static void CancelAndDispose(ref CancellationTokenSource? cts)
