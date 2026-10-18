@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Cross-platform (.NET 10 only): deliberately no net48 target, unlike the WinForms editors. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Not packed until the control does real script editing. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CDS.CSharpScript2\CDS.CSharpScript2.csproj" />
+  </ItemGroup>
+
+</Project>

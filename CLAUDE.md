@@ -21,8 +21,10 @@ releases are built, packed, and published via `.github/workflows/release.yml`.
 
 ## Project Layout
 
-Every project except `ConsoleTest` multi-targets `net48` alongside its modern target,
-so a change that only compiles on .NET 10 will break the build.
+Every project except `ConsoleTest` and the two Avalonia projects multi-targets `net48`
+alongside its modern target, so a change to those projects (including the core engine)
+that only compiles on .NET 10 will break the build. The Avalonia projects are .NET 10 only
+and cross-platform (they build and run on macOS/Linux as well as Windows).
 
 | Project | Target | Role |
 |---------|--------|------|
@@ -33,6 +35,8 @@ so a change that only compiles on .NET 10 will break the build.
 | `UnitTests` | net48 + net10.0-windows | MSTest suite |
 | `CDS.CSharpScript2.WinForms.Sample` | net48 + net10.0-windows | Demo app |
 | `ConsoleTest` | net10.0-windows | Manual test harness |
+| `CDS.CSharpScript2.AvaloniaEditor` | net10.0 | Cross-platform AvaloniaEdit-based editor control (placeholder: plain text only so far) |
+| `CDS.CSharpScript2.Avalonia.Sample` | net10.0 | Cross-platform Avalonia demo shell (menu, editor, output panel) |
 
 Only `CDS.CSharpScript2` and `CDS.CSharpScript2.ScintillaEditor` are packed; everything
 else sets `IsPackable=false`.

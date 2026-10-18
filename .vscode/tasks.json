@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build Avalonia Sample",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/CDS.CSharpScript2.Avalonia.Sample/CDS.CSharpScript2.Avalonia.Sample.csproj",
+                "--configuration",
+                "Debug"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build ConsoleTest",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/ConsoleTest/ConsoleTest.csproj",
+                "--configuration",
+                "Debug"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        }
+    ]
+}
