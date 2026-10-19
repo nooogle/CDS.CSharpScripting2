@@ -179,6 +179,71 @@ public class UT_DocsPanelController
         controller.CurrentPage!.Title.Should().Be("Second");
     }
 
+    [TestMethod]
+    public async Task CancelledSource_ThrowingOperationCanceled_DoesNotFault()
+    {
+        var (source, controller) = Create();
+        var first = controller.ShowAtAsync(1);
+        var second = controller.ShowAtAsync(2);
+
+        source.Fail(0, new OperationCanceledException(source.Requests[0].Token));
+        source.Complete(1, Page("Second"));
+        await first;
+        await second;
+
+        controller.CurrentPage!.Title.Should().Be("Second");
+    }
+
+    [TestMethod]
+    public async Task SourceFailure_KeepsPage()
+    {
+        var (source, controller) = await FollowingAsync("A");
+        var task = controller.CaretMovedAsync(3);
+        source.Fail(1, new InvalidOperationException("boom"));
+        await task;
+
+        controller.State.Should().Be(DocsPanelState.Following);
+        controller.CurrentPage!.Title.Should().Be("A");
+    }
+
+    [TestMethod]
+    public async Task ShowAt_WhileBrowsing_KeepsHistory()
+    {
+        var (source, controller) = await FollowingAsync("A");
+        await NavigateAsync(source, controller, "B");
+
+        var show = controller.ShowAtAsync(1);
+        source.Complete(2, Page("C"));
+        await show;
+
+        controller.State.Should().Be(DocsPanelState.Following);
+        controller.CanGoBack.Should().BeTrue();
+        controller.CanGoForward.Should().BeFalse();
+
+        var back = controller.BackAsync();
+        source.Complete(3, Page("B"));
+        await back;
+
+        controller.State.Should().Be(DocsPanelState.Browsing);
+        controller.CurrentPage!.Title.Should().Be("B");
+    }
+
+    [TestMethod]
+    public async Task CaretMoved_WhileLinkLoading_IsIgnored()
+    {
+        var (source, controller) = await FollowingAsync("A");
+        var navigate = controller.NavigateAsync(new DocTarget("T:B"));
+
+        controller.State.Should().Be(DocsPanelState.Browsing);
+        await controller.CaretMovedAsync(7);
+        source.Requests.Should().HaveCount(2);
+        source.Requests[1].Token.IsCancellationRequested.Should().BeFalse();
+
+        source.Complete(1, Page("B"));
+        await navigate;
+        controller.CurrentPage!.Title.Should().Be("B");
+    }
+
     private static async Task NavigateAsync(FakeSource source, DocsPanelController controller, string name)
     {
         var task = controller.NavigateAsync(new DocTarget("T:" + name));
@@ -215,6 +280,8 @@ public class UT_DocsPanelController
             => Add(new Request { Target = target, Token = cancellationToken });
 
         public void Complete(int index, DocPage? page) => Requests[index].Completion.SetResult(page);
+
+        public void Fail(int index, Exception exception) => Requests[index].Completion.SetException(exception);
 
         private Task<DocPage?> Add(Request request)
         {
