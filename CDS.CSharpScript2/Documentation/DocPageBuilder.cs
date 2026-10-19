@@ -12,10 +12,12 @@ internal static class DocPageBuilder
         memberOptions: SymbolDisplayMemberOptions.IncludeAccessibility
             | SymbolDisplayMemberOptions.IncludeModifiers
             | SymbolDisplayMemberOptions.IncludeType
-            | SymbolDisplayMemberOptions.IncludeParameters,
+            | SymbolDisplayMemberOptions.IncludeParameters
+            | SymbolDisplayMemberOptions.IncludeConstantValue,
         parameterOptions: SymbolDisplayParameterOptions.IncludeType
             | SymbolDisplayParameterOptions.IncludeName
             | SymbolDisplayParameterOptions.IncludeExtensionThis,
+        propertyStyle: SymbolDisplayPropertyStyle.ShowReadWriteDescriptor,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
     private static readonly SymbolDisplayFormat s_typeFormat = new(
@@ -60,51 +62,81 @@ internal static class DocPageBuilder
         if (symbol is ILocalSymbol or IParameterSymbol or IFieldSymbol { ContainingType.IsScriptClass: true })
             return BuildVariablePage(symbol);
 
-        if (symbol is not IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } method)
-            return null;
+        if (symbol is IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } or IPropertySymbol or IFieldSymbol or IEventSymbol)
+            return BuildMemberPage(symbol.OriginalDefinition, compilation);
 
-        return BuildMethodPage(method.OriginalDefinition, compilation);
+        return null;
     }
 
-    private static DocPage BuildMethodPage(IMethodSymbol method, Compilation? compilation)
+    /// <summary>Whether a symbol referenced from documentation text has a page to link to.</summary>
+    internal static bool HasPage(ISymbol symbol) => symbol switch
     {
-        var comment = new DocCommentParser(compilation).Parse(method.GetDocumentationCommentXml(expandIncludes: true));
-        var type = method.ContainingType;
-        var isConstructor = method.MethodKind == MethodKind.Constructor;
+        INamedTypeSymbol { TypeKind: TypeKind.Error } => false,
+        INamedTypeSymbol => true,
+        IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } => true,
+        IPropertySymbol or IFieldSymbol or IEventSymbol => true,
+        _ => false,
+    };
 
-        // A script's own methods belong to the implicit script class, which is not worth naming.
+    private static DocPage BuildMemberPage(ISymbol member, Compilation? compilation)
+    {
+        var comment = new DocCommentParser(compilation).Parse(member.GetDocumentationCommentXml(expandIncludes: true));
+        var type = member.ContainingType;
+        var method = member as IMethodSymbol;
+        var isConstructor = method?.MethodKind == MethodKind.Constructor;
         var inScriptClass = type.IsScriptClass;
 
+        var kindWord = member switch
+        {
+            IPropertySymbol => "Property",
+            IFieldSymbol => "Field",
+            IEventSymbol => "Event",
+            _ => isConstructor ? "Constructor" : "Method",
+        };
+
+        // A script's own members belong to the implicit script class, which is not worth naming.
         var kindLine = inScriptClass
-            ? new List<DocRun> { new("Method", DocRunKind.Text, null) }
+            ? new List<DocRun> { new(kindWord, DocRunKind.Text, null) }
             : new List<DocRun>
             {
-                new(isConstructor ? "Constructor · " : "Method · ", DocRunKind.Text, null),
+                new(kindWord + " · ", DocRunKind.Text, null),
                 new(type.Name, DocRunKind.Link, TargetOf(type)),
             };
 
-        var overloads = type.GetMembers(method.Name)
-            .OfType<IMethodSymbol>()
-            .Where(m => m.MethodKind == method.MethodKind)
-            .OrderBy(m => m.Locations.FirstOrDefault()?.SourceSpan.Start ?? 0)
-            .Select(m => (Method: m, Target: TargetOf(m)))
-            .Where(x => x.Target is not null)
-            .Select(x => new DocOverload(OverloadLabel(x.Method), x.Target!, SymbolEqualityComparer.Default.Equals(x.Method, method)))
-            .ToList();
+        var name = member is IPropertySymbol { IsIndexer: true } ? "this[]" : member.Name;
+        var title = isConstructor ? type.Name : inScriptClass ? name : $"{type.Name}.{name}";
 
         return new DocPage
         {
-            Target = TargetOf(method),
+            Target = TargetOf(member),
             KindLine = kindLine,
-            Title = isConstructor ? type.Name : inScriptClass ? method.Name : $"{type.Name}.{method.Name}",
-            Signature = method.ToDisplayString(s_signatureFormat),
+            Title = title,
+            Signature = member.ToDisplayString(s_signatureFormat),
             Summary = comment.Summary,
             Parameters = comment.Parameters,
-            Returns = comment.Returns,
+            Returns = comment.Returns.Count > 0 ? comment.Returns : comment.Value,
             Exceptions = comment.Exceptions,
             Remarks = comment.Remarks,
-            Overloads = overloads,
+            Overloads = OverloadsOf(member, type),
         };
+    }
+
+    private static List<DocOverload> OverloadsOf(ISymbol member, INamedTypeSymbol type)
+    {
+        IEnumerable<ISymbol> siblings;
+        if (member is IMethodSymbol method)
+            siblings = type.GetMembers(method.Name).OfType<IMethodSymbol>().Where(m => m.MethodKind == method.MethodKind);
+        else if (member is IPropertySymbol { IsIndexer: true })
+            siblings = type.GetMembers().OfType<IPropertySymbol>().Where(p => p.IsIndexer);
+        else
+            return [];
+
+        return siblings
+            .OrderBy(m => m.Locations.FirstOrDefault()?.SourceSpan.Start ?? 0)
+            .Select(m => (Member: m, Target: TargetOf(m)))
+            .Where(x => x.Target is not null)
+            .Select(x => new DocOverload(OverloadLabel(x.Member), x.Target!, SymbolEqualityComparer.Default.Equals(x.Member, member)))
+            .ToList();
     }
 
     private static DocPage BuildVariablePage(ISymbol symbol)
@@ -131,10 +163,21 @@ internal static class DocPageBuilder
         };
     }
 
-    private static string OverloadLabel(IMethodSymbol method)
+    private static string OverloadLabel(ISymbol symbol)
     {
-        var name = method.MethodKind == MethodKind.Constructor ? method.ContainingType.Name : method.Name;
-        return $"{name}({string.Join(", ", method.Parameters.Select(p => p.Type.ToDisplayString(s_typeFormat)))})";
+        var parameters = symbol switch
+        {
+            IMethodSymbol m => m.Parameters,
+            IPropertySymbol p => p.Parameters,
+            _ => [],
+        };
+        var list = string.Join(", ", parameters.Select(p => p.Type.ToDisplayString(s_typeFormat)));
+        return symbol switch
+        {
+            IMethodSymbol { MethodKind: MethodKind.Constructor } => $"{symbol.ContainingType.Name}({list})",
+            IPropertySymbol { IsIndexer: true } => $"this[{list}]",
+            _ => $"{symbol.Name}({list})",
+        };
     }
 
     /// <summary>Gets the page target for a symbol, or <see langword="null"/> when it has no documentation ID.</summary>

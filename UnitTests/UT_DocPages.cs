@@ -247,6 +247,85 @@ public class UT_DocPages
         (await source.GetDocPageAsync(new DocTarget("T:System.Math"), CancellationToken.None))!.Title.Should().Be("Math");
     }
 
+    [TestMethod]
+    public async Task PropertyPage_DescribesTheProperty()
+    {
+        const string script = "var s = \"abc\"; var n = s.Length;";
+        var page = await GetPageAsync(script, "Length");
+
+        page.Should().NotBeNull();
+        page!.Title.Should().Be("String.Length");
+        page.KindLine.ToPlainText().Should().Be("Property · String");
+        page.Signature.Should().Contain("int Length");
+        page.Target.Should().NotBeNull();
+        page.Summary.Should().NotBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task FieldTarget_ResolvesToAFieldPage()
+    {
+        var analyser = await AnalyserForAsync("int n = 1;");
+        var page = await analyser.GetDocPageAsync(new DocTarget("F:System.Math.PI"));
+
+        page!.IsUnavailable.Should().BeFalse();
+        page.Title.Should().Be("Math.PI");
+        page.KindLine.ToPlainText().Should().Be("Field · Math");
+    }
+
+    [TestMethod]
+    public async Task EventTarget_ResolvesToAnEventPage()
+    {
+        var analyser = await AnalyserForAsync("int n = 1;");
+        var page = await analyser.GetDocPageAsync(new DocTarget("E:System.AppDomain.ProcessExit"));
+
+        page!.IsUnavailable.Should().BeFalse();
+        page.KindLine.ToPlainText().Should().Be("Event · AppDomain");
+    }
+
+    [TestMethod]
+    public async Task IndexerTarget_ListsOtherIndexersAsOverloads()
+    {
+        var analyser = await AnalyserForAsync("int n = 1;");
+        var page = await analyser.GetDocPageAsync(new DocTarget("P:System.Collections.Generic.List`1.Item(System.Int32)"));
+
+        page!.IsUnavailable.Should().BeFalse();
+        page.KindLine.ToPlainText().Should().StartWith("Property · ");
+    }
+
+    [TestMethod]
+    public async Task TypePage_MemberLinksAllResolveToPages()
+    {
+        var analyser = await AnalyserForAsync("int n = 1;");
+        var type = await analyser.GetDocPageAsync(new DocTarget("T:System.Math"));
+
+        foreach (var group in type!.MemberGroups)
+        {
+            var page = await analyser.GetDocPageAsync(group.Members[0].Target);
+            page!.IsUnavailable.Should().BeFalse($"{group.Heading} {group.Members[0].Name} should have a page");
+        }
+    }
+
+    [TestMethod]
+    public async Task PropertyCref_BecomesALinkToAPage()
+    {
+        const string script = "/// <summary>Length is <see cref=\"string.Length\"/>.</summary>\nvoid F() { }\nF();";
+        var analyser = await AnalyserForAsync(script);
+        var page = await analyser.GetDocPageAsync(script.IndexOf("F();") + 1);
+
+        var link = page!.Summary.Should().ContainSingle(r => r.Kind == DocRunKind.Link).Subject;
+        (await analyser.GetDocPageAsync(link.Target!))!.IsUnavailable.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task NamespaceCref_IsPlainText()
+    {
+        const string script = "/// <summary>In <see cref=\"N:System.Text\"/> namespace.</summary>\nvoid F() { }\nF();";
+        var page = await (await AnalyserForAsync(script)).GetDocPageAsync(script.IndexOf("F();") + 1);
+
+        page!.Summary.Should().NotContain(r => r.Kind == DocRunKind.Link);
+        page.Summary.ToPlainText().Should().Contain("Text");
+    }
+
     private static async Task<ScriptAnalyser> AnalyserForAsync(string script)
     {
         var context = (await ScriptContext.CreateAsync()).ApplyScript(script);

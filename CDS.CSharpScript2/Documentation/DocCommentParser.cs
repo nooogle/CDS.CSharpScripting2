@@ -11,9 +11,10 @@ internal sealed record ParsedDocComment(
     IReadOnlyList<DocNamedItem> Parameters,
     IReadOnlyList<DocRun> Returns,
     IReadOnlyList<DocNamedItem> Exceptions,
-    IReadOnlyList<DocRun> Remarks)
+    IReadOnlyList<DocRun> Remarks,
+    IReadOnlyList<DocRun> Value)
 {
-    internal static ParsedDocComment Empty { get; } = new([], [], [], [], []);
+    internal static ParsedDocComment Empty { get; } = new([], [], [], [], [], []);
 }
 
 /// <summary>Parses XML documentation comments into <see cref="DocRun"/> sections.</summary>
@@ -50,7 +51,8 @@ internal sealed class DocCommentParser
                 Runs(p))).ToList(),
             Runs(root.Element("returns")),
             root.Elements("exception").Select(ExceptionItem).ToList(),
-            Runs(root.Element("remarks")));
+            Runs(root.Element("remarks")),
+            Runs(root.Element("value")));
     }
 
     private DocNamedItem ExceptionItem(XElement element)
@@ -113,7 +115,7 @@ internal sealed class DocCommentParser
         if (_compilation != null && !cref.StartsWith("!:", StringComparison.Ordinal))
             symbol = DocumentationCommentId.GetFirstSymbolForDeclarationId(cref, _compilation);
 
-        if (symbol != null)
+        if (symbol != null && DocPageBuilder.HasPage(symbol))
             return new DocRun(symbol.Name, DocRunKind.Link, new DocTarget(cref));
 
         var name = cref.Length > 2 && cref[1] == ':' ? cref.Substring(2) : cref;
