@@ -54,6 +54,23 @@ public class UT_DocPages
         page.Overloads.Should().OnlyContain(o => o.Label.StartsWith("Round("));
     }
 
+    [TestMethod]
+    public async Task MethodPage_FromExtensionCall_DescribesTheUnreducedMethod()
+    {
+        const string script = "var xs = new[] { 1, 2 }; var zs = xs.Select(x => x * 2);";
+        var environment = ScriptEnvironment.Default
+            .WithAdditionalNamespaceName("System.Linq")
+            .WithAdditionalReferenceForType(typeof(System.Linq.Enumerable));
+        var context = (await ScriptContext.CreateAsync(environment)).ApplyScript(script);
+        var page = await new ScriptAnalyser(context).GetDocPageAsync(script.IndexOf("Select") + 1);
+
+        page.Should().NotBeNull();
+        page!.Title.Should().Be("Enumerable.Select");
+        page.Signature.Should().Contain("this IEnumerable<TSource> source");
+        page.Target!.DocumentationId.Should().StartWith("M:System.Linq.Enumerable.Select");
+        page.Overloads.Should().ContainSingle(o => o.IsCurrent);
+    }
+
     /// <summary>Asks for a page one character into <paramref name="marker"/>.</summary>
     private static async Task<DocPage?> GetPageAsync(string script, string marker)
     {

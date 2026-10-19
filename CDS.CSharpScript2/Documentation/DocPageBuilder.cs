@@ -13,7 +13,9 @@ internal static class DocPageBuilder
             | SymbolDisplayMemberOptions.IncludeModifiers
             | SymbolDisplayMemberOptions.IncludeType
             | SymbolDisplayMemberOptions.IncludeParameters,
-        parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeName,
+        parameterOptions: SymbolDisplayParameterOptions.IncludeType
+            | SymbolDisplayParameterOptions.IncludeName
+            | SymbolDisplayParameterOptions.IncludeExtensionThis,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
     private static readonly SymbolDisplayFormat s_typeFormat = new(
@@ -26,6 +28,10 @@ internal static class DocPageBuilder
         cancellationToken.ThrowIfCancellationRequested();
 
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, position, cancellationToken).ConfigureAwait(false);
+        // An extension call binds to a reduced method; document the declared static method instead.
+        if (symbol is IMethodSymbol { ReducedFrom: { } reducedFrom })
+            symbol = reducedFrom;
+
         if (symbol is not IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } method)
             return null;
 
