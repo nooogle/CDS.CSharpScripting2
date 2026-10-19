@@ -68,6 +68,58 @@ public class UT_AvaloniaScriptEditorHelp
         });
     }
 
+    /// <summary>
+    /// Verifies that two concurrent requests right after an edit both see the edit.
+    /// </summary>
+    [TestMethod]
+    public Task ConcurrentDocPageRequests_BothSeeTheEdit()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            driver.Editor.Script = "var shown = Math.Round(2.5);";
+            var source = new EditorDocPageSource(driver.Editor);
+            var position = driver.Editor.Script.IndexOf("Round", StringComparison.Ordinal) + 1;
+
+            var first = source.GetDocPageAsync(position, CancellationToken.None);
+            var second = source.GetDocPageAsync(position, CancellationToken.None);
+
+            (await first).Should().NotBeNull();
+            (await second).Should().NotBeNull();
+        });
+    }
+
+    /// <summary>
+    /// Verifies that a request cancelled during the refresh does not leave the manager stale
+    /// for the next request.
+    /// </summary>
+    [TestMethod]
+    public Task CancelledRefresh_DoesNotStrandLaterRequests()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            driver.Editor.Script = "var shown = Math.Round(2.5);";
+            var source = new EditorDocPageSource(driver.Editor);
+            var position = driver.Editor.Script.IndexOf("Round", StringComparison.Ordinal) + 1;
+
+            using var cts = new CancellationTokenSource();
+            var cancelled = source.GetDocPageAsync(position, cts.Token);
+            cts.Cancel();
+            try
+            {
+                await cancelled;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            var page = await source.GetDocPageAsync(position, CancellationToken.None);
+
+            page.Should().NotBeNull();
+        });
+    }
+
     private static async Task<SampleWindowDriver> StartAsync()
     {
         var driver = new SampleWindowDriver();

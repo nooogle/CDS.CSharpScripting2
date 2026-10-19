@@ -10,6 +10,10 @@ namespace CDS.CSharpScript2.AvaloniaEditor;
 /// </content>
 public partial class AvaloniaScriptEditor
 {
+    private Task? _managerRefreshTask;
+    private int _managerRefreshVersion = -1;
+    private EditorManager? _managerRefreshManager;
+
     /// <summary>
     /// Occurs when the user asks for help on the code at the caret (F1) or <see cref="RequestHelp"/> is called.
     /// </summary>
@@ -48,13 +52,65 @@ public partial class AvaloniaScriptEditor
         }
 
         var documentVersion = _documentVersion;
-        if (_managerDocumentVersion != documentVersion)
+        if (_managerDocumentVersion == documentVersion)
+        {
+            return;
+        }
+
+        // Callers arriving during a refresh of the same version share it; each honours its own
+        // token for its wait only, so one cancelled caller cannot strand the others.
+        if (_managerRefreshTask is null
+            || _managerRefreshVersion != documentVersion
+            || !ReferenceEquals(_managerRefreshManager, manager))
+        {
+            var previous = _managerRefreshTask;
+            _managerRefreshVersion = documentVersion;
+            _managerRefreshManager = manager;
+            _managerRefreshTask = RefreshManagerDocumentAsync(manager, documentVersion, Script, previous);
+        }
+
+        await _managerRefreshTask.WaitAsync(cancellationToken);
+    }
+
+    private async Task RefreshManagerDocumentAsync(
+        EditorManager manager,
+        int documentVersion,
+        string script,
+        Task? previous)
+    {
+        // The manager is single-threaded: never overlap with an earlier refresh. No
+        // ConfigureAwait(false): the next manager call must stay on the UI thread.
+        if (previous is not null)
+        {
+            try
+            {
+                await previous;
+            }
+            catch (Exception)
+            {
+                // That refresh's own callers see its failure; this one starts afresh.
+            }
+        }
+
+        try
+        {
+            await manager.UpdateScriptDocumentAsync(script, CancellationToken.None);
+        }
+        catch (Exception)
+        {
+            // Leave the version unmarked and forget the failed task so the next caller retries.
+            if (_managerRefreshVersion == documentVersion && ReferenceEquals(_managerRefreshManager, manager))
+            {
+                _managerRefreshTask = null;
+            }
+
+            throw;
+        }
+
+        // Mark the version only now the update has really happened.
+        if (ReferenceEquals(_manager, manager))
         {
             _managerDocumentVersion = documentVersion;
-
-            // No ConfigureAwait(false): the manager is single-threaded and the next call must stay
-            // on the UI thread.
-            await manager.UpdateScriptDocumentAsync(Script, cancellationToken);
         }
     }
 
