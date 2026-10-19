@@ -86,11 +86,7 @@ public partial class AvaloniaScriptEditor
         {
             if (manager is not null && !_disposed)
             {
-                if (_managerDocumentVersion != documentVersion)
-                {
-                    _managerDocumentVersion = documentVersion;
-                    await manager.UpdateScriptDocumentAsync(Script, cancellationToken);
-                }
+                await EnsureManagerDocumentCurrentAsync(cancellationToken);
 
                 quickInfo = await manager.GetQuickInfoAsync(offset, cancellationToken);
             }

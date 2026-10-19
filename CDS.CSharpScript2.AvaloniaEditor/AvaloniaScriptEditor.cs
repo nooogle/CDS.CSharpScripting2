@@ -95,6 +95,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         InitialiseCompletion();
         InitialiseCallTips();
         InitialiseHover();
+        InitialiseHelp();
 
         ActualThemeVariantChanged += (_, _) => ApplyTheme();
 
@@ -186,11 +187,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         // The manager compiles its own document, which the debounced passes may not have caught
         // up with yet; bring it level with the text on screen first. No ConfigureAwait(false)
         // here: the manager is single-threaded and the next call must stay on the UI thread.
-        if (_managerDocumentVersion != _documentVersion)
-        {
-            _managerDocumentVersion = _documentVersion;
-            await _manager.UpdateScriptDocumentAsync(Script, cancellationToken);
-        }
+        await EnsureManagerDocumentCurrentAsync(cancellationToken);
 
         _currentCompiledScript = await _manager.CompileAsync(cancellationToken).ConfigureAwait(false);
         return _currentCompiledScript;
@@ -437,6 +434,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         DetachHover();
         DetachCompletion();
         DetachCallTips();
+        DetachHelp();
 
         _manager?.Dispose();
         _manager = null;
