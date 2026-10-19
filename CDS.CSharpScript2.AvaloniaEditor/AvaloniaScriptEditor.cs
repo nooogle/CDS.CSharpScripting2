@@ -250,7 +250,15 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         }
 
         textView.Redraw();
+
+        EffectiveThemeChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Raised whenever the editor (re)applies its theme — a <see cref="ColorTheme"/> change or a
+    /// theme-variant change — so views beside it (the docs panel) can recolour to match.
+    /// </summary>
+    internal event EventHandler? EffectiveThemeChanged;
 
     // ── Live analysis ────────────────────────────────────────────────────────
 

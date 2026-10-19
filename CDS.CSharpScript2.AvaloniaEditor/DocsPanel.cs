@@ -151,7 +151,7 @@ public sealed class DocsPanel : UserControl
             {
                 _editor.HelpRequested -= OnHelpRequested;
                 _editor.CaretMoved -= OnCaretMoved;
-                _editor.ActualThemeVariantChanged -= OnEditorThemeChanged;
+                _editor.EffectiveThemeChanged -= OnEditorThemeChanged;
             }
 
             _caretTimer.Stop();
@@ -162,7 +162,7 @@ public sealed class DocsPanel : UserControl
             {
                 _editor.HelpRequested += OnHelpRequested;
                 _editor.CaretMoved += OnCaretMoved;
-                _editor.ActualThemeVariantChanged += OnEditorThemeChanged;
+                _editor.EffectiveThemeChanged += OnEditorThemeChanged;
             }
 
             Controller.Close();
@@ -214,6 +214,7 @@ public sealed class DocsPanel : UserControl
         }
     }
 
+    // Raised by the editor after it applies a theme (ColorTheme or variant), so its EffectiveTheme is current.
     private void OnEditorThemeChanged(object? sender, EventArgs e) => Render();
 
     private void OnPanelPointerPressed(object? sender, PointerPressedEventArgs e)

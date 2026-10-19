@@ -1,7 +1,10 @@
 using AwesomeAssertions;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.VisualTree;
+using CDS.CSharpScript2.Classification;
 using CDS.CSharpScript2.Documentation;
 
 namespace CDS.CSharpScript2.Avalonia.UITests;
@@ -126,6 +129,38 @@ public class UT_DocsPanel
                 $"the docs body to overflow its viewport (extent {scrollViewer.Extent}, viewport {scrollViewer.Viewport})");
 
             driver.DocsPanel.Bounds.Height.Should().BeLessThanOrEqualTo(driver.Window.ClientSize.Height);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that setting the editor's explicit colour theme while the panel is open recolours
+    /// the panel, with no theme-variant change to prompt it.
+    /// </summary>
+    [TestMethod]
+    public Task ChangingEditorColorTheme_RecoloursPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            var app = global::Avalonia.Application.Current!;
+            app.RequestedThemeVariant = ThemeVariant.Light;
+            try
+            {
+                using var driver = await StartAsync();
+                await PressF1OnAsync(driver, "Round");
+                var frame = driver.DocsPanel.GetVisualDescendants().OfType<Border>().First();
+                var dark = EditorTheme.Dark.Background;
+                bool IsDark() => frame.Background is ISolidColorBrush brush
+                    && brush.Color == Color.FromArgb(dark.A, dark.R, dark.G, dark.B);
+                IsDark().Should().BeFalse();
+
+                driver.Editor.ColorTheme = EditorTheme.Dark;
+
+                await driver.WaitUntilAsync(IsDark, $"docs panel background to turn dark (is {frame.Background})");
+            }
+            finally
+            {
+                app.RequestedThemeVariant = ThemeVariant.Default;
+            }
         });
     }
 
