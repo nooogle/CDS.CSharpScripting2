@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using CDS.CSharpScript2;
 using CDS.CSharpScript2.Documentation;
+using CDS.CSharpScript2.Editors;
 
 namespace UnitTests;
 
@@ -168,6 +169,88 @@ public class UT_DocPages
     public async Task UnresolvedType_ReturnsNull()
     {
         (await GetPageAsync("UnknownType x;", "UnknownType")).Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Target_ResolvesToItsPage()
+    {
+        var analyser = await AnalyserForAsync("int n = 1;");
+        var page = await analyser.GetDocPageAsync(new DocTarget("T:System.ArgumentOutOfRangeException"));
+
+        page!.Title.Should().Be("ArgumentOutOfRangeException");
+    }
+
+    [TestMethod]
+    public async Task MethodTarget_WithReturnTypeSuffix_ResolvesAndMarksTheOverload()
+    {
+        var analyser = await AnalyserForAsync(RoundScript);
+        var current = (await analyser.GetDocPageAsync(RoundScript.IndexOf("Round") + 1))!.Overloads.Single(o => o.IsCurrent);
+        var other = (await analyser.GetDocPageAsync(RoundScript.IndexOf("Round") + 1))!.Overloads.First(o => !o.IsCurrent);
+
+        var page = await analyser.GetDocPageAsync(other.Target);
+
+        page!.IsUnavailable.Should().BeFalse();
+        page.Overloads.Should().ContainSingle(o => o.IsCurrent).Which.Target.Should().Be(other.Target);
+        current.Target.Should().NotBe(other.Target);
+    }
+
+    [TestMethod]
+    public async Task ScriptDocs_SeeCrefBecomesALink()
+    {
+        const string script = "/// <summary>Uses <see cref=\"Math.Sqrt(double)\"/> on <paramref name=\"a\"/>.</summary>\ndouble Hyp(double a) => a;\nHyp(2);";
+        var analyser = await AnalyserForAsync(script);
+        var page = await analyser.GetDocPageAsync(script.IndexOf("Hyp(2") + 1);
+
+        var link = page!.Summary.Should().ContainSingle(r => r.Kind == DocRunKind.Link).Subject;
+        link.Target!.DocumentationId.Should().Be("M:System.Math.Sqrt(System.Double)");
+        (await analyser.GetDocPageAsync(link.Target))!.Title.Should().Be("Math.Sqrt");
+        page.Summary.Should().ContainSingle(r => r.Kind == DocRunKind.Code && r.Text == "a");
+    }
+
+    [TestMethod]
+    public async Task ScriptSymbolTarget_ResolvesAfterAnEdit()
+    {
+        const string script = "double Hyp(double a) => a;\nHyp(2);";
+        var context = (await ScriptContext.CreateAsync()).ApplyScript(script);
+        var target = (await new ScriptAnalyser(context).GetDocPageAsync(script.IndexOf("Hyp(2") + 1))!.Target!;
+
+        var edited = context.ApplyScript(script + "\nvar z = 1;");
+        (await new ScriptAnalyser(edited).GetDocPageAsync(target))!.Title.Should().Be("Hyp");
+
+        var removed = context.ApplyScript("var z = 1;");
+        (await new ScriptAnalyser(removed).GetDocPageAsync(target))!.IsUnavailable.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task UnresolvableCref_IsPlainText()
+    {
+        const string script = "/// <summary>See <see cref=\"!:NoSuchThing\"/> here.</summary>\nvoid F() { }\nF();";
+        var page = await (await AnalyserForAsync(script)).GetDocPageAsync(script.IndexOf("F();") + 1);
+
+        page!.Summary.Should().NotContain(r => r.Kind == DocRunKind.Link);
+        page.Summary.ToPlainText().Should().Contain("NoSuchThing");
+    }
+
+    [TestMethod]
+    public async Task EditorManager_GetDocPageAsync_ByPositionAndTarget()
+    {
+        using var manager = new EditorManager(ScriptEnvironment.Default);
+        await manager.ApplyScript(RoundScript);
+
+        IDocPageSource source = manager;
+        var byPosition = await source.GetDocPageAsync(RoundScript.IndexOf("Round") + 1, CancellationToken.None);
+        byPosition!.Title.Should().Be("Math.Round");
+
+        var byTarget = await manager.GetDocPageAsync(new DocTarget("T:System.Math"));
+        byTarget!.Title.Should().Be("Math");
+        (await manager.GetDocPageAsync(RoundScript.IndexOf("Round") + 1))!.Title.Should().Be("Math.Round");
+        (await source.GetDocPageAsync(new DocTarget("T:System.Math"), CancellationToken.None))!.Title.Should().Be("Math");
+    }
+
+    private static async Task<ScriptAnalyser> AnalyserForAsync(string script)
+    {
+        var context = (await ScriptContext.CreateAsync()).ApplyScript(script);
+        return new ScriptAnalyser(context);
     }
 
     /// <summary>Asks for a page one character into <paramref name="marker"/>.</summary>

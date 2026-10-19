@@ -19,7 +19,7 @@ namespace CDS.CSharpScript2.Editors;
 /// stay on their own synchronisation context across the await.
 /// </para>
 /// </remarks>
-public class EditorManager : IDisposable
+public class EditorManager : IDisposable, Documentation.IDocPageSource
 {
     private ScriptContext? _context;
     private ExecutableScript? _cachedExecutableScript;
@@ -189,6 +189,40 @@ public class EditorManager : IDisposable
         await EnsureContext(cancellationToken).ConfigureAwait(false);
         return await RunAnalysisAsync(
             a => a.GetQuickInfoAsync(position, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Builds the documentation page for the symbol at the given position, or <see langword="null"/> when there is none.</summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(int position)
+        => GetDocPageAsync(position, CancellationToken.None);
+
+    /// <summary>Builds the documentation page for the symbol at the given position, or <see langword="null"/> when there is none.</summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="cancellationToken">A token that abandons the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(int position, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetDocPageAsync(position, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Builds the documentation page for a link target, or the unavailable page when it no longer resolves.</summary>
+    /// <param name="target">The target to resolve.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target)
+        => GetDocPageAsync(target, CancellationToken.None);
+
+    /// <summary>Builds the documentation page for a link target, or the unavailable page when it no longer resolves.</summary>
+    /// <param name="target">The target to resolve.</param>
+    /// <param name="cancellationToken">A token that abandons the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetDocPageAsync(target, cancellationToken),
             cancellationToken).ConfigureAwait(false);
     }
 

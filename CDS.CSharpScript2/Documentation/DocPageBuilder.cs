@@ -28,6 +28,25 @@ internal static class DocPageBuilder
         cancellationToken.ThrowIfCancellationRequested();
 
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, position, cancellationToken).ConfigureAwait(false);
+        var compilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        return BuildForSymbol(symbol, compilation);
+    }
+
+    /// <summary>Builds the page for the symbol a <see cref="DocTarget"/> names, or the unavailable page when it no longer resolves.</summary>
+    internal static async Task<DocPage> BuildAsync(Document document, DocTarget target, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var compilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+        if (compilation is null)
+            return DocPage.Unavailable(target);
+
+        var symbol = DocumentationCommentId.GetFirstSymbolForDeclarationId(target.DocumentationId, compilation);
+        return (symbol is null ? null : BuildForSymbol(symbol, compilation)) ?? DocPage.Unavailable(target);
+    }
+
+    private static DocPage? BuildForSymbol(ISymbol? symbol, Compilation? compilation)
+    {
         // An extension call binds to a reduced method; document the declared static method instead.
         if (symbol is IMethodSymbol { ReducedFrom: { } reducedFrom })
             symbol = reducedFrom;
@@ -36,12 +55,7 @@ internal static class DocPageBuilder
             return null;
 
         if (symbol is INamedTypeSymbol type)
-        {
-            var typeCompilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-            return DocTypePageBuilder.Build(type.OriginalDefinition, typeCompilation);
-        }
-
-        var compilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+            return DocTypePageBuilder.Build(type.OriginalDefinition, compilation);
 
         if (symbol is ILocalSymbol or IParameterSymbol or IFieldSymbol { ContainingType.IsScriptClass: true })
             return BuildVariablePage(symbol);
@@ -58,11 +72,16 @@ internal static class DocPageBuilder
         var type = method.ContainingType;
         var isConstructor = method.MethodKind == MethodKind.Constructor;
 
-        var kindLine = new List<DocRun>
-        {
-            new(isConstructor ? "Constructor · " : "Method · ", DocRunKind.Text, null),
-            new(type.Name, DocRunKind.Link, TargetOf(type)),
-        };
+        // A script's own methods belong to the implicit script class, which is not worth naming.
+        var inScriptClass = type.IsScriptClass;
+
+        var kindLine = inScriptClass
+            ? new List<DocRun> { new("Method", DocRunKind.Text, null) }
+            : new List<DocRun>
+            {
+                new(isConstructor ? "Constructor · " : "Method · ", DocRunKind.Text, null),
+                new(type.Name, DocRunKind.Link, TargetOf(type)),
+            };
 
         var overloads = type.GetMembers(method.Name)
             .OfType<IMethodSymbol>()
@@ -77,7 +96,7 @@ internal static class DocPageBuilder
         {
             Target = TargetOf(method),
             KindLine = kindLine,
-            Title = isConstructor ? type.Name : $"{type.Name}.{method.Name}",
+            Title = isConstructor ? type.Name : inScriptClass ? method.Name : $"{type.Name}.{method.Name}",
             Signature = method.ToDisplayString(s_signatureFormat),
             Summary = comment.Summary,
             Parameters = comment.Parameters,

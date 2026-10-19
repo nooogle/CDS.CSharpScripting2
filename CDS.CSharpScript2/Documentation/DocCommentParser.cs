@@ -109,21 +109,20 @@ internal sealed class DocCommentParser
 
     private DocRun CrefRun(string cref)
     {
-        string label;
-        if (_compilation != null && DocumentationCommentId.GetFirstSymbolForDeclarationId(cref, _compilation) is { } symbol)
-        {
-            label = symbol.Name;
-        }
-        else
-        {
-            var name = cref.Length > 2 && cref[1] == ':' ? cref.Substring(2) : cref;
-            var paren = name.IndexOf('(');
-            if (paren >= 0)
-                name = name.Substring(0, paren);
-            label = name.Substring(name.LastIndexOf('.') + 1);
-        }
+        ISymbol? symbol = null;
+        if (_compilation != null && !cref.StartsWith("!:", StringComparison.Ordinal))
+            symbol = DocumentationCommentId.GetFirstSymbolForDeclarationId(cref, _compilation);
 
-        return new DocRun(label, DocRunKind.Link, new DocTarget(cref));
+        if (symbol != null)
+            return new DocRun(symbol.Name, DocRunKind.Link, new DocTarget(cref));
+
+        var name = cref.Length > 2 && cref[1] == ':' ? cref.Substring(2) : cref;
+        var paren = name.IndexOf('(');
+        if (paren >= 0)
+            name = name.Substring(0, paren);
+
+        // A cref that cannot be resolved has nowhere to go, so it is shown as plain text.
+        return new DocRun(name.Substring(name.LastIndexOf('.') + 1), DocRunKind.Text, null);
     }
 
     private static bool IsBreak(DocRun run) => run.Kind == DocRunKind.Text && run.Text == ParagraphBreak;

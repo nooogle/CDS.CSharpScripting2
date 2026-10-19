@@ -208,6 +208,24 @@ public class ScriptAnalyser
     }
 
     /// <summary>
+    /// Builds the documentation page for a link target. Returns <see cref="Documentation.DocPage.Unavailable"/>
+    /// when the target no longer resolves, such as a script symbol that has been deleted.
+    /// </summary>
+    /// <param name="target">The target to resolve.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target)
+        => GetDocPageAsync(target, CancellationToken.None);
+
+    /// <summary>
+    /// Builds the documentation page for a link target. Returns <see cref="Documentation.DocPage.Unavailable"/>
+    /// when the target no longer resolves, such as a script symbol that has been deleted.
+    /// </summary>
+    /// <param name="target">The target to resolve.</param>
+    /// <param name="ct">A token that aborts the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target, CancellationToken ct)
+        => await Documentation.DocPageBuilder.BuildAsync(_context.Document, target, ct).ConfigureAwait(false);
+
+    /// <summary>
     /// Returns API information (type info, member overloads, XML docs) at the given position.
     /// Returns null when no symbol is found at that position.
     /// </summary>
