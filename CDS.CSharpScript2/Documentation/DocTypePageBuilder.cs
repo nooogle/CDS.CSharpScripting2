@@ -77,7 +77,9 @@ internal static class DocTypePageBuilder
         // Overloads share a name, so each name is listed once, targeting the first overload declared.
         var entries = symbols
             .GroupBy(s => s is IMethodSymbol { MethodKind: MethodKind.Constructor } ? s.ContainingType.Name : s.Name)
-            .Select(g => new DocMember(g.Key, g.Count(), DocPageBuilder.TargetOf(g.OrderBy(DeclarationOrder).First())))
+            .Select(g => (g.Key, Count: g.Count(), Target: DocPageBuilder.TargetOf(g.OrderBy(DeclarationOrder).First())))
+            .Where(x => x.Target is not null)
+            .Select(x => new DocMember(x.Key, x.Count, x.Target!))
             .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

@@ -110,6 +110,66 @@ public class UT_DocPages
         watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
     }
 
+    [TestMethod]
+    public async Task VariablePage_ForScriptVariable()
+    {
+        var page = await GetPageAsync(RoundScript, "price,");
+
+        page.Should().NotBeNull();
+        page!.Title.Should().Be("price");
+        page.Signature.Should().Be("double price");
+        page.KindLine.ToPlainText().Should().Be("Variable · Double");
+        var link = page.KindLine.Single(r => r.Text == "Double");
+        link.Kind.Should().Be(DocRunKind.Link);
+        link.Target!.DocumentationId.Should().Be("T:System.Double");
+        page.Target.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task ParameterPage_HasNoTarget()
+    {
+        const string script = "double Hyp(double a) => a;";
+        var page = await GetPageAsync(script, "a;");
+
+        page.Should().NotBeNull();
+        page!.KindLine.ToPlainText().Should().Be("Parameter · Double");
+        page.Signature.Should().Be("double a");
+        page.Target.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task KeywordForBuiltInType_OpensTheTypePage()
+    {
+        (await GetPageAsync("int n = 1;", "int"))!.Title.Should().Be("Int32");
+        (await GetPageAsync(RoundScript, "var"))!.Title.Should().Be("Double");
+    }
+
+    [TestMethod]
+    public async Task Namespace_ReturnsNull()
+    {
+        (await GetPageAsync("System.Console.WriteLine();", "System")).Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task BlankLine_ReturnsNull()
+    {
+        const string script = "var a = 1;\n\nvar b = 2;";
+        var context = (await ScriptContext.CreateAsync()).ApplyScript(script);
+        (await new ScriptAnalyser(context).GetDocPageAsync(script.IndexOf("\n\n") + 1)).Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Comment_ReturnsNull()
+    {
+        (await GetPageAsync("// a comment here", "comment")).Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task UnresolvedType_ReturnsNull()
+    {
+        (await GetPageAsync("UnknownType x;", "UnknownType")).Should().BeNull();
+    }
+
     /// <summary>Asks for a page one character into <paramref name="marker"/>.</summary>
     private static async Task<DocPage?> GetPageAsync(string script, string marker)
     {

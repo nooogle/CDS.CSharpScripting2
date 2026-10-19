@@ -32,16 +32,23 @@ internal static class DocPageBuilder
         if (symbol is IMethodSymbol { ReducedFrom: { } reducedFrom })
             symbol = reducedFrom;
 
+        if (symbol is INamedTypeSymbol { TypeKind: TypeKind.Error })
+            return null;
+
         if (symbol is INamedTypeSymbol type)
         {
             var typeCompilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
             return DocTypePageBuilder.Build(type.OriginalDefinition, typeCompilation);
         }
 
+        var compilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+
+        if (symbol is ILocalSymbol or IParameterSymbol or IFieldSymbol { ContainingType.IsScriptClass: true })
+            return BuildVariablePage(symbol);
+
         if (symbol is not IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } method)
             return null;
 
-        var compilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
         return BuildMethodPage(method.OriginalDefinition, compilation);
     }
 
@@ -61,7 +68,9 @@ internal static class DocPageBuilder
             .OfType<IMethodSymbol>()
             .Where(m => m.MethodKind == method.MethodKind)
             .OrderBy(m => m.Locations.FirstOrDefault()?.SourceSpan.Start ?? 0)
-            .Select(m => new DocOverload(OverloadLabel(m), TargetOf(m), SymbolEqualityComparer.Default.Equals(m, method)))
+            .Select(m => (Method: m, Target: TargetOf(m)))
+            .Where(x => x.Target is not null)
+            .Select(x => new DocOverload(OverloadLabel(x.Method), x.Target!, SymbolEqualityComparer.Default.Equals(x.Method, method)))
             .ToList();
 
         return new DocPage
@@ -79,12 +88,40 @@ internal static class DocPageBuilder
         };
     }
 
+    private static DocPage BuildVariablePage(ISymbol symbol)
+    {
+        var type = symbol switch
+        {
+            ILocalSymbol local => local.Type,
+            IParameterSymbol parameter => parameter.Type,
+            _ => ((IFieldSymbol)symbol).Type,
+        };
+
+        var kindLine = new List<DocRun>
+        {
+            new(symbol is IParameterSymbol ? "Parameter · " : "Variable · ", DocRunKind.Text, null),
+            new(type is INamedTypeSymbol ? type.Name : type.ToDisplayString(s_typeFormat), type is INamedTypeSymbol ? DocRunKind.Link : DocRunKind.Text, type is INamedTypeSymbol ? TargetOf(type) : null),
+        };
+
+        return new DocPage
+        {
+            Target = TargetOf(symbol),
+            KindLine = kindLine,
+            Title = symbol.Name,
+            Signature = $"{type.ToDisplayString(s_typeFormat)} {symbol.Name}",
+        };
+    }
+
     private static string OverloadLabel(IMethodSymbol method)
     {
         var name = method.MethodKind == MethodKind.Constructor ? method.ContainingType.Name : method.Name;
         return $"{name}({string.Join(", ", method.Parameters.Select(p => p.Type.ToDisplayString(s_typeFormat)))})";
     }
 
-    internal static DocTarget TargetOf(ISymbol symbol)
-        => new(DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition) ?? symbol.Name);
+    /// <summary>Gets the page target for a symbol, or <see langword="null"/> when it has no documentation ID.</summary>
+    internal static DocTarget? TargetOf(ISymbol symbol)
+    {
+        var id = DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition);
+        return id is null ? null : new DocTarget(id);
+    }
 }
