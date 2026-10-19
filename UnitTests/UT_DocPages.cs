@@ -71,6 +71,45 @@ public class UT_DocPages
         page.Overloads.Should().ContainSingle(o => o.IsCurrent);
     }
 
+    [TestMethod]
+    public async Task TypePage_ForStaticClass()
+    {
+        var page = await GetPageAsync(RoundScript, "Math");
+
+        page.Should().NotBeNull();
+        page!.Title.Should().Be("Math");
+        page.KindLine.ToPlainText().Should().Be("Static class · System");
+        page.Signature.Should().Be("public static class Math");
+        page.Summary.ToPlainText().Should().StartWith("Provides constants and static methods");
+    }
+
+    [TestMethod]
+    public async Task TypePage_GroupsDeclaredPublicMembers()
+    {
+        var page = await GetPageAsync(RoundScript, "Math");
+
+        page!.MemberGroups.Select(g => g.Heading).Should().Equal("Fields", "Methods");
+        page.MemberGroups[0].Members.Select(m => m.Name).Should().Contain(["E", "PI", "Tau"]);
+        page.MemberGroups[1].Members.Single(m => m.Name == "Round").OverloadCount.Should().Be(8);
+        var names = page.MemberGroups.SelectMany(g => g.Members).Select(m => m.Name).ToList();
+        names.Should().NotContain(n => n.StartsWith("get_") || n.StartsWith("set_") || n.StartsWith("op_"));
+        page.MemberGroups[1].Members.Select(m => m.Name)
+            .Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase);
+    }
+
+    [TestMethod]
+    public async Task TypePage_ForLargeType_BuildsAllGroups()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var page = await GetPageAsync("string s = \"\";", "string");
+        watch.Stop();
+
+        page.Should().NotBeNull();
+        page!.Title.Should().Be("String");
+        page.MemberGroups.Select(g => g.Heading).Should().Contain(["Properties", "Methods", "Constructors"]);
+        watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
+    }
+
     /// <summary>Asks for a page one character into <paramref name="marker"/>.</summary>
     private static async Task<DocPage?> GetPageAsync(string script, string marker)
     {

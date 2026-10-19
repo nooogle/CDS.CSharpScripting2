@@ -32,6 +32,12 @@ internal static class DocPageBuilder
         if (symbol is IMethodSymbol { ReducedFrom: { } reducedFrom })
             symbol = reducedFrom;
 
+        if (symbol is INamedTypeSymbol type)
+        {
+            var typeCompilation = await document.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+            return DocTypePageBuilder.Build(type.OriginalDefinition, typeCompilation);
+        }
+
         if (symbol is not IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.Constructor } method)
             return null;
 
@@ -79,6 +85,6 @@ internal static class DocPageBuilder
         return $"{name}({string.Join(", ", method.Parameters.Select(p => p.Type.ToDisplayString(s_typeFormat)))})";
     }
 
-    private static DocTarget TargetOf(ISymbol symbol)
+    internal static DocTarget TargetOf(ISymbol symbol)
         => new(DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition) ?? symbol.Name);
 }
