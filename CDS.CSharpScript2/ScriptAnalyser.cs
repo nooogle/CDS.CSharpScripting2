@@ -239,6 +239,24 @@ public class ScriptAnalyser
         => await APIInfo.QuickInfoProvider.GetAsync(_context.Document, position, ct).ConfigureAwait(false);
 
     /// <summary>
+    /// Builds the documentation page for the symbol at the given position, or <see langword="null"/>
+    /// when there is no documentable symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(int position)
+        => GetDocPageAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Builds the documentation page for the symbol at the given position, or <see langword="null"/>
+    /// when there is no documentable symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="ct">A token that aborts the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(int position, CancellationToken ct)
+        => await Documentation.DocPageBuilder.BuildAsync(_context.Document, position, ct).ConfigureAwait(false);
+
+    /// <summary>
     /// Returns API information (type info, member overloads, XML docs) at the given position.
     /// Returns null when no symbol is found at that position.
     /// </summary>
