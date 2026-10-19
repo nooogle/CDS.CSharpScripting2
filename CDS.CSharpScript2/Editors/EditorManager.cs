@@ -167,6 +167,31 @@ public class EditorManager : IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position)
+        => GetQuickInfoAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="cancellationToken">A token that abandons a request the pointer has moved past.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetQuickInfoAsync(position, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Returns API info (type, overloads, XML docs) at the given cursor position.</summary>
     public Task<APIInfo.APIInfoResult?> GetAPIInfo(int cursorPosition)
         => GetAPIInfo(cursorPosition, CancellationToken.None);

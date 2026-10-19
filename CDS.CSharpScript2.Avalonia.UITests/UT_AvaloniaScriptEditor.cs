@@ -69,10 +69,9 @@ public class UT_AvaloniaScriptEditor
 
             driver.HoverOverOffset(driver.Editor.Script.IndexOf("missingSymbol", StringComparison.Ordinal) + 2);
 
-            await driver.WaitUntilAsync(() => ToolTip.GetIsOpen(driver.TextEditor), "the diagnostic tooltip to open");
+            await driver.WaitUntilAsync(() => driver.HoverInfo is not null, "the diagnostic tooltip to open");
 
-            ToolTip.GetTip(driver.TextEditor).Should().BeOfType<string>()
-                .Which.Should().Contain("CS0103").And.Contain("missingSymbol");
+            driver.HoverInfo!.DiagnosticText.Should().Contain("CS0103").And.Contain("missingSymbol");
         });
     }
 

@@ -177,6 +177,20 @@ internal sealed class SampleWindowDriver : IDisposable
         Window.MouseMove(target, RawInputModifiers.None);
     }
 
+    /// <summary>Moves the pointer off the editor, onto the output panel.</summary>
+    public void MovePointerAway()
+    {
+        var target = Output.TranslatePoint(new Point(20, 20), Window)
+            ?? throw new InvalidOperationException("Output panel is not in the window.");
+        Window.MouseMove(target, RawInputModifiers.None);
+    }
+
+    /// <summary>
+    /// What the open hover popup is showing, or <see langword="null"/> when none is open.
+    /// </summary>
+    public HoverInfoView? HoverInfo =>
+        ToolTip.GetIsOpen(TextEditor) ? ToolTip.GetTip(TextEditor) as HoverInfoView : null;
+
     /// <summary>
     /// Pumps the headless UI (layout, render, timers) until <paramref name="condition"/> holds,
     /// failing the test if it does not within the timeout.

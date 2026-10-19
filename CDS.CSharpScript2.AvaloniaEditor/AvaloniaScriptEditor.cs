@@ -85,8 +85,6 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         textView.BackgroundRenderers.Add(_diagnosticRenderer);
 
         _textEditor.TextChanged += OnTextChanged;
-        _textEditor.PointerHover += OnPointerHover;
-        _textEditor.PointerHoverStopped += OnPointerHoverStopped;
 
         _syntacticTimer = new DispatcherTimer { Interval = SyntacticPassDelay };
         _syntacticTimer.Tick += OnSyntacticTimerTick;
@@ -96,6 +94,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
 
         InitialiseCompletion();
         InitialiseCallTips();
+        InitialiseHover();
 
         ActualThemeVariantChanged += (_, _) => ApplyTheme();
 
@@ -240,6 +239,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         textView.CurrentLineBorder = new ImmutablePen(theme.CaretLineBackground.ToBrush());
 
         _colorizer.SetTheme(theme);
+        ApplyHoverTheme(theme);
         _diagnosticRenderer.SetTheme(theme);
 
         if (_completionWindow is not null)
@@ -266,6 +266,9 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
 
         _documentVersion++;
         _currentCompiledScript = null;
+
+        // Whatever the hover popup describes may no longer be there.
+        CloseHover();
 
         Restart(_syntacticTimer);
         Restart(_fullPassTimer);
@@ -411,37 +414,6 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         return !_disposed && documentVersion == _documentVersion && stateVersion == _editorStateVersion;
     }
 
-    // ── Diagnostic tooltips ──────────────────────────────────────────────────
-
-    private void OnPointerHover(object? sender, PointerEventArgs e)
-    {
-        var position = _textEditor.GetPositionFromPoint(e.GetPosition(_textEditor.TextArea.TextView));
-        if (position is null)
-        {
-            return;
-        }
-
-        var offset = _textEditor.Document.GetOffset(position.Value.Location);
-        var messages = _diagnosticRenderer.GetDiagnosticsAt(offset)
-            .Select(d => $"{d.Id}: {d.GetMessage()}")
-            .ToList();
-
-        if (messages.Count == 0)
-        {
-            return;
-        }
-
-        ToolTip.SetTip(_textEditor, string.Join(System.Environment.NewLine, messages));
-        ToolTip.SetIsOpen(_textEditor, true);
-        e.Handled = true;
-    }
-
-    private void OnPointerHoverStopped(object? sender, PointerEventArgs e)
-    {
-        ToolTip.SetIsOpen(_textEditor, false);
-        ToolTip.SetTip(_textEditor, null);
-    }
-
     // ── Lifetime ─────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -462,8 +434,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         CancelPendingPasses();
 
         _textEditor.TextChanged -= OnTextChanged;
-        _textEditor.PointerHover -= OnPointerHover;
-        _textEditor.PointerHoverStopped -= OnPointerHoverStopped;
+        DetachHover();
         DetachCompletion();
         DetachCallTips();
 
@@ -483,6 +454,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         CloseCompletionWindow();
 
         CancelCallTip();
+        CloseHover();
     }
 
     private static void CancelAndDispose(ref CancellationTokenSource? cts)
