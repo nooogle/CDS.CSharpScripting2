@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using CDS.CSharpScript2.AvaloniaEditor;
 using CDS.CSharpScript2.Classification;
 using CDS.CSharpScript2.Documentation;
 
@@ -84,6 +85,80 @@ public class UT_DocsPanel
 
             await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
             driver.DocsState.Should().Be(DocsPanelState.Closed);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that a host that hides the panel by its own means and calls <c>Close()</c> gets a fresh
+    /// panel on the next F1: no history, following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task HostClose_ResetsPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Browsing);
+            driver.DocsPanel.Controller.CanGoBack.Should().BeTrue();
+
+            driver.DocsPanel.Close();
+            driver.DocsPanel.IsVisible = false;
+
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Closed);
+            await PressF1OnAsync(driver, "Round");
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Following);
+            driver.DocsPanel.Controller.CanGoBack.Should().BeFalse();
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the first F1 never flashes the empty-state hint while the page is on its way.
+    /// </summary>
+    [TestMethod]
+    public Task FirstF1_NeverShowsTheHintWhileLoading()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            bool HintShown() => driver.DocsPanel.GetVisualDescendants().OfType<TextBlock>()
+                .Any(t => t.Text == DocPageRenderer.EmptyHint);
+            driver.MoveCaretTo(OffsetIn("Round"));
+
+            var hintSeen = false;
+            driver.PressKey(Key.F1, PhysicalKey.F1);
+            hintSeen |= HintShown();
+            await driver.WaitUntilAsync(
+                () =>
+                {
+                    hintSeen |= HintShown();
+                    return driver.DocsTitle == "Math.Round";
+                },
+                $"docs page 'Math.Round' (showing '{driver.DocsTitle}')");
+
+            hintSeen.Should().BeFalse();
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Following);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that closing the panel with Escape returns keyboard focus to the editor.
+    /// </summary>
+    [TestMethod]
+    public Task Escape_InPanel_ReturnsFocusToEditor()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsPanel.Focus();
+            driver.PressKey(Key.Escape, PhysicalKey.Escape);
+
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+            driver.TextEditor.TextArea.IsFocused.Should().BeTrue();
         });
     }
 

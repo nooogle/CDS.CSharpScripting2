@@ -30,10 +30,16 @@ internal static class DocPageRenderer
     /// <summary>Builds the body for <paramref name="page"/>, or the hint when there is none.</summary>
     /// <param name="page">The page to show, or <see langword="null"/> for none.</param>
     /// <param name="state">The panel's state; "← this call" marks the current overload only when following.</param>
+    /// <param name="loading">Whether a page is still on its way; with no page yet, nothing is drawn rather than the hint.</param>
     /// <param name="palette">The brushes and fonts to draw with.</param>
-    public static Control Render(DocPage? page, DocsPanelState state, DocsPanelPalette palette)
+    public static Control Render(DocPage? page, DocsPanelState state, bool loading, DocsPanelPalette palette)
     {
         var body = new StackPanel { Spacing = 0 };
+
+        if (page is null && loading)
+        {
+            return body;
+        }
 
         if (page is null)
         {

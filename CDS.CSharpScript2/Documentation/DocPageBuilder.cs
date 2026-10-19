@@ -132,6 +132,8 @@ internal static class DocPageBuilder
             return [];
 
         return siblings
+            // Hide non-public overloads of library types, but keep a script's own members (top-level script members need not be public).
+            .Where(m => m.DeclaredAccessibility == Accessibility.Public || m.Locations.Any(l => l.IsInSource))
             .OrderBy(m => m.Locations.FirstOrDefault()?.SourceSpan.Start ?? 0)
             .Select(m => (Member: m, Target: TargetOf(m)))
             .Where(x => x.Target is not null)
@@ -148,10 +150,16 @@ internal static class DocPageBuilder
             _ => ((IFieldSymbol)symbol).Type,
         };
 
+        // Only an ordinary named type has a page to link to; nullable value types, tuples, anonymous and error types show as plain text.
+        var linkable = type is INamedTypeSymbol { IsAnonymousType: false, IsTupleType: false, TypeKind: not TypeKind.Error } named
+            && named.OriginalDefinition.SpecialType != SpecialType.System_Nullable_T;
+
         var kindLine = new List<DocRun>
         {
             new(symbol is IParameterSymbol ? "Parameter · " : "Variable · ", DocRunKind.Text, null),
-            new(type is INamedTypeSymbol ? type.Name : type.ToDisplayString(s_typeFormat), type is INamedTypeSymbol ? DocRunKind.Link : DocRunKind.Text, type is INamedTypeSymbol ? TargetOf(type) : null),
+            linkable
+                ? new DocRun(type.Name, DocRunKind.Link, TargetOf(type))
+                : new DocRun(type.ToDisplayString(s_typeFormat), DocRunKind.Text, null),
         };
 
         return new DocPage

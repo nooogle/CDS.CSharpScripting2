@@ -101,8 +101,13 @@ public class UT_DocPages
     [TestMethod]
     public async Task TypePage_ForLargeType_BuildsAllGroups()
     {
+        const string script = "string s = \"\";";
+        var context = await ScriptContext.CreateAsync();
+        context = context.ApplyScript(script);
+        var analyser = new ScriptAnalyser(context);
+
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        var page = await GetPageAsync("string s = \"\";", "string");
+        var page = await analyser.GetDocPageAsync(script.IndexOf("string") + 1);
         watch.Stop();
 
         page.Should().NotBeNull();
@@ -124,6 +129,36 @@ public class UT_DocPages
         link.Kind.Should().Be(DocRunKind.Link);
         link.Target!.DocumentationId.Should().Be("T:System.Double");
         page.Target.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task ConstructorPage_ListsOnlyAccessibleOverloads()
+    {
+        var script = "var e = new Exception(\"x\");";
+        var page = await GetPageAsync(script, "Exception");
+
+        page.Should().NotBeNull();
+        page!.Overloads.Should().NotBeEmpty();
+        page.Overloads.Select(o => o.Label).Should().NotContain(l => l.Contains("SerializationInfo"));
+    }
+
+    [TestMethod]
+    public async Task VariablePage_ForNullableValueType_ShowsPlainText()
+    {
+        var page = await GetPageAsync("int? x = 1;", "x");
+
+        page!.KindLine.ToPlainText().Should().Be("Variable · int?");
+        page.KindLine.Should().NotContain(r => r.Kind == DocRunKind.Link);
+    }
+
+    [TestMethod]
+    public async Task VariablePage_ForAnonymousType_ShowsPlainText()
+    {
+        var page = await GetPageAsync("var a = new { Id = 1 };", "a =");
+
+        page!.KindLine.Should().NotContain(r => r.Kind == DocRunKind.Link);
+        page.KindLine.ToPlainText().Should().NotBe("Variable · ");
+        page.KindLine.ToPlainText().Should().StartWith("Variable · ").And.Contain("Id");
     }
 
     [TestMethod]

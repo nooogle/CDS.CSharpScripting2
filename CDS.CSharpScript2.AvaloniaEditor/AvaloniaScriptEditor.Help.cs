@@ -36,6 +36,11 @@ public partial class AvaloniaScriptEditor
     internal FontFamily CodeFontFamily => _textEditor.FontFamily;
 
     /// <summary>
+    /// Gives keyboard focus to the text area, so a view that closes can hand focus back.
+    /// </summary>
+    internal void FocusTextArea() => _textEditor.TextArea.Focus();
+
+    /// <summary>
     /// Raises <see cref="HelpRequested"/> at the caret.
     /// </summary>
     public void RequestHelp()

@@ -1,6 +1,10 @@
 namespace CDS.CSharpScript2.Documentation;
 
 /// <summary>A UI-neutral documentation page describing one symbol.</summary>
+/// <remarks>
+/// Record equality is not deep: the list properties compare by reference, so two pages built
+/// separately for the same symbol are not equal. Compare <see cref="Target"/> to identify a page.
+/// </remarks>
 public sealed record DocPage
 {
     /// <summary>The symbol the page describes; <see langword="null"/> for variables and parameters without a documentation ID.</summary>

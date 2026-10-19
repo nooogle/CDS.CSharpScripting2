@@ -139,7 +139,8 @@ public sealed class DocsPanel : UserControl
 
     /// <summary>
     /// Gets or sets the editor the panel documents. Setting it starts listening for that editor's
-    /// help requests and caret moves, and resets the panel.
+    /// help requests and caret moves, and resets the panel to its empty state. Replacing the editor
+    /// does not raise <see cref="CloseRequested"/>; the host decides whether to hide the panel.
     /// </summary>
     public AvaloniaScriptEditor? Editor
     {
@@ -171,6 +172,25 @@ public sealed class DocsPanel : UserControl
 
             Controller.Close();
             Render();
+        }
+    }
+
+    /// <summary>Gets the panel's mode: closed, following the caret, or browsing links.</summary>
+    public DocsPanelState State => Controller.State;
+
+    /// <summary>
+    /// Resets the panel (clears the page and history, and stops following the caret) without raising
+    /// <see cref="CloseRequested"/>. Call this when you hide the panel by your own means, such as a
+    /// docking pane's or window's own close button, so that reopening it with F1 starts fresh.
+    /// </summary>
+    public void Close()
+    {
+        var hadFocus = IsKeyboardFocusWithin;
+        _caretTimer.Stop();
+        Controller.Close();
+        if (hadFocus)
+        {
+            _editor?.FocusTextArea();
         }
     }
 
@@ -260,6 +280,9 @@ public sealed class DocsPanel : UserControl
         _caretTimer.Stop();
         Controller.Close();
         CloseRequested?.Invoke(this, EventArgs.Empty);
+
+        // The panel is about to be hidden; don't leave keyboard focus on it.
+        _editor?.FocusTextArea();
     }
 
     private DocsPanelPalette CreatePalette()
@@ -295,7 +318,7 @@ public sealed class DocsPanel : UserControl
         _stateLabel.Foreground = browsing ? palette.BrowsingChipForeground : palette.FollowingChipForeground;
 
         var page = Controller.CurrentPage;
-        _scrollViewer.Content = DocPageRenderer.Render(page, state, palette);
+        _scrollViewer.Content = DocPageRenderer.Render(page, state, Controller.IsLoading, palette);
 
         // A new page starts at the top; a re-render of the same page (theme, state) keeps its place.
         if (!ReferenceEquals(page, _renderedPage))

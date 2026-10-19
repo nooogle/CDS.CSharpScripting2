@@ -20,6 +20,71 @@ public class UT_DocsPanelController
     }
 
     [TestMethod]
+    public async Task ShowAt_FromClosed_IsFollowingAndLoadingBeforeTheSourceCompletes()
+    {
+        var (source, controller) = Create();
+        var raised = 0;
+        controller.Changed += (_, _) => raised++;
+
+        var task = controller.ShowAtAsync(5);
+
+        controller.State.Should().Be(DocsPanelState.Following);
+        controller.IsLoading.Should().BeTrue();
+        raised.Should().Be(1);
+
+        source.Complete(0, Page("A"));
+        await task;
+
+        controller.IsLoading.Should().BeFalse();
+        controller.CurrentPage!.Title.Should().Be("A");
+        raised.Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task ShowAt_WhenSourceReturnsNull_StopsLoading()
+    {
+        var (source, controller) = Create();
+        var task = controller.ShowAtAsync(5);
+        source.Complete(0, null);
+        await task;
+
+        controller.IsLoading.Should().BeFalse();
+        controller.CurrentPage.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task CaretMoved_DuringFirstShow_IsNotLost()
+    {
+        var (source, controller) = Create();
+        var show = controller.ShowAtAsync(5);
+
+        var move = controller.CaretMovedAsync(9);
+        source.Requests[1].Position.Should().Be(9);
+        source.Complete(1, Page("B"));
+        await move;
+        source.Complete(0, Page("A"));
+        await show;
+
+        controller.IsLoading.Should().BeFalse();
+        controller.CurrentPage!.Title.Should().Be("B");
+    }
+
+    [TestMethod]
+    public async Task Close_WhileLoading_StopsLoading()
+    {
+        var (source, controller) = Create();
+        var task = controller.ShowAtAsync(5);
+
+        controller.Close();
+        source.Complete(0, Page("A"));
+        await task;
+
+        controller.IsLoading.Should().BeFalse();
+        controller.CurrentPage.Should().BeNull();
+        controller.State.Should().Be(DocsPanelState.Closed);
+    }
+
+    [TestMethod]
     public async Task ShowAt_OnNothing_FromClosed_HasNoPage()
     {
         var (source, controller) = Create();
