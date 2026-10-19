@@ -71,6 +71,9 @@ public sealed class DocsPanel : UserControl
         _followButton = HeaderButton(FollowCaretText, "Show what is at the caret and follow it");
         _closeButton = HeaderButton(CloseText, "Close");
         _closeButton.Click += (_, _) => CloseFromUser();
+        _backButton.Click += (_, _) => _ = Controller.BackAsync();
+        _forwardButton.Click += (_, _) => _ = Controller.ForwardAsync();
+        _followButton.Click += (_, _) => FollowCaret();
 
         _stateLabel = new TextBlock { FontSize = 10.5, VerticalAlignment = VerticalAlignment.Center };
         _stateChip = new Border
@@ -115,6 +118,7 @@ public sealed class DocsPanel : UserControl
 
         // Focusable so Escape reaches the panel after a click anywhere in it.
         Focusable = true;
+        AddHandler(DocLink.ClickEvent, OnDocLinkClick);
         AddHandler(PointerPressedEvent, OnPanelPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
         ActualThemeVariantChanged += (_, _) => Render();
 
@@ -181,6 +185,32 @@ public sealed class DocsPanel : UserControl
         {
             CloseFromUser();
             e.Handled = true;
+        }
+        else if (!e.Handled && e.Key == Key.F1 && e.KeyModifiers == KeyModifiers.None)
+        {
+            // The editor handles F1 only while it has focus; a click in the panel moves focus here.
+            FollowCaret();
+            e.Handled = true;
+        }
+    }
+
+    private void FollowCaret()
+    {
+        _caretTimer.Stop();
+        if (_editor is { } editor)
+        {
+            // The controller swallows cancellation and source failures, so fire-and-forget is safe.
+            _ = Controller.ShowAtAsync(editor.CaretOffset);
+        }
+    }
+
+    private void OnDocLinkClick(object? sender, RoutedEventArgs e)
+    {
+        if (e.Source is DocLink link)
+        {
+            e.Handled = true;
+            _caretTimer.Stop();
+            _ = Controller.NavigateAsync(link.Target);
         }
     }
 

@@ -62,27 +62,43 @@ internal sealed class SampleWindowDriver : IDisposable
     }
 
     /// <summary>Clicks the centre of the visible docs-panel link showing <paramref name="text"/>.</summary>
-    public void ClickDocLink(string text)
+    public async Task ClickDocLinkAsync(string text)
     {
         var link = DocsPanel.GetVisualDescendants()
             .OfType<DocLink>()
             .FirstOrDefault(l => l.Text == text && l.IsEffectivelyVisible)
             ?? throw new InvalidOperationException($"No visible docs link '{text}'.");
-        Click(link);
+        await ClickAsync(link);
     }
 
     /// <summary>Clicks the centre of the docs-panel header button whose content is <paramref name="content"/>.</summary>
-    public void ClickDocsButton(string content)
+    public async Task ClickDocsButtonAsync(string content)
     {
         var button = DocsPanel.GetVisualDescendants()
             .OfType<Button>()
             .FirstOrDefault(b => Equals(b.Content, content) && b.IsEffectivelyVisible)
             ?? throw new InvalidOperationException($"No visible docs button '{content}'.");
-        Click(button);
+        await ClickAsync(button);
     }
 
-    private void Click(Visual target)
+    private async Task ClickAsync(Control target)
     {
+        // Scroll the target into the panel's viewport, then wait for layout to put it there.
+        target.BringIntoView();
+        var scrollViewer = DocsPanel.GetVisualDescendants().OfType<ScrollViewer>().First();
+        if (target.FindAncestorOfType<ScrollViewer>() == scrollViewer)
+        {
+            await WaitUntilAsync(
+                () =>
+                {
+                    var bounds = target.TranslatePoint(default, scrollViewer);
+                    return bounds is { } p
+                        && p.Y >= -0.5
+                        && p.Y + target.Bounds.Height <= scrollViewer.Viewport.Height + 0.5;
+                },
+                "the click target to scroll into the docs viewport");
+        }
+
         var centre = target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), Window)
             ?? throw new InvalidOperationException("Control is not in the window.");
         Window.MouseMove(centre, RawInputModifiers.None);

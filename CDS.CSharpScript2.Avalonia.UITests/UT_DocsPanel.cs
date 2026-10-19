@@ -61,7 +61,7 @@ public class UT_DocsPanel
             using var driver = await StartAsync();
             await PressF1OnAsync(driver, "Round");
 
-            driver.ClickDocsButton("✕");
+            await driver.ClickDocsButtonAsync("✕");
 
             await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
             driver.DocsState.Should().Be(DocsPanelState.Closed);
@@ -162,6 +162,150 @@ public class UT_DocsPanel
                 app.RequestedThemeVariant = ThemeVariant.Default;
             }
         });
+    }
+
+    /// <summary>
+    /// Verifies that clicking a link browses to its page and the panel then ignores the caret.
+    /// </summary>
+    [TestMethod]
+    public Task ClickingLink_BrowsesAndIgnoresCaret()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            await driver.ClickDocLinkAsync("Math");
+
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+            driver.DocsState.Should().Be(DocsPanelState.Browsing);
+            StateText(driver).Should().Be("Browsing");
+
+            driver.MoveCaretTo(OffsetIn("price"));
+            await PumpAsync(driver, TimeSpan.FromMilliseconds(600));
+
+            driver.DocsTitle.Should().Be("Math");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that F1 in the editor while browsing returns to following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task F1_WhileBrowsing_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+
+            driver.TextEditor.TextArea.Focus();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsState.Should().Be(DocsPanelState.Following);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that F1 while the panel itself has keyboard focus returns to following.
+    /// </summary>
+    [TestMethod]
+    public Task F1_WithPanelFocused_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+            driver.DocsPanel.IsKeyboardFocusWithin.Should().BeTrue();
+
+            driver.PressKey(Key.F1, PhysicalKey.F1);
+
+            await driver.WaitUntilAsync(
+                () => driver.DocsState == DocsPanelState.Following && driver.DocsTitle == "Math.Round",
+                $"following Math.Round (state {driver.DocsState}, showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the Follow caret button returns to following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task FollowCaretButton_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+
+            await driver.ClickDocsButtonAsync("Follow caret (F1)");
+
+            await driver.WaitUntilAsync(
+                () => driver.DocsState == DocsPanelState.Following && driver.DocsTitle == "Math.Round",
+                $"following Math.Round (state {driver.DocsState}, showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the Back and Forward buttons step through visited pages.
+    /// </summary>
+    [TestMethod]
+    public Task BackAndForwardButtons_StepThroughPages()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", "docs page 'Math'");
+
+            await driver.ClickDocsButtonAsync("◀");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math.Round", $"back to Math.Round (showing '{driver.DocsTitle}')");
+
+            await driver.ClickDocsButtonAsync("▶");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"forward to Math (showing '{driver.DocsTitle}')");
+            driver.DocsState.Should().Be(DocsPanelState.Browsing);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that closing and reopening the panel starts with an empty history.
+    /// </summary>
+    [TestMethod]
+    public Task ReopeningAfterClose_StartsWithEmptyHistory()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", "docs page 'Math'");
+            driver.DocsPanel.Controller.CanGoBack.Should().BeTrue();
+
+            await driver.ClickDocsButtonAsync("✕");
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+
+            driver.TextEditor.TextArea.Focus();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsPanel.Controller.CanGoBack.Should().BeFalse();
+        });
+    }
+
+    private static string? StateText(SampleWindowDriver driver) =>
+        driver.DocsPanel.GetVisualDescendants().OfType<TextBlock>()
+            .Select(t => t.Text)
+            .FirstOrDefault(t => t is "Browsing" or "● Following caret");
+
+    private static async Task PumpAsync(SampleWindowDriver driver, TimeSpan duration)
+    {
+        var until = DateTime.UtcNow + duration;
+        await driver.WaitUntilAsync(() => DateTime.UtcNow >= until, "time to pass");
     }
 
     private static int OffsetIn(string word) => Script.IndexOf(word, StringComparison.Ordinal) + 1;
