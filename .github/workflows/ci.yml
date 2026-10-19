@@ -40,6 +40,11 @@ jobs:
         # headless suite — not (yet) wired into unattended CI.
         run: dotnet test UnitTests/UnitTests.csproj --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
+      - name: Test (Avalonia editor UI)
+        # Headless (Avalonia.Headless): drives the real Avalonia sample window with simulated
+        # input but needs no display, so unlike UITests it is safe to run unattended.
+        run: dotnet test CDS.CSharpScript2.Avalonia.UITests/CDS.CSharpScript2.Avalonia.UITests.csproj --no-build --configuration Release --blame-hang-timeout 5m --logger "trx;LogFileName=avalonia-ui-test-results.trx" --results-directory ./TestResults
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

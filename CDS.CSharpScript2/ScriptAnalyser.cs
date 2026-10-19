@@ -182,6 +182,50 @@ public class ScriptAnalyser
             cancellationToken: ct).ConfigureAwait(false);
 
     /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetCompletionsAsync(int, CancellationToken)"/>.</param>
+    public Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item)
+        => GetCompletionDescriptionAsync(item, CancellationToken.None);
+
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetCompletionsAsync(int, CancellationToken)"/>.</param>
+    /// <param name="ct">A token that aborts the request once the selection has moved on.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item, CancellationToken ct)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+
+        return await CodeCompletion.Manager.GetDescriptionAsync(
+            _context.Document,
+            item,
+            ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Builds the documentation page for a link target. Returns <see cref="Documentation.DocPage.Unavailable"/>
+    /// when the target no longer resolves, such as a script symbol that has been deleted.
+    /// </summary>
+    /// <param name="target">The target to resolve.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target)
+        => GetDocPageAsync(target, CancellationToken.None);
+
+    /// <summary>
+    /// Builds the documentation page for a link target. Returns <see cref="Documentation.DocPage.Unavailable"/>
+    /// when the target no longer resolves, such as a script symbol that has been deleted.
+    /// </summary>
+    /// <param name="target">The target to resolve.</param>
+    /// <param name="ct">A token that aborts the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target, CancellationToken ct)
+        => await Documentation.DocPageBuilder.BuildAsync(_context.Document, target, ct).ConfigureAwait(false);
+
+    /// <summary>
     /// Returns API information (type info, member overloads, XML docs) at the given position.
     /// Returns null when no symbol is found at that position.
     /// </summary>
@@ -191,6 +235,44 @@ public class ScriptAnalyser
     /// </remarks>
     public Task<APIInfo.APIInfoResult?> GetAPIInfoAsync(int position)
         => GetAPIInfoAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position)
+        => GetQuickInfoAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="ct">A token that aborts the request once the pointer has moved on.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position, CancellationToken ct)
+        => await APIInfo.QuickInfoProvider.GetAsync(_context.Document, position, ct).ConfigureAwait(false);
+
+    /// <summary>
+    /// Builds the documentation page for the symbol at the given position, or <see langword="null"/>
+    /// when there is no documentable symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(int position)
+        => GetDocPageAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Builds the documentation page for the symbol at the given position, or <see langword="null"/>
+    /// when there is no documentable symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="ct">A token that aborts the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(int position, CancellationToken ct)
+        => await Documentation.DocPageBuilder.BuildAsync(_context.Document, position, ct).ConfigureAwait(false);
 
     /// <summary>
     /// Returns API information (type info, member overloads, XML docs) at the given position.

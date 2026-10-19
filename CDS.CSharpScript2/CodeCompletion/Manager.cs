@@ -67,6 +67,39 @@ public static class Manager
     }
 
     /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the XML-doc
+    /// summary — for display alongside the completion list.
+    /// </summary>
+    /// <param name="document">The Roslyn <see cref="Document"/> representing the script.</param>
+    /// <param name="item">An item previously returned by <see cref="GetAsync"/>.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The description, or <see langword="null"/> if Roslyn has none for the item.</returns>
+    /// <remarks>
+    /// The item carries what Roslyn needs to find its symbol again, so the document may be a
+    /// later revision than the one the item came from. Unlike <see cref="GetAsync"/>, this lets
+    /// cancellation propagate: a description is requested per selection change, and the caller
+    /// needs to tell a superseded request from an item that has no description.
+    /// </remarks>
+    public static async Task<CompletionDescription?> GetDescriptionAsync(
+        Document document,
+        CompletionItem item,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var completionService = CompletionService.GetService(document);
+        if (completionService == null)
+        {
+            return null;
+        }
+
+        return await completionService.GetDescriptionAsync(
+            document,
+            item,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Returns the text the user has already typed at the caret — the span the completion list is
     /// filtered against. Empty when the caret sits at the start of a fresh identifier, as it does
     /// straight after a dot.
