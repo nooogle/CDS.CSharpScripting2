@@ -4,11 +4,13 @@ using Avalonia.Headless;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using AvaloniaEdit;
 using AvaloniaEdit.CodeCompletion;
 using AvaloniaEdit.Rendering;
 using CDS.CSharpScript2.Avalonia.Sample;
 using CDS.CSharpScript2.AvaloniaEditor;
+using CDS.CSharpScript2.Documentation;
 
 namespace CDS.CSharpScript2.Avalonia.UITests;
 
@@ -29,6 +31,7 @@ internal sealed class SampleWindowDriver : IDisposable
         TextEditor = (TextEditor)Editor.Content!;
         Output = Window.FindControl<TextBox>("OutputBox")!;
         Status = Window.FindControl<TextBlock>("StatusText")!;
+        DocsPanel = Window.FindControl<DocsPanel>("DocsPanel")!;
     }
 
     public MainWindow Window { get; }
@@ -40,6 +43,52 @@ internal sealed class SampleWindowDriver : IDisposable
     public TextBox Output { get; }
 
     public TextBlock Status { get; }
+
+    public DocsPanel DocsPanel { get; }
+
+    /// <summary>Whether the sample is showing the docs panel.</summary>
+    public bool IsDocsPanelVisible => DocsPanel.IsVisible;
+
+    /// <summary>The title of the page the docs panel is showing, or <see langword="null"/> for none.</summary>
+    public string? DocsTitle => DocsPanel.Controller.CurrentPage?.Title;
+
+    /// <summary>The docs panel's state.</summary>
+    public DocsPanelState DocsState => DocsPanel.Controller.State;
+
+    /// <summary>Moves the editor's caret to <paramref name="offset"/>.</summary>
+    public void MoveCaretTo(int offset)
+    {
+        TextEditor.CaretOffset = offset;
+    }
+
+    /// <summary>Clicks the centre of the visible docs-panel link showing <paramref name="text"/>.</summary>
+    public void ClickDocLink(string text)
+    {
+        var link = DocsPanel.GetVisualDescendants()
+            .OfType<DocLink>()
+            .FirstOrDefault(l => l.Text == text && l.IsEffectivelyVisible)
+            ?? throw new InvalidOperationException($"No visible docs link '{text}'.");
+        Click(link);
+    }
+
+    /// <summary>Clicks the centre of the docs-panel header button whose content is <paramref name="content"/>.</summary>
+    public void ClickDocsButton(string content)
+    {
+        var button = DocsPanel.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(b => Equals(b.Content, content) && b.IsEffectivelyVisible)
+            ?? throw new InvalidOperationException($"No visible docs button '{content}'.");
+        Click(button);
+    }
+
+    private void Click(Visual target)
+    {
+        var centre = target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), Window)
+            ?? throw new InvalidOperationException("Control is not in the window.");
+        Window.MouseMove(centre, RawInputModifiers.None);
+        Window.MouseDown(centre, MouseButton.Left, RawInputModifiers.None);
+        Window.MouseUp(centre, MouseButton.Left, RawInputModifiers.None);
+    }
 
     /// <summary>
     /// Focuses the editor, moves the caret to the end, and types <paramref name="text"/> one

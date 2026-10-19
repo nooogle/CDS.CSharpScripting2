@@ -36,6 +36,12 @@ public partial class MainWindow : Window
         ScriptEditor.Script = InitialScript;
         ScriptEditor.DiagnosticsUpdated += OnDiagnosticsUpdated;
 
+        // The docs panel never shows or hides itself; where it lives and when it is visible is
+        // the host's choice. This sample keeps it in a fixed right-hand column, hidden until F1.
+        DocsPanel.Editor = ScriptEditor;
+        DocsPanel.ShowRequested += (_, _) => DocsPanel.IsVisible = true;
+        DocsPanel.CloseRequested += (_, _) => DocsPanel.IsVisible = false;
+
         Closed += (_, _) => ScriptEditor.Dispose();
     }
 
@@ -150,6 +156,11 @@ public partial class MainWindow : Window
         {
             app.RequestedThemeVariant = variant;
         }
+    }
+
+    private void OnDocsClick(object? sender, RoutedEventArgs e)
+    {
+        ScriptEditor.RequestHelp();
     }
 
     private void OnExitClick(object? sender, RoutedEventArgs e)

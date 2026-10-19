@@ -1,5 +1,6 @@
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using CDS.CSharpScript2.Editors;
 
 namespace CDS.CSharpScript2.AvaloniaEditor;
@@ -28,6 +29,11 @@ public partial class AvaloniaScriptEditor
     /// Gets the caret's character offset in the script.
     /// </summary>
     public int CaretOffset => _textEditor.CaretOffset;
+
+    /// <summary>
+    /// The font the editor draws code in, so views beside it (the docs panel) can match it.
+    /// </summary>
+    internal FontFamily CodeFontFamily => _textEditor.FontFamily;
 
     /// <summary>
     /// Raises <see cref="HelpRequested"/> at the caret.
