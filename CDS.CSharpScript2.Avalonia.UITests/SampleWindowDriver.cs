@@ -1,8 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 using AvaloniaEdit;
+using AvaloniaEdit.CodeCompletion;
 using AvaloniaEdit.Rendering;
 using CDS.CSharpScript2.Avalonia.Sample;
 using CDS.CSharpScript2.AvaloniaEditor;
@@ -105,6 +108,38 @@ internal sealed class SampleWindowDriver : IDisposable
 
     /// <summary>The highlighted entry in the open completion list, if any.</summary>
     public string? SelectedCompletion => Editor.ActiveCompletionWindow?.CompletionList.SelectedItem?.Text;
+
+    /// <summary>
+    /// The popup AvaloniaEdit shows beside the completion list for the highlighted entry's
+    /// description, or <see langword="null"/> when no list is open.
+    /// </summary>
+    public Popup? CompletionDescriptionPopup =>
+        Editor.ActiveCompletionWindow?.GetLogicalChildren().OfType<Popup>().FirstOrDefault();
+
+    /// <summary>
+    /// The text the description popup is showing, or <see langword="null"/> when it is closed or
+    /// hidden while its description loads.
+    /// </summary>
+    public string? CompletionDescription
+    {
+        get
+        {
+            if (CompletionDescriptionPopup is not { IsOpen: true, Child: CompletionTipContentControl { IsVisible: true } tip })
+            {
+                return null;
+            }
+
+            return (tip.Content as TextBlock)?.Text;
+        }
+    }
+
+    /// <summary>Waits until the description popup shows text containing <paramref name="text"/>.</summary>
+    public Task WaitForCompletionDescriptionAsync(string text)
+    {
+        return WaitUntilAsync(
+            () => CompletionDescription?.Contains(text, StringComparison.Ordinal) == true,
+            $"completion description containing '{text}'");
+    }
 
     /// <summary>Waits until the completion list is open with <paramref name="text"/> highlighted.</summary>
     public Task WaitForSelectedCompletionAsync(string text)

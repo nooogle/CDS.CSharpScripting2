@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Input;
@@ -9,6 +10,7 @@ using AvaloniaEdit.CodeCompletion;
 using AvaloniaEdit.Document;
 using CDS.CSharpScript2.Classification;
 using CDS.CSharpScript2.CodeCompletion;
+using Microsoft.CodeAnalysis.Completion;
 
 namespace CDS.CSharpScript2.AvaloniaEditor;
 
@@ -26,6 +28,10 @@ public partial class AvaloniaScriptEditor
 
     private DispatcherTimer _completionTimer = null!;
     private CancellationTokenSource? _completionCts;
+
+    // Covers the description lookups for the entries currently in the list; cancelled whenever
+    // the list is refilled or closed, since those entries are then gone.
+    private CancellationTokenSource? _descriptionCts;
     private CompletionWindow? _completionWindow;
     private char? _completionClosingBracket;
 
@@ -243,12 +249,16 @@ public partial class AvaloniaScriptEditor
             window.StartOffset = wordStart;
             window.EndOffset = caret;
 
+            CancelAndDispose(ref _descriptionCts);
+            _descriptionCts = new CancellationTokenSource();
+            var descriptionToken = _descriptionCts.Token;
+
             var list = window.CompletionList;
             var data = list.CompletionData;
             data.Clear();
             foreach (var item in completions)
             {
-                data.Add(new RoslynCompletionData(item));
+                data.Add(new RoslynCompletionData(item, i => GetCompletionDescriptionAsync(i, descriptionToken)));
             }
 
             // CompletionData is a plain List, not an observable collection, and with filtering off
@@ -273,6 +283,36 @@ public partial class AvaloniaScriptEditor
         }
     }
 
+    /// <summary>
+    /// Looks up an entry's description for the panel beside the list.
+    /// </summary>
+    /// <returns>
+    /// The description, or <see langword="null"/> if there is none or the list has moved on.
+    /// </returns>
+    private async Task<CompletionDescription?> GetCompletionDescriptionAsync(
+        CompletionItem item,
+        CancellationToken cancellationToken)
+    {
+        if (_manager is not { } manager || _disposed)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await manager.GetCompletionDescriptionAsync(item, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The editor was disposed, which cancels this first, mid-lookup.
+            return null;
+        }
+    }
+
     // ── Window ───────────────────────────────────────────────────────────────
 
     private CompletionWindow OpenCompletionWindow()
@@ -292,9 +332,11 @@ public partial class AvaloniaScriptEditor
 
         window.Closed += (_, _) =>
         {
+            // AvaloniaEdit also closes the window itself, e.g. when the caret leaves the word.
             if (ReferenceEquals(_completionWindow, window))
             {
                 _completionWindow = null;
+                CancelAndDispose(ref _descriptionCts);
             }
         };
 
@@ -307,6 +349,7 @@ public partial class AvaloniaScriptEditor
     {
         var window = _completionWindow;
         _completionWindow = null;
+        CancelAndDispose(ref _descriptionCts);
         window?.Close();
     }
 
@@ -329,6 +372,22 @@ public partial class AvaloniaScriptEditor
             {
                 new Setter(ContentPresenter.BackgroundProperty, selectedBackground),
                 new Setter(ContentPresenter.ForegroundProperty, selectedForeground),
+            },
+        });
+
+        // The description panel beside the list. Its popup is a logical child of the window, so
+        // the window's styles reach it too.
+        window.Styles.Add(new Style(x => x.OfType<CompletionTipContentControl>())
+        {
+            Setters =
+            {
+                new Setter(BackgroundProperty, theme.Background.ToBrush()),
+                new Setter(ForegroundProperty, theme.Foreground.ToBrush()),
+                new Setter(BorderBrushProperty, System.Drawing.Color.FromArgb(96, theme.Foreground).ToBrush()),
+                new Setter(BorderThicknessProperty, new Thickness(1)),
+                new Setter(PaddingProperty, new Thickness(6, 4)),
+                new Setter(FontFamilyProperty, list.FontFamily),
+                new Setter(FontSizeProperty, list.FontSize),
             },
         });
     }

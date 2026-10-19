@@ -142,6 +142,31 @@ public class EditorManager : IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetAutoCompletions(int, CancellationToken)"/>.</param>
+    public Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item)
+        => GetCompletionDescriptionAsync(item, CancellationToken.None);
+
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetAutoCompletions(int, CancellationToken)"/>.</param>
+    /// <param name="cancellationToken">A token that abandons a request the selection has moved past.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<CompletionDescription?> GetCompletionDescriptionAsync(
+        CompletionItem item,
+        CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetCompletionDescriptionAsync(item, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Returns API info (type, overloads, XML docs) at the given cursor position.</summary>
     public Task<APIInfo.APIInfoResult?> GetAPIInfo(int cursorPosition)
         => GetAPIInfo(cursorPosition, CancellationToken.None);

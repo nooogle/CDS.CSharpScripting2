@@ -251,10 +251,16 @@ public class ScriptContext : IDisposable
             System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86)
         };
 
-        foreach (var root in programFilesPaths)
+        var dotnetRoots = new[] { GetRunningDotnetRoot() }
+            .Concat(programFilesPaths.Select(root => Path.Combine(root, "dotnet")))
+            .Where(root => !string.IsNullOrEmpty(root))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var dotnetRoot in dotnetRoots)
         {
             // .NET 5+ reference assemblies
-            var packsRoot = Path.Combine(root, "dotnet", "packs", "Microsoft.NETCore.App.Ref");
+            var packsRoot = Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref");
             if (Directory.Exists(packsRoot))
             {
                 foreach (var packDir in Directory.GetDirectories(packsRoot)
@@ -274,7 +280,10 @@ public class ScriptContext : IDisposable
                     }
                 }
             }
+        }
 
+        foreach (var root in programFilesPaths)
+        {
             // .NET Framework reference assemblies (xml docs are not shipped next to runtime dlls)
             var netFxRoot = Path.Combine(root, "Reference Assemblies", "Microsoft", "Framework", ".NETFramework");
             if (Directory.Exists(netFxRoot))
@@ -289,5 +298,26 @@ public class ScriptContext : IDisposable
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Returns the root of the .NET installation the process is running on — the folder holding
+    /// <c>packs</c> — or <see langword="null"/> on .NET Framework. Needed because the install is
+    /// only under Program Files on Windows; macOS and Linux put it elsewhere
+    /// (<c>/usr/local/share/dotnet</c>, <c>/usr/share/dotnet</c>, <c>~/.dotnet</c>).
+    /// </summary>
+    private static string? GetRunningDotnetRoot()
+    {
+        // CoreLib lives at <root>/shared/Microsoft.NETCore.App/<version>/.
+        var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
+        var frameworkDir = runtimeDir is null ? null : Path.GetDirectoryName(runtimeDir);
+
+        if (frameworkDir is null ||
+            !string.Equals(Path.GetFileName(frameworkDir), "Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return Path.GetDirectoryName(Path.GetDirectoryName(frameworkDir));
     }
 }

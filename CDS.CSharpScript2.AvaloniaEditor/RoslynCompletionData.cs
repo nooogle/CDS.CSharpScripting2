@@ -11,9 +11,17 @@ namespace CDS.CSharpScript2.AvaloniaEditor;
 /// </summary>
 internal sealed class RoslynCompletionData : ICompletionData
 {
-    public RoslynCompletionData(CompletionItem item)
+    private readonly Func<CompletionItem, Task<CompletionDescription?>> _describe;
+    private CompletionDescriptionView? _description;
+
+    /// <param name="item">The Roslyn item.</param>
+    /// <param name="describe">
+    /// Looks up the item's description; called at most once, the first time the entry is highlighted.
+    /// </param>
+    public RoslynCompletionData(CompletionItem item, Func<CompletionItem, Task<CompletionDescription?>> describe)
     {
         Item = item;
+        _describe = describe;
     }
 
     public CompletionItem Item { get; }
@@ -22,7 +30,9 @@ internal sealed class RoslynCompletionData : ICompletionData
 
     public object Content => Item.DisplayText;
 
-    public object? Description => null;
+    // Created on first highlight rather than up front: a list can hold thousands of entries and
+    // only the few the user visits need a Roslyn lookup. Kept, so returning to an entry is instant.
+    public object Description => _description ??= new CompletionDescriptionView(_describe(Item));
 
     public IImage? Image => null;
 

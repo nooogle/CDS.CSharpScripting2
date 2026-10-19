@@ -222,6 +222,68 @@ public class UT_AvaloniaScriptEditorCompletion
         });
     }
 
+    // ── Description panel ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that the highlighted entry's signature and XML-doc summary appear beside the list.
+    /// </summary>
+    [TestMethod]
+    public Task HighlightedEntry_ShowsSignatureAndSummary()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync("Math");
+
+            driver.Type(".Sqr");
+            await driver.WaitForSelectedCompletionAsync("Sqrt");
+
+            await driver.WaitForCompletionDescriptionAsync("double Math.Sqrt(double d)");
+            driver.CompletionDescription.Should().Contain("square root");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that moving the highlight replaces the description with the new entry's.
+    /// </summary>
+    [TestMethod]
+    public Task MovingHighlight_ShowsNewEntrysDescription()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync("Console");
+
+            driver.Type(".Write");
+            await driver.WaitForSelectedCompletionAsync("Write");
+            await driver.WaitForCompletionDescriptionAsync("Console.Write(");
+
+            driver.PressKey(Key.Down, PhysicalKey.ArrowDown);
+
+            await driver.WaitForSelectedCompletionAsync("WriteLine");
+            await driver.WaitForCompletionDescriptionAsync("Console.WriteLine(");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the description popup closes along with the list.
+    /// </summary>
+    [TestMethod]
+    public Task ClosingList_ClosesDescription()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync("Math");
+
+            driver.Type(".Sqr");
+            await driver.WaitForCompletionDescriptionAsync("Math.Sqrt(");
+            var popup = driver.CompletionDescriptionPopup!;
+
+            driver.PressKey(Key.Escape, PhysicalKey.Escape);
+
+            driver.Editor.IsCompletionListOpen.Should().BeFalse();
+            popup.IsOpen.Should().BeFalse();
+        });
+    }
+
     private static async Task<SampleWindowDriver> StartAsync(string script)
     {
         var driver = new SampleWindowDriver();

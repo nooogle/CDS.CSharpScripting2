@@ -182,6 +182,32 @@ public class ScriptAnalyser
             cancellationToken: ct).ConfigureAwait(false);
 
     /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetCompletionsAsync(int, CancellationToken)"/>.</param>
+    public Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item)
+        => GetCompletionDescriptionAsync(item, CancellationToken.None);
+
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetCompletionsAsync(int, CancellationToken)"/>.</param>
+    /// <param name="ct">A token that aborts the request once the selection has moved on.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item, CancellationToken ct)
+    {
+        if (item == null)
+            throw new ArgumentNullException(nameof(item));
+
+        return await CodeCompletion.Manager.GetDescriptionAsync(
+            _context.Document,
+            item,
+            ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Returns API information (type info, member overloads, XML docs) at the given position.
     /// Returns null when no symbol is found at that position.
     /// </summary>
