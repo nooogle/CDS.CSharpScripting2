@@ -95,6 +95,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         _fullPassTimer.Tick += OnFullPassTimerTick;
 
         InitialiseCompletion();
+        InitialiseCallTips();
 
         ActualThemeVariantChanged += (_, _) => ApplyTheme();
 
@@ -141,6 +142,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
             ThrowIfDisposed();
             CloseCompletionWindow();
             CancelCompletion();
+            CancelCallTip();
             _textEditor.Text = value ?? string.Empty;
         }
     }
@@ -243,6 +245,11 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         if (_completionWindow is not null)
         {
             ApplyCompletionTheme(_completionWindow, theme);
+        }
+
+        if (_callTipWindow is not null)
+        {
+            ApplyCallTipTheme(_callTipWindow, theme);
         }
 
         textView.Redraw();
@@ -458,6 +465,7 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         _textEditor.PointerHover -= OnPointerHover;
         _textEditor.PointerHoverStopped -= OnPointerHoverStopped;
         DetachCompletion();
+        DetachCallTips();
 
         _manager?.Dispose();
         _manager = null;
@@ -473,6 +481,8 @@ public partial class AvaloniaScriptEditor : UserControl, IScriptEditor
         _completionTimer.Stop();
         CancelAndDispose(ref _completionCts);
         CloseCompletionWindow();
+
+        CancelCallTip();
     }
 
     private static void CancelAndDispose(ref CancellationTokenSource? cts)

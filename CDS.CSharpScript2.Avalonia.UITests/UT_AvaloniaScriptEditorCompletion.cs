@@ -222,6 +222,28 @@ public class UT_AvaloniaScriptEditorCompletion
         });
     }
 
+    /// <summary>
+    /// Verifies that typing a character that ends the word cancels a completion request still
+    /// waiting out its debounce, so a list for the new caret position doesn't open unasked —
+    /// e.g. over a call tip while an argument like 'a' is being typed.
+    /// </summary>
+    [TestMethod]
+    public Task TypingNonIdentifierCharacter_CancelsPendingRequest()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync(TextVariable + "var c = ");
+
+            driver.Type("'a");
+            driver.Editor.IsCompletionRequestPending.Should().BeTrue("a letter starts a debounced request");
+
+            driver.Type("'");
+
+            driver.Editor.IsCompletionRequestPending.Should().BeFalse();
+            driver.Editor.IsCompletionListOpen.Should().BeFalse();
+        });
+    }
+
     // ── Description panel ────────────────────────────────────────────────────
 
     /// <summary>

@@ -40,6 +40,9 @@ public partial class AvaloniaScriptEditor
     /// </summary>
     public bool IsCompletionListOpen => _completionWindow is not null;
 
+    /// <summary>True while a debounced completion request is waiting to start. Exposed for UI tests.</summary>
+    internal bool IsCompletionRequestPending => _completionTimer.IsEnabled;
+
     /// <summary>The open completion window, if any. Exposed for UI tests.</summary>
     internal CompletionWindow? ActiveCompletionWindow => _completionWindow;
 
@@ -130,6 +133,12 @@ public partial class AvaloniaScriptEditor
             // because the core re-filters and re-ranks per request: substring and word-initial
             // matches must stay offered as the user types on.
             StartCompletionSession(immediate: false);
+        }
+        else if (!IsIdentifierCharacter(ch))
+        {
+            // The word has ended. A request still waiting out its debounce would otherwise run
+            // for wherever the caret is now and open a list nobody asked for.
+            CancelCompletion();
         }
     }
 

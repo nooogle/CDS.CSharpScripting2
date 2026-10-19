@@ -141,6 +141,19 @@ internal sealed class SampleWindowDriver : IDisposable
             $"completion description containing '{text}'");
     }
 
+    /// <summary>
+    /// What the open call tip is showing, or <see langword="null"/> when no tip is open.
+    /// </summary>
+    public CallTipOverloadProvider? CallTip => Editor.IsCallTipOpen ? Editor.ActiveCallTip : null;
+
+    /// <summary>Waits until a call tip is open with <paramref name="activeParameter"/> highlighted.</summary>
+    public Task WaitForCallTipParameterAsync(string activeParameter)
+    {
+        return WaitUntilAsync(
+            () => CallTip?.ActiveParameterText == activeParameter,
+            $"call tip with '{activeParameter}' highlighted (showing: '{CallTip?.SignatureText}', active: '{CallTip?.ActiveParameterText}')");
+    }
+
     /// <summary>Waits until the completion list is open with <paramref name="text"/> highlighted.</summary>
     public Task WaitForSelectedCompletionAsync(string text)
     {

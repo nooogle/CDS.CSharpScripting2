@@ -33,8 +33,7 @@ internal static class CallTipService
         while (node is not null)
         {
             if (node is ArgumentListSyntax argList &&
-                argList.OpenParenToken.SpanStart < position &&
-                position <= argList.Span.End)
+                IsInside(argList.OpenParenToken, argList.CloseParenToken, argList.Span, position))
             {
                 return new CallTipContext
                 {
@@ -44,8 +43,7 @@ internal static class CallTipService
             }
 
             if (node is BracketedArgumentListSyntax bracketedArgList &&
-                bracketedArgList.OpenBracketToken.SpanStart < position &&
-                position <= bracketedArgList.Span.End)
+                IsInside(bracketedArgList.OpenBracketToken, bracketedArgList.CloseBracketToken, bracketedArgList.Span, position))
             {
                 return new CallTipContext
                 {
@@ -58,6 +56,18 @@ internal static class CallTipService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// True when <paramref name="position"/> lies between an argument list's brackets: after the
+    /// opening one, and no further than the closing one — or, while that has not been typed yet,
+    /// the end of the list. A caret just past a typed closing bracket has left the call, which is
+    /// what lets an editor fall back to the enclosing call's tip.
+    /// </summary>
+    private static bool IsInside(SyntaxToken open, SyntaxToken close, Microsoft.CodeAnalysis.Text.TextSpan span, int position)
+    {
+        var end = close.IsMissing ? span.End : close.SpanStart;
+        return open.SpanStart < position && position <= end;
     }
 
     /// <summary>
