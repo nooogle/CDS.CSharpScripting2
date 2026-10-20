@@ -83,6 +83,12 @@ internal sealed class SampleWindowDriver : IDisposable
 
     private async Task ClickAsync(Control target)
     {
+        // A page the panel has only just rendered has had no layout pass yet: its controls have
+        // empty bounds, so BringIntoView does nothing and the click lands at the control's origin.
+        await WaitUntilAsync(
+            () => target.IsArrangeValid && target.Bounds.Width > 0 && target.Bounds.Height > 0,
+            "the click target to be laid out");
+
         // Scroll the target into the panel's viewport, then wait for layout to put it there.
         target.BringIntoView();
         var scrollViewer = DocsPanel.GetVisualDescendants().OfType<ScrollViewer>().First();
