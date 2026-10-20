@@ -90,7 +90,8 @@ public class UT_DocPages
         var page = await GetPageAsync(RoundScript, "Math");
 
         page!.MemberGroups.Select(g => g.Heading).Should().Equal("Fields", "Methods");
-        page.MemberGroups[0].Members.Select(m => m.Name).Should().Contain(["E", "PI", "Tau"]);
+        // Not Tau: it arrived in .NET 5, so net48's Math lacks it.
+        page.MemberGroups[0].Members.Select(m => m.Name).Should().Contain(["E", "PI"]);
         page.MemberGroups[1].Members.Single(m => m.Name == "Round").OverloadCount.Should().Be(8);
         var names = page.MemberGroups.SelectMany(g => g.Members).Select(m => m.Name).ToList();
         names.Should().NotContain(n => n.StartsWith("get_") || n.StartsWith("set_") || n.StartsWith("op_"));
