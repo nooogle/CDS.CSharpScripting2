@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Avalonia Sample",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build Avalonia Sample",
+            "program": "${workspaceFolder}/CDS.CSharpScript2.Avalonia.Sample/bin/Debug/net10.0/CDS.CSharpScript2.Avalonia.Sample.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/CDS.CSharpScript2.Avalonia.Sample",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "ConsoleTest (Windows only)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build ConsoleTest",
+            "program": "${workspaceFolder}/ConsoleTest/bin/Debug/net10.0-windows/ConsoleTest.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/ConsoleTest",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        }
+    ]
+}

@@ -19,7 +19,7 @@ namespace CDS.CSharpScript2.Editors;
 /// stay on their own synchronisation context across the await.
 /// </para>
 /// </remarks>
-public class EditorManager : IDisposable
+public class EditorManager : IDisposable, Documentation.IDocPageSource
 {
     private ScriptContext? _context;
     private ExecutableScript? _cachedExecutableScript;
@@ -139,6 +139,90 @@ public class EditorManager : IDisposable
         await EnsureContext(cancellationToken).ConfigureAwait(false);
         return await RunAnalysisAsync(
             a => a.GetCompletionsAsync(cursorPosition, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetAutoCompletions(int, CancellationToken)"/>.</param>
+    public Task<CompletionDescription?> GetCompletionDescriptionAsync(CompletionItem item)
+        => GetCompletionDescriptionAsync(item, CancellationToken.None);
+
+    /// <summary>
+    /// Returns Roslyn's description of a completion item — its signature followed by the
+    /// XML-doc summary — or <see langword="null"/> if it has none.
+    /// </summary>
+    /// <param name="item">An item returned by <see cref="GetAutoCompletions(int, CancellationToken)"/>.</param>
+    /// <param name="cancellationToken">A token that abandons a request the selection has moved past.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<CompletionDescription?> GetCompletionDescriptionAsync(
+        CompletionItem item,
+        CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetCompletionDescriptionAsync(item, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position)
+        => GetQuickInfoAsync(position, CancellationToken.None);
+
+    /// <summary>
+    /// Returns compact information about the symbol at the given position — what it is and a
+    /// one-paragraph summary — for a hover popup, or <see langword="null"/> when there is no
+    /// symbol there.
+    /// </summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="cancellationToken">A token that abandons a request the pointer has moved past.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<APIInfo.QuickInfo?> GetQuickInfoAsync(int position, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetQuickInfoAsync(position, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Builds the documentation page for the symbol at the given position, or <see langword="null"/> when there is none.</summary>
+    /// <param name="position">The offset within the script.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(int position)
+        => GetDocPageAsync(position, CancellationToken.None);
+
+    /// <summary>Builds the documentation page for the symbol at the given position, or <see langword="null"/> when there is none.</summary>
+    /// <param name="position">The offset within the script.</param>
+    /// <param name="cancellationToken">A token that abandons the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(int position, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetDocPageAsync(position, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Builds the documentation page for a link target, or the unavailable page when it no longer resolves.</summary>
+    /// <param name="target">The target to resolve.</param>
+    public Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target)
+        => GetDocPageAsync(target, CancellationToken.None);
+
+    /// <summary>Builds the documentation page for a link target, or the unavailable page when it no longer resolves.</summary>
+    /// <param name="target">The target to resolve.</param>
+    /// <param name="cancellationToken">A token that abandons the request.</param>
+    /// <exception cref="OperationCanceledException">The request was cancelled.</exception>
+    public async Task<Documentation.DocPage?> GetDocPageAsync(Documentation.DocTarget target, CancellationToken cancellationToken)
+    {
+        await EnsureContext(cancellationToken).ConfigureAwait(false);
+        return await RunAnalysisAsync(
+            a => a.GetDocPageAsync(target, cancellationToken),
             cancellationToken).ConfigureAwait(false);
     }
 

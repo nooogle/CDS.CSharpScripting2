@@ -1,0 +1,406 @@
+using AwesomeAssertions;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Styling;
+using Avalonia.VisualTree;
+using CDS.CSharpScript2.AvaloniaEditor;
+using CDS.CSharpScript2.Classification;
+using CDS.CSharpScript2.Documentation;
+
+namespace CDS.CSharpScript2.Avalonia.UITests;
+
+[TestClass]
+public class UT_DocsPanel
+{
+    private const string Script = "var price = 19.987;\nvar shown = Math.Round(price, 2);\nvar text = string.Empty;";
+
+    /// <summary>
+    /// Verifies that F1 on a method call shows the panel on that method's page, following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task F1_ShowsPanelWithMethodPage()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            driver.IsDocsPanelVisible.Should().BeFalse();
+
+            await PressF1OnAsync(driver, "Round");
+
+            driver.IsDocsPanelVisible.Should().BeTrue();
+            driver.DocsTitle.Should().Be("Math.Round");
+            driver.DocsState.Should().Be(DocsPanelState.Following);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that while following, moving the caret onto another symbol shows its page.
+    /// </summary>
+    [TestMethod]
+    public Task MovingCaret_UpdatesPage()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.MoveCaretTo(OffsetIn("Math"));
+
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the close button hides the panel and closes the controller.
+    /// </summary>
+    [TestMethod]
+    public Task CloseButton_HidesPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            await driver.ClickDocsButtonAsync("✕");
+
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+            driver.DocsState.Should().Be(DocsPanelState.Closed);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that Escape while the panel has keyboard focus hides the panel.
+    /// </summary>
+    [TestMethod]
+    public Task Escape_InPanel_HidesPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsPanel.Focus();
+            driver.PressKey(Key.Escape, PhysicalKey.Escape);
+
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+            driver.DocsState.Should().Be(DocsPanelState.Closed);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that a host that hides the panel by its own means and calls <c>Close()</c> gets a fresh
+    /// panel on the next F1: no history, following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task HostClose_ResetsPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Browsing);
+            driver.DocsPanel.Controller.CanGoBack.Should().BeTrue();
+
+            driver.DocsPanel.Close();
+            driver.DocsPanel.IsVisible = false;
+
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Closed);
+            await PressF1OnAsync(driver, "Round");
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Following);
+            driver.DocsPanel.Controller.CanGoBack.Should().BeFalse();
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the first F1 never flashes the empty-state hint while the page is on its way.
+    /// </summary>
+    [TestMethod]
+    public Task FirstF1_NeverShowsTheHintWhileLoading()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            bool HintShown() => driver.DocsPanel.GetVisualDescendants().OfType<TextBlock>()
+                .Any(t => t.Text == DocPageRenderer.EmptyHint);
+            driver.MoveCaretTo(OffsetIn("Round"));
+
+            var hintSeen = false;
+            driver.PressKey(Key.F1, PhysicalKey.F1);
+            hintSeen |= HintShown();
+            await driver.WaitUntilAsync(
+                () =>
+                {
+                    hintSeen |= HintShown();
+                    return driver.DocsTitle == "Math.Round";
+                },
+                $"docs page 'Math.Round' (showing '{driver.DocsTitle}')");
+
+            hintSeen.Should().BeFalse();
+            driver.DocsPanel.State.Should().Be(DocsPanelState.Following);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that closing the panel with Escape returns keyboard focus to the editor.
+    /// </summary>
+    [TestMethod]
+    public Task Escape_InPanel_ReturnsFocusToEditor()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsPanel.Focus();
+            driver.PressKey(Key.Escape, PhysicalKey.Escape);
+
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+            driver.TextEditor.TextArea.IsFocused.Should().BeTrue();
+        });
+    }
+
+    /// <summary>
+    /// Verifies that replacing the editor's environment, which replaces its manager, does not
+    /// stop the open panel following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task ChangingEnvironment_WhileOpen_KeepsWorking()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.Editor.Environment = driver.Editor.Environment;
+            driver.MoveCaretTo(OffsetIn("Math"));
+
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that a long page scrolls inside the panel rather than stretching it past the window.
+    /// </summary>
+    [TestMethod]
+    public Task LongPage_Scrolls()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+
+            // Short enough that String's member list cannot fit.
+            driver.Window.Height = 400;
+
+            driver.MoveCaretTo(OffsetIn("string"));
+            driver.PressKey(Key.F1, PhysicalKey.F1);
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "String", $"docs page 'String' (showing '{driver.DocsTitle}')");
+
+            var scrollViewer = driver.DocsPanel.GetVisualDescendants().OfType<ScrollViewer>().First();
+            await driver.WaitUntilAsync(
+                () => scrollViewer.Extent.Height > scrollViewer.Viewport.Height,
+                $"the docs body to overflow its viewport (extent {scrollViewer.Extent}, viewport {scrollViewer.Viewport})");
+
+            driver.DocsPanel.Bounds.Height.Should().BeLessThanOrEqualTo(driver.Window.ClientSize.Height);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that setting the editor's explicit colour theme while the panel is open recolours
+    /// the panel, with no theme-variant change to prompt it.
+    /// </summary>
+    [TestMethod]
+    public Task ChangingEditorColorTheme_RecoloursPanel()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            var app = global::Avalonia.Application.Current!;
+            app.RequestedThemeVariant = ThemeVariant.Light;
+            try
+            {
+                using var driver = await StartAsync();
+                await PressF1OnAsync(driver, "Round");
+                var frame = driver.DocsPanel.GetVisualDescendants().OfType<Border>().First();
+                var dark = EditorTheme.Dark.Background;
+                bool IsDark() => frame.Background is ISolidColorBrush brush
+                    && brush.Color == Color.FromArgb(dark.A, dark.R, dark.G, dark.B);
+                IsDark().Should().BeFalse();
+
+                driver.Editor.ColorTheme = EditorTheme.Dark;
+
+                await driver.WaitUntilAsync(IsDark, $"docs panel background to turn dark (is {frame.Background})");
+            }
+            finally
+            {
+                app.RequestedThemeVariant = ThemeVariant.Default;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Verifies that clicking a link browses to its page and the panel then ignores the caret.
+    /// </summary>
+    [TestMethod]
+    public Task ClickingLink_BrowsesAndIgnoresCaret()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+
+            await driver.ClickDocLinkAsync("Math");
+
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"docs page 'Math' (showing '{driver.DocsTitle}')");
+            driver.DocsState.Should().Be(DocsPanelState.Browsing);
+            StateText(driver).Should().Be("Browsing");
+
+            driver.MoveCaretTo(OffsetIn("price"));
+            await PumpAsync(driver, TimeSpan.FromMilliseconds(600));
+
+            driver.DocsTitle.Should().Be("Math");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that F1 in the editor while browsing returns to following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task F1_WhileBrowsing_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+
+            driver.TextEditor.TextArea.Focus();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsState.Should().Be(DocsPanelState.Following);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that F1 while the panel itself has keyboard focus returns to following.
+    /// </summary>
+    [TestMethod]
+    public Task F1_WithPanelFocused_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+            driver.DocsPanel.IsKeyboardFocusWithin.Should().BeTrue();
+
+            driver.PressKey(Key.F1, PhysicalKey.F1);
+
+            await driver.WaitUntilAsync(
+                () => driver.DocsState == DocsPanelState.Following && driver.DocsTitle == "Math.Round",
+                $"following Math.Round (state {driver.DocsState}, showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the Follow caret button returns to following the caret.
+    /// </summary>
+    [TestMethod]
+    public Task FollowCaretButton_ReturnsToFollowing()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsState == DocsPanelState.Browsing, "browsing");
+
+            await driver.ClickDocsButtonAsync("Follow caret (F1)");
+
+            await driver.WaitUntilAsync(
+                () => driver.DocsState == DocsPanelState.Following && driver.DocsTitle == "Math.Round",
+                $"following Math.Round (state {driver.DocsState}, showing '{driver.DocsTitle}')");
+        });
+    }
+
+    /// <summary>
+    /// Verifies that the Back and Forward buttons step through visited pages.
+    /// </summary>
+    [TestMethod]
+    public Task BackAndForwardButtons_StepThroughPages()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", "docs page 'Math'");
+
+            await driver.ClickDocsButtonAsync("◀");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math.Round", $"back to Math.Round (showing '{driver.DocsTitle}')");
+
+            await driver.ClickDocsButtonAsync("▶");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", $"forward to Math (showing '{driver.DocsTitle}')");
+            driver.DocsState.Should().Be(DocsPanelState.Browsing);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that closing and reopening the panel starts with an empty history.
+    /// </summary>
+    [TestMethod]
+    public Task ReopeningAfterClose_StartsWithEmptyHistory()
+    {
+        return HeadlessTestSession.RunAsync(async () =>
+        {
+            using var driver = await StartAsync();
+            await PressF1OnAsync(driver, "Round");
+            await driver.ClickDocLinkAsync("Math");
+            await driver.WaitUntilAsync(() => driver.DocsTitle == "Math", "docs page 'Math'");
+            driver.DocsPanel.Controller.CanGoBack.Should().BeTrue();
+
+            await driver.ClickDocsButtonAsync("✕");
+            await driver.WaitUntilAsync(() => !driver.IsDocsPanelVisible, "docs panel to hide");
+
+            driver.TextEditor.TextArea.Focus();
+            await PressF1OnAsync(driver, "Round");
+
+            driver.DocsPanel.Controller.CanGoBack.Should().BeFalse();
+        });
+    }
+
+    private static string? StateText(SampleWindowDriver driver) =>
+        driver.DocsPanel.GetVisualDescendants().OfType<TextBlock>()
+            .Select(t => t.Text)
+            .FirstOrDefault(t => t is "Browsing" or "● Following caret");
+
+    private static async Task PumpAsync(SampleWindowDriver driver, TimeSpan duration)
+    {
+        var until = DateTime.UtcNow + duration;
+        await driver.WaitUntilAsync(() => DateTime.UtcNow >= until, "time to pass");
+    }
+
+    private static int OffsetIn(string word) => Script.IndexOf(word, StringComparison.Ordinal) + 1;
+
+    private static async Task PressF1OnAsync(SampleWindowDriver driver, string word)
+    {
+        driver.MoveCaretTo(OffsetIn(word));
+        driver.PressKey(Key.F1, PhysicalKey.F1);
+
+        var expected = word == "Round" ? "Math.Round" : word;
+        await driver.WaitUntilAsync(
+            () => driver.DocsTitle == expected,
+            $"docs page '{expected}' (showing '{driver.DocsTitle}')");
+    }
+
+    private static async Task<SampleWindowDriver> StartAsync()
+    {
+        var driver = new SampleWindowDriver();
+        await driver.WaitForInitialAnalysisAsync();
+        driver.SetScriptWithCaretAtEnd(Script);
+        return driver;
+    }
+}
