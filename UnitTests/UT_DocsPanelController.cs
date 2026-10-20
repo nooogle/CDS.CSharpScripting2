@@ -357,11 +357,12 @@ public class UT_DocsPanelController
 
     private sealed class Request
     {
-        public int? Position { get; init; }
+        // set, not init: net48 has no IsExternalInit.
+        public int? Position { get; set; }
 
-        public DocTarget? Target { get; init; }
+        public DocTarget? Target { get; set; }
 
-        public CancellationToken Token { get; init; }
+        public CancellationToken Token { get; set; }
 
         public TaskCompletionSource<DocPage?> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }

@@ -60,7 +60,8 @@ public class UT_QuickInfo
     {
         var info = await GetQuickInfoAsync(RoundScript, "var shown");
 
-        info!.Signature.Should().Be("readonly struct System.Double");
+        // .NET Framework's Double is not declared readonly, so only the type is framework-neutral.
+        info!.Signature.Should().EndWith("struct System.Double");
     }
 
     [TestMethod]
