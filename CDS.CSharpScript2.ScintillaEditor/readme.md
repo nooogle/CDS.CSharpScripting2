@@ -95,6 +95,27 @@ provisional API information window instead.
 See the [CDS.CSharpScript2.WinForms.Sample](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/CDS.CSharpScript2.WinForms.Sample)
 project for a full working example.
 
+## Ready-made panel (`ScriptEditorPanel`)
+
+`ScriptEditorPanel` is the three controls above already wired together: the editor on top, the
+output panel below it, and the documentation panel in a column to the right that appears on F1 and
+goes away when closed. For most hosts it is the quickest way in:
+
+```csharp
+var panel = new ScriptEditorPanel { Dock = DockStyle.Fill };
+Controls.Add(panel);
+
+panel.API.Environment = ScriptEnvironment.Default;   // the editor's scripting API
+panel.API.Script = "Console.WriteLine(\"Hello\");";
+
+var executable = await panel.API.CompileAsync();
+panel.Output.AppendLine("Compiled");                 // the output panel
+panel.Theme = EditorTheme.Dark;                      // editor + output + docs, together
+```
+
+`Editor`, `Output` and `Docs` expose the individual controls when you need their WinForms surface.
+If you need a different arrangement, use the controls individually instead.
+
 ## Requirements
 
 - .NET 10.0 (Windows) or .NET Framework 4.8
