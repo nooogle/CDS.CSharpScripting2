@@ -16,6 +16,10 @@ A Roslyn-powered C# scripting framework for .NET. Embed a full C# script engine 
 | `CDS.CSharpScript2` | Core scripting engine |
 | `CDS.CSharpScript2.ScintillaEditor` | WinForms editor control (Scintilla5-based) |
 
+Both packages target .NET 10 (the editor: .NET 10 on Windows) and .NET Framework 4.8.
+
+The repository also contains an RTF-based WinForms editor (`CDS.CSharpScript2.RTFEditor`) and an Avalonia editor (`CDS.CSharpScript2.AvaloniaEditor`, cross-platform, .NET 10). Neither is published to NuGet; reference them from source. Runnable examples live in `CDS.CSharpScript2.WinForms.Sample`, `CDS.CSharpScript2.Avalonia.Sample` and `ConsoleTest`.
+
 ---
 
 ## Core Engine
@@ -111,6 +115,9 @@ else
 - Hover tooltips with XML-doc summaries
 - Error/warning squiggles and a live diagnostic list
 - Find/Replace
+- A `DocsPanel` companion control: F1 shows the full XML documentation for the symbol at the caret (see the [editor readme](CDS.CSharpScript2.ScintillaEditor/readme.md))
+- Code folding with save/restore of the folded state
+- A ready-made `ScriptEditorPanel` that combines the editor, an output panel and the docs panel
 
 Add the control to a form and wire up an environment:
 
@@ -135,6 +142,20 @@ if (!executable.HasErrors)
 ```
 
 All scripting properties and methods are accessed through `editor.API` to keep them separate from the standard WinForms `Control` surface.
+
+### Ready-made panel
+
+Most hosts want the editor, an output area and the F1 docs panel together. `ScriptEditorPanel` is those three controls already wired up:
+
+```csharp
+var panel = new ScriptEditorPanel { Dock = DockStyle.Fill };
+Controls.Add(panel);
+
+panel.API.Environment = ScriptEnvironment.Default;
+var executable = await panel.API.CompileAsync();
+panel.Output.AppendLine(executable.HasErrors ? "Errors" : "OK");
+panel.Theme = EditorTheme.Dark;   // editor, output and docs together
+```
 
 ---
 

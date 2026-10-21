@@ -1,11 +1,11 @@
 # CDS.CSharpScript2
 
-Roslyn-powered C# scripting engine for .NET 10.
+Roslyn-powered C# scripting engine for .NET 10 and .NET Framework 4.8.
 
 ## Description
 
 `CDS.CSharpScript2` lets you embed full C# scripting — compilation, execution, IntelliSense, and
-syntax classification — into any .NET 10 application.
+syntax classification — into any .NET 10 or .NET Framework 4.8 application.
 
 ## Features
 
@@ -103,7 +103,7 @@ Pair with the editor package for a ready-to-use WinForms control:
 
 ## Requirements
 
-- .NET 10.0
+- .NET 10.0 or .NET Framework 4.8
 
 ## Attributions
 

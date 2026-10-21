@@ -24,8 +24,10 @@ A Spectre.Console menu lets you navigate between demos with arrow keys. Each dem
 | **Shared data** | Pass a host object into the script as global state; run the same compiled script multiple times without recompiling. |
 | **MathNet demo** | Give the script access to an external NuGet assembly (`MathNet.Numerics`); shows how to add assembly references to the `ScriptEnvironment`. |
 | **OpenCvSharp demo** | Same pattern as MathNet but with a native-backed library; also exercises namespace injection and shared data with complex types. |
-| **Code completion → Built-in demos** | Drives `ScriptAnalyser.GetCompletionsAsync` at various cursor positions and prints the top suggestions; useful for checking completion quality after engine changes. |
-| **Code completion → User entered script** | Stub — intended as an interactive completion explorer. Currently unimplemented. |
+| **Completion suggestions** (under *Code completion*) | Drives `ScriptAnalyser.GetCompletionsAsync` at various cursor positions and prints the top suggestions; useful for checking completion quality after engine changes. |
+| **Completion suggestions (user script)** | Placeholder for an interactive completion explorer; currently does nothing. |
+| **Typing session (responsiveness)** | Simulates typing a line of code using the Scintilla editor's completion trigger policy and times each trigger. |
+| **Responsiveness benchmark (CSV)** | Measures colour-coding and completion latency across script sizes and `#r`/`#load` directives; writes a CSV for review. |
 | **XML documentation** | Drives `ScriptAnalyser.GetAPIInfoAsync` for `Math.Pow(` and `Console.WriteLine`; verifies that type/member metadata and XML-doc summaries are extracted correctly. |
 | **Environment information** | Prints runtime environment details (from `TestUtils.RuntimeEnvironmentInfo`); useful on new machines or after SDK upgrades to confirm the expected runtime is being used. |
 

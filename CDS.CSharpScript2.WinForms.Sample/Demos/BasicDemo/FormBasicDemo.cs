@@ -28,13 +28,13 @@ public partial class FormBasicDemo : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
+        scriptPanel.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
 
         // Fold levels are computed asynchronously, so the saved fold state can only be reapplied
         // once the first analysis pass has landed — the first DiagnosticsUpdated after Script is
         // set. Restoring it any earlier would have nothing to collapse yet.
-        scintillaScriptEditor.API.DiagnosticsUpdated += RestoreCollapsedFoldsOnce;
-        scintillaScriptEditor.API.Script = _settings.Script;
+        scriptPanel.API.DiagnosticsUpdated += RestoreCollapsedFoldsOnce;
+        scriptPanel.API.Script = _settings.Script;
 
         // Checking the radio button here (rather than from the designer) fires rbThemeSystem_CheckedChanged,
         // which starts following the OS theme, since by now InitializeComponent has already wired up
@@ -77,8 +77,7 @@ public partial class FormBasicDemo : Form
     /// </summary>
     private void ApplyTheme(CDS.CSharpScript2.Classification.EditorTheme theme)
     {
-        scintillaScriptEditor.Theme = theme;
-        outputPanel.Theme = theme;
+        scriptPanel.Theme = theme;
         BackColor = theme.Background;
         groupBoxTheme.ForeColor = theme.Foreground;
     }
@@ -150,8 +149,8 @@ public partial class FormBasicDemo : Form
     /// </summary>
     private void RestoreCollapsedFoldsOnce(object? sender, CDS.CSharpScript2.Editors.DiagnosticsUpdatedEventArgs e)
     {
-        scintillaScriptEditor.API.DiagnosticsUpdated -= RestoreCollapsedFoldsOnce;
-        scintillaScriptEditor.API.CollapsedFoldLines = _settings.CollapsedFoldLines;
+        scriptPanel.API.DiagnosticsUpdated -= RestoreCollapsedFoldsOnce;
+        scriptPanel.API.CollapsedFoldLines = _settings.CollapsedFoldLines;
     }
 
     /// <summary>
@@ -165,8 +164,8 @@ public partial class FormBasicDemo : Form
             return;
         }
 
-        _settings.Script = scintillaScriptEditor.API.Script;
-        _settings.CollapsedFoldLines = [.. scintillaScriptEditor.API.CollapsedFoldLines];
+        _settings.Script = scriptPanel.API.Script;
+        _settings.CollapsedFoldLines = [.. scriptPanel.API.CollapsedFoldLines];
 
         base.OnFormClosing(e);
     }
@@ -186,7 +185,7 @@ public partial class FormBasicDemo : Form
         }
 
         _isRunningOrCompiling = true;
-        outputPanel.Clear();
+        scriptPanel.Output.Clear();
 
         try
         {
@@ -195,7 +194,7 @@ public partial class FormBasicDemo : Form
         }
         catch (Exception ex)
         {
-            outputPanel.AppendLine($"Error: {ex.Message}");
+            scriptPanel.Output.AppendLine($"Error: {ex.Message}");
             return false;
         }
         finally
@@ -209,11 +208,11 @@ public partial class FormBasicDemo : Form
     /// </summary>
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => scriptPanel.Output.Append(text ?? string.Empty));
 
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.API.CompileAsync();
+            var compiled = await scriptPanel.API.CompileAsync();
             await compiled.RunAsync();
         });
     }
@@ -225,18 +224,18 @@ public partial class FormBasicDemo : Form
     {
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.API.CompileAsync();
+            var compiled = await scriptPanel.API.CompileAsync();
             var output = compiled.CompilationOutput;
 
-            outputPanel.AppendLine("Compilation complete");
+            scriptPanel.Output.AppendLine("Compilation complete");
 
             foreach (var message in output.Messages)
             {
-                outputPanel.AppendLine(message);
+                scriptPanel.Output.AppendLine(message);
             }
 
-            outputPanel.AppendLine($"\t{output.WarningCount} warnings");
-            outputPanel.AppendLine($"\t{output.ErrorCount} errors");
+            scriptPanel.Output.AppendLine($"\t{output.WarningCount} warnings");
+            scriptPanel.Output.AppendLine($"\t{output.ErrorCount} errors");
         });
     }
 
@@ -244,11 +243,11 @@ public partial class FormBasicDemo : Form
     /// Handles the Expand All button click event to expand every folded region in the editor.
     /// </summary>
     private void btnExpandAllFolds_Click(object sender, EventArgs e) =>
-        scintillaScriptEditor.API.ExpandAllFolds();
+        scriptPanel.API.ExpandAllFolds();
 
     /// <summary>
     /// Handles the Collapse All button click event to collapse every foldable region in the editor.
     /// </summary>
     private void btnCollapseAllFolds_Click(object sender, EventArgs e) =>
-        scintillaScriptEditor.API.CollapseAllFolds();
+        scriptPanel.API.CollapseAllFolds();
 }

@@ -2,6 +2,8 @@
 
 Lightweight RTF-based WinForms editor control for C# script editing, powered by Roslyn.
 
+> This project is built as part of the repository but is **not published to NuGet**; reference it from source.
+
 ## Description
 
 `CDS.CSharpScript2.RTFEditor` provides a simple WinForms `UserControl` for C# script editing
@@ -25,8 +27,8 @@ var editor = new RTFScriptEditor();
 editor.Dock = DockStyle.Fill;
 Controls.Add(editor);
 
-// Configure a ScriptEnvironment and wire it up
-editor.ScriptManager = new ScriptManager(env);
+// Setting the environment enables analysis
+editor.Environment = env;
 ```
 
 See the [CDS.CSharpScript2.WinForms.Sample](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/CDS.CSharpScript2.WinForms.Sample)
@@ -42,7 +44,7 @@ project for a full working example.
 
 ## Requirements
 
-- .NET 10.0 (Windows)
+- .NET 10.0 (Windows) or .NET Framework 4.8
 
 ## Dependencies
 

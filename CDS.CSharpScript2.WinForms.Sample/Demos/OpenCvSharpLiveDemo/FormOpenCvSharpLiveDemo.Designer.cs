@@ -38,8 +38,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo
             this.chkWebcamRunning = new System.Windows.Forms.CheckBox();
             this.comboBoxCameras = new System.Windows.Forms.ComboBox();
             this.tableLayoutPanelRight = new System.Windows.Forms.TableLayoutPanel();
-            this.scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
-            this.outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
+            this.scriptPanel = new CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel();
             this.captureTimer = new System.Windows.Forms.Timer(this.components);
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanelMain.SuspendLayout();
@@ -145,35 +144,24 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo
             // 
             this.tableLayoutPanelRight.ColumnCount = 1;
             this.tableLayoutPanelRight.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanelRight.Controls.Add(this.scintillaScriptEditor, 0, 1);
-            this.tableLayoutPanelRight.Controls.Add(this.outputPanel, 0, 2);
+            this.tableLayoutPanelRight.Controls.Add(this.scriptPanel, 0, 1);
             this.tableLayoutPanelRight.Controls.Add(this.panel1, 0, 0);
             this.tableLayoutPanelRight.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanelRight.Location = new System.Drawing.Point(560, 3);
             this.tableLayoutPanelRight.Name = "tableLayoutPanelRight";
-            this.tableLayoutPanelRight.RowCount = 3;
+            this.tableLayoutPanelRight.RowCount = 2;
             this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
-            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 66.66666F));
-            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanelRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanelRight.Size = new System.Drawing.Size(366, 517);
             this.tableLayoutPanelRight.TabIndex = 1;
             // 
-            // scintillaScriptEditor
+            // scriptPanel
             // 
-            this.scintillaScriptEditor.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.scintillaScriptEditor.Location = new System.Drawing.Point(3, 44);
-            this.scintillaScriptEditor.Name = "scintillaScriptEditor";
-            this.scintillaScriptEditor.Size = new System.Drawing.Size(360, 311);
-            this.scintillaScriptEditor.TabIndex = 5;
-            // 
-            // outputPanel
-            // 
-            this.outputPanel.AllowClickLinks2 = true;
-            this.outputPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.outputPanel.Location = new System.Drawing.Point(3, 361);
-            this.outputPanel.Name = "outputPanel";
-            this.outputPanel.Size = new System.Drawing.Size(360, 153);
-            this.outputPanel.TabIndex = 6;
+            this.scriptPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.scriptPanel.Location = new System.Drawing.Point(3, 44);
+            this.scriptPanel.Name = "scriptPanel";
+            this.scriptPanel.Size = new System.Drawing.Size(360, 470);
+            this.scriptPanel.TabIndex = 5;
             // 
             // captureTimer
             // 
@@ -219,8 +207,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpLiveDemo
         private ZoomPictureBox zoomPictureBoxDest;
         private CheckBox chkWebcamRunning;
         private TableLayoutPanel tableLayoutPanelRight;
-        private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
-        private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel scriptPanel;
         private System.Windows.Forms.Timer captureTimer;
         private ComboBox comboBoxCameras;
         private Panel panel1;

@@ -188,6 +188,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         {
             _theme = value ?? throw new ArgumentNullException(nameof(value));
             ApplyTheme();
+            ThemeChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -216,6 +217,7 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         _classificationKindToScintillaStyle = builder.ToImmutableDictionary();
 
         InitialiseScintilla();
+        InitialiseHelp();
 
         API = new ScintillaScriptEditorApi(this);
     }
@@ -1495,6 +1497,15 @@ public partial class ScintillaScriptEditor : UserControl, Editors.IScriptEditor
         }
         else if (e.KeyCode == Keys.F1)
         {
+            // A host that shows documentation itself (the docs panel) takes over from the provisional window.
+            if (ScriptHelpRequested is not null)
+            {
+                RequestHelp();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
+
             if (_manager is null || !TryGetCurrentPosition(out var pos))
             {
                 return;

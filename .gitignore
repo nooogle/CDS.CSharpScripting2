@@ -31,6 +31,8 @@ bld/
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
+# Daily work logs are tracked (see docs/log)
+!docs/log/
 [Ll]ogs/
 
 # Visual Studio 2015/2017 cache/options directory

@@ -35,8 +35,8 @@ public partial class FormOpenCvSharpLiveDemo : Form
     {
         base.OnLoad(e);
 
-        scintillaScriptEditor.API.Environment = CreateScriptEnvironment();
-        scintillaScriptEditor.API.Script = _settings.Script;
+        scriptPanel.API.Environment = CreateScriptEnvironment();
+        scriptPanel.API.Script = _settings.Script;
 
         zoomPictureBoxSource.ViewportChanged += OnSourceViewportChanged;
 
@@ -68,7 +68,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
         }
 
         base.OnFormClosing(e);
-        _settings.Script = scintillaScriptEditor.API.Script;
+        _settings.Script = scriptPanel.API.Script;
         _sharedData.Dispose();
     }
 
@@ -108,19 +108,19 @@ public partial class FormOpenCvSharpLiveDemo : Form
 
     private async Task StartWebcamAsync()
     {
-        outputPanel.Clear();
-        outputPanel.AppendLine("Compiling script...");
+        scriptPanel.Output.Clear();
+        scriptPanel.Output.AppendLine("Compiling script...");
 
-        _executableScript = await scintillaScriptEditor.API.CompileAsync();
+        _executableScript = await scriptPanel.API.CompileAsync();
 
         if (_executableScript.HasErrors)
         {
             foreach (var msg in _executableScript.CompilationOutput.Messages)
             {
-                outputPanel.AppendLine(msg);
+                scriptPanel.Output.AppendLine(msg);
             }
 
-            outputPanel.AppendLine($"Compilation failed — {_executableScript.CompilationOutput.ErrorCount} error(s). Fix the script before starting the webcam.");
+            scriptPanel.Output.AppendLine($"Compilation failed — {_executableScript.CompilationOutput.ErrorCount} error(s). Fix the script before starting the webcam.");
             SetWebcamCheckbox(isChecked: false);
             return;
         }
@@ -129,7 +129,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
 
         if (!_capture.IsOpened())
         {
-            outputPanel.AppendLine($"Could not open webcam at device index {comboBoxCameras.SelectedIndex}.");
+            scriptPanel.Output.AppendLine($"Could not open webcam at device index {comboBoxCameras.SelectedIndex}.");
             _capture.Dispose();
             _capture = null;
             SetWebcamCheckbox(isChecked: false);
@@ -138,10 +138,10 @@ public partial class FormOpenCvSharpLiveDemo : Form
 
         _isFirstFrame = true;
         _lastScriptErrorMessage = null;
-        scintillaScriptEditor.Enabled = false;
+        scriptPanel.Editor.Enabled = false;
         comboBoxCameras.Enabled = false;
         captureTimer.Start();
-        outputPanel.AppendLine("Webcam running. Double-click either image to reset zoom.");
+        scriptPanel.Output.AppendLine("Webcam running. Double-click either image to reset zoom.");
     }
 
     private void StopWebcam()
@@ -149,9 +149,9 @@ public partial class FormOpenCvSharpLiveDemo : Form
         captureTimer.Stop();
         _capture?.Dispose();
         _capture = null;
-        scintillaScriptEditor.Enabled = true;
+        scriptPanel.Editor.Enabled = true;
         comboBoxCameras?.Enabled = true;
-        outputPanel.AppendLine("Webcam stopped.");
+        scriptPanel.Output.AppendLine("Webcam stopped.");
     }
 
     /// <summary>
@@ -216,7 +216,7 @@ public partial class FormOpenCvSharpLiveDemo : Form
             if (ex.Message != _lastScriptErrorMessage)
             {
                 _lastScriptErrorMessage = ex.Message;
-                outputPanel.AppendLine($"Script error: {ex.Message}");
+                scriptPanel.Output.AppendLine($"Script error: {ex.Message}");
             }
         }
 

@@ -15,8 +15,11 @@ and full Roslyn IntelliSense.
 - **Signature help (call tips)** — parameter info as you type method calls.
 - **Hover tooltips** — type and XML-doc info on mouse hover.
 - **Error indicators** — squiggles and a live diagnostic list tied to the Roslyn compiler.
+- **Code folding** — fold and unfold regions; save and restore the folded state.
 - **Find/Replace** — built-in find and replace dialog.
+- **Documentation panel** — companion `DocsPanel` showing full XML docs for the symbol at the caret (F1).
 - **Output panel** — companion `RTFOutputPanel` for displaying script results.
+- **Ready-made panel** — `ScriptEditorPanel` combines the editor, output panel and docs panel in one control.
 
 ## Quick Start
 
@@ -54,19 +57,47 @@ separate from the standard WinForms `Control` surface.
 | `Script` | Get/set the script text shown in the editor. |
 | `HasErrors` | `true` when the most recent live-analysis pass found at least one error. |
 | `CurrentDiagnostics` | Diagnostics from the most recent analysis pass. |
-| `CompileAsync()` | Full Roslyn compilation; returns an `ExecutableScript`. |
+| `CompileAsync()` / `CompileAsync(cancellationToken)` | Full Roslyn compilation; returns an `ExecutableScript`. |
 | `CurrentCompiledScript` | The result of the last `CompileAsync()` call, or `null` if the script has changed since. |
 | `HighlightText(start, length)` | Highlights a range in the editor. |
 | `ClearHighlightText()` | Removes the active highlight. |
+| `ExpandAllFolds()` / `CollapseAllFolds()` | Expands or collapses every foldable region. |
+| `CollapsedFoldLines` | Get/set the 0-based line numbers of the collapsed folds, for saving and restoring fold state. |
+| `Manager` | The underlying `EditorManager`, for hosts that need the analysis results directly (for example the syntax tree). |
 | `ScriptChanged` | Event raised when the user modifies the script text. |
 | `DiagnosticsUpdated` | Event raised when the live-analysis diagnostic set changes. |
+
+## Documentation panel (F1)
+
+`DocsPanel` is a plain `UserControl` that shows the full XML documentation for the symbol at the
+caret: signature, summary, parameters, returns, exceptions, remarks, overloads, and a type's members,
+with links between related symbols. Press F1 in the editor to bring it up; it then follows the caret,
+until you click a link (it then stays on the pages you choose, with Back and Forward) and F1 returns it
+to following the caret. Colours follow the editor's `Theme`.
+
+The panel never shows or hides itself, so you decide where it lives (a fixed column, a docking pane,
+a tab, a floating form). Connect it to the editor and react to its two events:
+
+```csharp
+var docsPanel = new DocsPanel { Visible = false, Width = 340, Dock = DockStyle.Right };
+Controls.Add(docsPanel);
+
+docsPanel.Editor = editor;
+docsPanel.ShowRequested += (_, _) => docsPanel.Visible = true;    // F1 in the editor
+docsPanel.CloseRequested += (_, _) => docsPanel.Visible = false;  // close button or Escape
+```
+
+If you hide the panel by some other means (a docking pane's own close button), call
+`docsPanel.Close()` so that F1 starts fresh. While nothing is subscribed to the editor's
+`ScriptHelpRequested` event (which the panel does when `Editor` is set), F1 opens the older
+provisional API information window instead.
 
 See the [CDS.CSharpScript2.WinForms.Sample](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/CDS.CSharpScript2.WinForms.Sample)
 project for a full working example.
 
 ## Requirements
 
-- .NET 10.0 (Windows)
+- .NET 10.0 (Windows) or .NET Framework 4.8
 - x64 or ARM64 — Scintilla5 is a native library; AnyCPU is not supported at runtime
 
 ## Dependencies
