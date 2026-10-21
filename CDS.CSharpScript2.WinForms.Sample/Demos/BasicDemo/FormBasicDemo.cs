@@ -30,6 +30,12 @@ public partial class FormBasicDemo : Form
 
         scintillaScriptEditor.API.Environment = CDS.CSharpScript2.ScriptEnvironment.Default;
 
+        // The panel never shows or hides itself; here it lives in a fixed column beside the editor,
+        // hidden until the user presses F1 in the editor, and hidden again when they close it.
+        docsPanel.Editor = scintillaScriptEditor;
+        docsPanel.ShowRequested += (_, _) => docsPanel.Visible = true;
+        docsPanel.CloseRequested += (_, _) => docsPanel.Visible = false;
+
         // Fold levels are computed asynchronously, so the saved fold state can only be reapplied
         // once the first analysis pass has landed — the first DiagnosticsUpdated after Script is
         // set. Restoring it any earlier would have nothing to collapse yet.

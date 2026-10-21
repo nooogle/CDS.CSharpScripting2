@@ -31,6 +31,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             tableLayoutPanel1 = new TableLayoutPanel();
             scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
             outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
+            docsPanel = new CDS.CSharpScript2.ScintillaEditor.DocsPanel();
             btnCompile = new Button();
             btnRun = new Button();
             btnExpandAllFolds = new Button();
@@ -46,10 +47,12 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             // tableLayoutPanel1
             // 
             tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnCount = 2;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle());
             tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
             tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
+            tableLayoutPanel1.Controls.Add(docsPanel, 1, 0);
             tableLayoutPanel1.Location = new Point(15, 44);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 2;
@@ -74,6 +77,16 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
             outputPanel.Name = "outputPanel";
             outputPanel.Size = new Size(593, 127);
             outputPanel.TabIndex = 6;
+            // 
+            // docsPanel
+            // 
+            docsPanel.Dock = DockStyle.Fill;
+            docsPanel.Location = new Point(602, 3);
+            docsPanel.Name = "docsPanel";
+            tableLayoutPanel1.SetRowSpan(docsPanel, 2);
+            docsPanel.Size = new Size(340, 391);
+            docsPanel.TabIndex = 7;
+            docsPanel.Visible = false;
             // 
             // btnCompile
             // 
@@ -188,6 +201,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.BasicDemo
         private Button btnCollapseAllFolds;
         private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
         private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private CDS.CSharpScript2.ScintillaEditor.DocsPanel docsPanel;
         private GroupBox groupBoxTheme;
         private RadioButton rbThemeLight;
         private RadioButton rbThemeDark;

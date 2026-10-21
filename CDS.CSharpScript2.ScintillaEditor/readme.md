@@ -16,6 +16,7 @@ and full Roslyn IntelliSense.
 - **Hover tooltips** — type and XML-doc info on mouse hover.
 - **Error indicators** — squiggles and a live diagnostic list tied to the Roslyn compiler.
 - **Find/Replace** — built-in find and replace dialog.
+- **Documentation panel** — companion `DocsPanel` showing full XML docs for the symbol at the caret (F1).
 - **Output panel** — companion `RTFOutputPanel` for displaying script results.
 
 ## Quick Start
@@ -60,6 +61,31 @@ separate from the standard WinForms `Control` surface.
 | `ClearHighlightText()` | Removes the active highlight. |
 | `ScriptChanged` | Event raised when the user modifies the script text. |
 | `DiagnosticsUpdated` | Event raised when the live-analysis diagnostic set changes. |
+
+## Documentation panel (F1)
+
+`DocsPanel` is a plain `UserControl` that shows the full XML documentation for the symbol at the
+caret: signature, summary, parameters, returns, exceptions, remarks, overloads, and a type's members,
+with links between related symbols. Press F1 in the editor to bring it up; it then follows the caret,
+until you click a link (it then stays on the pages you choose, with Back and Forward) and F1 returns it
+to following the caret. Colours follow the editor's `Theme`.
+
+The panel never shows or hides itself, so you decide where it lives (a fixed column, a docking pane,
+a tab, a floating form). Connect it to the editor and react to its two events:
+
+```csharp
+var docsPanel = new DocsPanel { Visible = false, Width = 340, Dock = DockStyle.Right };
+Controls.Add(docsPanel);
+
+docsPanel.Editor = editor;
+docsPanel.ShowRequested += (_, _) => docsPanel.Visible = true;    // F1 in the editor
+docsPanel.CloseRequested += (_, _) => docsPanel.Visible = false;  // close button or Escape
+```
+
+If you hide the panel by some other means (a docking pane's own close button), call
+`docsPanel.Close()` so that F1 starts fresh. While nothing is subscribed to the editor's
+`ScriptHelpRequested` event (which the panel does when `Editor` is set), F1 opens the older
+provisional API information window instead.
 
 See the [CDS.CSharpScript2.WinForms.Sample](https://github.com/nooogle/CDS.CSharpScripting2/tree/master/CDS.CSharpScript2.WinForms.Sample)
 project for a full working example.

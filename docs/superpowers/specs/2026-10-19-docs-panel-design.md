@@ -2,6 +2,10 @@
 
 Date: 2026-10-19 · Status: draft for Jon's approval
 
+> **2026-10-21 update:** the WinForms panel described as "later" below now exists
+> (`DocsPanel` in `CDS.CSharpScript2.ScintillaEditor`; see `docs/log/2026-10-21-log.md`). The Scintilla
+> editor's event is named `ScriptHelpRequested`, because `Control` already has a `HelpRequested`.
+
 ## Intent
 
 Script authors need somewhere to read the full documentation for whatever they are working

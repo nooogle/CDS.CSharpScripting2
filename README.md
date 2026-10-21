@@ -111,6 +111,7 @@ else
 - Hover tooltips with XML-doc summaries
 - Error/warning squiggles and a live diagnostic list
 - Find/Replace
+- A `DocsPanel` companion control: F1 shows the full XML documentation for the symbol at the caret (see the [editor readme](CDS.CSharpScript2.ScintillaEditor/readme.md))
 
 Add the control to a form and wire up an environment:
 
