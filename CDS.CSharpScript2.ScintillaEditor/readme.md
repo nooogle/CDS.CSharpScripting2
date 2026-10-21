@@ -15,9 +15,11 @@ and full Roslyn IntelliSense.
 - **Signature help (call tips)** — parameter info as you type method calls.
 - **Hover tooltips** — type and XML-doc info on mouse hover.
 - **Error indicators** — squiggles and a live diagnostic list tied to the Roslyn compiler.
+- **Code folding** — fold and unfold regions; save and restore the folded state.
 - **Find/Replace** — built-in find and replace dialog.
 - **Documentation panel** — companion `DocsPanel` showing full XML docs for the symbol at the caret (F1).
 - **Output panel** — companion `RTFOutputPanel` for displaying script results.
+- **Ready-made panel** — `ScriptEditorPanel` combines the editor, output panel and docs panel in one control.
 
 ## Quick Start
 
@@ -55,10 +57,13 @@ separate from the standard WinForms `Control` surface.
 | `Script` | Get/set the script text shown in the editor. |
 | `HasErrors` | `true` when the most recent live-analysis pass found at least one error. |
 | `CurrentDiagnostics` | Diagnostics from the most recent analysis pass. |
-| `CompileAsync()` | Full Roslyn compilation; returns an `ExecutableScript`. |
+| `CompileAsync()` / `CompileAsync(cancellationToken)` | Full Roslyn compilation; returns an `ExecutableScript`. |
 | `CurrentCompiledScript` | The result of the last `CompileAsync()` call, or `null` if the script has changed since. |
 | `HighlightText(start, length)` | Highlights a range in the editor. |
 | `ClearHighlightText()` | Removes the active highlight. |
+| `ExpandAllFolds()` / `CollapseAllFolds()` | Expands or collapses every foldable region. |
+| `CollapsedFoldLines` | Get/set the 0-based line numbers of the collapsed folds, for saving and restoring fold state. |
+| `Manager` | The underlying `EditorManager`, for hosts that need the analysis results directly (for example the syntax tree). |
 | `ScriptChanged` | Event raised when the user modifies the script text. |
 | `DiagnosticsUpdated` | Event raised when the live-analysis diagnostic set changes. |
 
@@ -92,7 +97,7 @@ project for a full working example.
 
 ## Requirements
 
-- .NET 10.0 (Windows)
+- .NET 10.0 (Windows) or .NET Framework 4.8
 - x64 or ARM64 — Scintilla5 is a native library; AnyCPU is not supported at runtime
 
 ## Dependencies

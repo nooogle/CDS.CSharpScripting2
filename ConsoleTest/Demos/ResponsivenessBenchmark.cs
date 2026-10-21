@@ -15,12 +15,11 @@ namespace ConsoleTest.Demos;
 /// directives, and writes the results to a CSV file for offline review.
 /// </summary>
 /// <remarks>
-/// Written up as an open question in optimise.md §8 ("reproduce with a realistic hand-written
-/// script... to confirm the §2.3 size scaling holds") and as a documented gap in §12 ("not
-/// covered, deliberately" - the original findings came from throwaway probes, not anything
-/// checked in). This is that measurement, made repeatable.
+/// Reproduces the engine cost of colour-coding and completion on a realistic hand-written
+/// script, to confirm that cost scales with script size as earlier throwaway probes suggested.
+/// This is that measurement, made repeatable.
 /// <para>
-/// Reports raw engine cost per call (like the optimise.md §2 probes) rather than simulating the
+/// Reports raw engine cost per call rather than simulating the
 /// Scintilla editor's debounce policy - the point here is comparing how cost scales with size and
 /// directives, not reproducing perceived UX. See <see cref="Completions.TypingSessionDemo"/> for
 /// the debounce-aware version of that question.
@@ -122,7 +121,7 @@ class ResponsivenessBenchmark
         // This only covers per-config JIT/workspace cost - it does not fully isolate a config from
         // process-wide effects (tiered JIT promotion, heap growth for larger scripts) left behind by
         // whichever earlier config first exercised that code path or size. See the caveat printed
-        // at the end of the run, and optimise.md's §10 Step 1 measurement note for the same pitfall.
+        // at the end of the run.
         await manager.ApplyScript(script);
         await manager.ApplySyntacticPassAsync(script, CancellationToken.None);
         await manager.UpdateScriptDocumentAsync(probeScript);

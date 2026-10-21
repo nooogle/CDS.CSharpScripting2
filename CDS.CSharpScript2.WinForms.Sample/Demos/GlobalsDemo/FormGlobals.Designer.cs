@@ -28,50 +28,23 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.GlobalsDemo
         /// </summary>
         private void InitializeComponent()
         {
-            tableLayoutPanel1 = new TableLayoutPanel();
-            scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
-            outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
+            scriptPanel = new CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel();
             btnCompile = new Button();
             btnRun = new Button();
             groupBoxScript = new GroupBox();
             propertyGrid1 = new PropertyGrid();
             groupBox1 = new GroupBox();
-            tableLayoutPanel1.SuspendLayout();
             groupBoxScript.SuspendLayout();
             groupBox1.SuspendLayout();
             SuspendLayout();
             // 
-            // tableLayoutPanel1
+            // scriptPanel
             // 
-            tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tableLayoutPanel1.ColumnCount = 1;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
-            tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanel1.Location = new Point(344, 24);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(587, 520);
-            tableLayoutPanel1.TabIndex = 2;
-            // 
-            // scintillaScriptEditor
-            // 
-            scintillaScriptEditor.Dock = DockStyle.Fill;
-            scintillaScriptEditor.Location = new Point(3, 3);
-            scintillaScriptEditor.Name = "scintillaScriptEditor";
-            scintillaScriptEditor.Size = new Size(581, 340);
-            scintillaScriptEditor.TabIndex = 5;
-            // 
-            // outputPanel
-            // 
-            outputPanel.AllowClickLinks2 = true;
-            outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 349);
-            outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(581, 168);
-            outputPanel.TabIndex = 6;
+            scriptPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            scriptPanel.Location = new Point(344, 24);
+            scriptPanel.Name = "scriptPanel";
+            scriptPanel.Size = new Size(587, 520);
+            scriptPanel.TabIndex = 2;
             // 
             // btnCompile
             // 
@@ -129,24 +102,21 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.GlobalsDemo
             ClientSize = new Size(943, 568);
             Controls.Add(groupBox1);
             Controls.Add(groupBoxScript);
-            Controls.Add(tableLayoutPanel1);
+            Controls.Add(scriptPanel);
             Name = "FormGlobals";
             Padding = new Padding(12);
             Text = "Globals demo";
-            tableLayoutPanel1.ResumeLayout(false);
             groupBoxScript.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
-        private TableLayoutPanel tableLayoutPanel1;
         private Button btnCompile;
         private Button btnRun;
         private GroupBox groupBoxScript;
         private PropertyGrid propertyGrid1;
         private GroupBox groupBox1;
-        private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
-        private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel scriptPanel;
     }
 }

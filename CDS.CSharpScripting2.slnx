@@ -4,9 +4,6 @@
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
-  <Folder Name="/Solution Items/Docs/">
-    <File Path="architecture.md" />
-  </Folder>
   <Project Path="CDS.CSharpScript2.Avalonia.Sample/CDS.CSharpScript2.Avalonia.Sample.csproj" />
   <Project Path="CDS.CSharpScript2.Avalonia.UITests/CDS.CSharpScript2.Avalonia.UITests.csproj" />
   <Project Path="CDS.CSharpScript2.AvaloniaEditor/CDS.CSharpScript2.AvaloniaEditor.csproj" />

@@ -13,7 +13,7 @@ namespace ConsoleTest.Demos.Completions;
 /// <c>VirtualScriptEditor.TypeTextAsync</c> runs a full diagnostics-and-classification pass on
 /// every keystroke, which is heavier and un-debounced compared to what the shipped editor
 /// actually does for a completion request (<c>UpdateScriptDocumentAsync</c> plus the trigger
-/// policy replicated below). See optimise.md for the production design this mirrors.
+/// policy replicated below). This mirrors the production editor's design.
 /// </remarks>
 class TypingSessionDemo
 {

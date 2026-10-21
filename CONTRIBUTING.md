@@ -12,7 +12,7 @@ CI runs the same steps on every push/PR via `.github/workflows/ci.yml`.
 
 ## Coding conventions
 
-Follow the conventions in [`.github/copilot-instructions.md`](.github/copilot-instructions.md):
+Follow these conventions:
 
 - Allman braces, file-scoped namespaces
 - Nullable reference types enabled; annotate all public APIs

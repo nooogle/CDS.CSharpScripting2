@@ -33,8 +33,8 @@ public partial class FormOpenCvSharpDemo : Form
 
         var environment = CreateScriptEnvironment();
 
-        scintillaScriptEditor.API.Environment = environment;
-        scintillaScriptEditor.API.Script = _settings.Script;
+        scriptPanel.API.Environment = environment;
+        scriptPanel.API.Script = _settings.Script;
 
         _sharedData.Source = Cv2.ImRead($"{nameof(Demos)}/{nameof(OpenCvSharpStaticDemo)}/IMG_1412.jpeg", ImreadModes.Grayscale);
         ShowImages();
@@ -52,7 +52,7 @@ public partial class FormOpenCvSharpDemo : Form
         }
 
         base.OnFormClosing(e);
-        _settings.Script = scintillaScriptEditor.API.Script;
+        _settings.Script = scriptPanel.API.Script;
         _sharedData.Dispose();
     }
 
@@ -86,20 +86,20 @@ public partial class FormOpenCvSharpDemo : Form
         groupBoxScript.Enabled = false;
         _isRunningOrCompiling = true;
 
-        outputPanel.Clear();
+        scriptPanel.Output.Clear();
         var stopwatch = Stopwatch.StartNew();
 
         try
         {
             await action();
             stopwatch.Stop();
-            outputPanel.AppendLine($"Execution time: {stopwatch.ElapsedMilliseconds}ms");
+            scriptPanel.Output.AppendLine($"Execution time: {stopwatch.ElapsedMilliseconds}ms");
             return true;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            outputPanel.AppendLine($"Error: {ex.Message}");
+            scriptPanel.Output.AppendLine($"Error: {ex.Message}");
             return false;
         }
         finally
@@ -114,11 +114,11 @@ public partial class FormOpenCvSharpDemo : Form
     /// </summary>
     private async void btnRun_Click(object sender, EventArgs e)
     {
-        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => outputPanel.Append(text ?? string.Empty));
+        using var consoleHook = new CDS.CSharpScript2.Output.ScriptConsoleRedirect(text => scriptPanel.Output.Append(text ?? string.Empty));
 
         var didSucceed = await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.API.CompileAsync();
+            var compiled = await scriptPanel.API.CompileAsync();
             await compiled.RunAsync(_sharedData);
         });
 
@@ -135,18 +135,18 @@ public partial class FormOpenCvSharpDemo : Form
     {
         await PerformScriptActionAsync(async () =>
         {
-            var compiled = await scintillaScriptEditor.API.CompileAsync();
+            var compiled = await scriptPanel.API.CompileAsync();
             var output = compiled.CompilationOutput;
 
-            outputPanel.AppendLine("Compilation complete");
+            scriptPanel.Output.AppendLine("Compilation complete");
 
             foreach (var message in output.Messages)
             {
-                outputPanel.AppendLine(message);
+                scriptPanel.Output.AppendLine(message);
             }
 
-            outputPanel.AppendLine($"\t{output.WarningCount} warnings");
-            outputPanel.AppendLine($"\t{output.ErrorCount} errors");
+            scriptPanel.Output.AppendLine($"\t{output.WarningCount} warnings");
+            scriptPanel.Output.AppendLine($"\t{output.ErrorCount} errors");
         });
     }
 

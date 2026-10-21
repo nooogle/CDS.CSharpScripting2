@@ -62,7 +62,7 @@ public class UT_EditorExecutionParity
     /// <summary>
     /// A second type in the same assembly as <see cref="ParityGlobals"/>, named explicitly by a
     /// script rather than reached through inherited member access. Regression coverage for the
-    /// upstream bug recorded in <c>todo.md</c>: <c>ScriptContext.CreateCore</c> adds the globals
+    /// upstream bug: <c>ScriptContext.CreateCore</c> adds the globals
     /// type's assembly to the editor's references, but <c>ScriptCompiler</c> did not do the same for
     /// the execution path, so a script naming another type from that assembly compiled in the editor
     /// and failed at run time with no squiggle to warn of it.

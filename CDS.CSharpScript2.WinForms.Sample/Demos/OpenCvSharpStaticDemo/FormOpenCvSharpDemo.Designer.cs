@@ -28,9 +28,7 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo
         /// </summary>
         private void InitializeComponent()
         {
-            tableLayoutPanel1 = new TableLayoutPanel();
-            scintillaScriptEditor = new CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor();
-            outputPanel = new CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel();
+            scriptPanel = new CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel();
             btnCompile = new Button();
             btnRun = new Button();
             groupBoxScript = new GroupBox();
@@ -39,44 +37,19 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo
             label1 = new Label();
             label2 = new Label();
             pictureBoxSource = new PictureBox();
-            tableLayoutPanel1.SuspendLayout();
             groupBoxScript.SuspendLayout();
             tableLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBoxDest).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxSource).BeginInit();
             SuspendLayout();
             // 
-            // tableLayoutPanel1
+            // scriptPanel
             // 
-            tableLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tableLayoutPanel1.ColumnCount = 1;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.Controls.Add(scintillaScriptEditor, 0, 0);
-            tableLayoutPanel1.Controls.Add(outputPanel, 0, 1);
-            tableLayoutPanel1.Location = new Point(604, 24);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 66.6666641F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
-            tableLayoutPanel1.Size = new Size(327, 529);
-            tableLayoutPanel1.TabIndex = 2;
-            // 
-            // scintillaScriptEditor
-            // 
-            scintillaScriptEditor.Dock = DockStyle.Fill;
-            scintillaScriptEditor.Location = new Point(3, 3);
-            scintillaScriptEditor.Name = "scintillaScriptEditor";
-            scintillaScriptEditor.Size = new Size(321, 346);
-            scintillaScriptEditor.TabIndex = 5;
-            // 
-            // outputPanel
-            // 
-            outputPanel.AllowClickLinks2 = true;
-            outputPanel.Dock = DockStyle.Fill;
-            outputPanel.Location = new Point(3, 355);
-            outputPanel.Name = "outputPanel";
-            outputPanel.Size = new Size(321, 171);
-            outputPanel.TabIndex = 6;
+            scriptPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            scriptPanel.Location = new Point(604, 24);
+            scriptPanel.Name = "scriptPanel";
+            scriptPanel.Size = new Size(327, 529);
+            scriptPanel.TabIndex = 2;
             // 
             // btnCompile
             // 
@@ -174,11 +147,10 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo
             ClientSize = new Size(943, 568);
             Controls.Add(tableLayoutPanel2);
             Controls.Add(groupBoxScript);
-            Controls.Add(tableLayoutPanel1);
+            Controls.Add(scriptPanel);
             Name = "FormOpenCvSharpDemo";
             Padding = new Padding(12);
             Text = "Globals demo";
-            tableLayoutPanel1.ResumeLayout(false);
             groupBoxScript.ResumeLayout(false);
             tableLayoutPanel2.ResumeLayout(false);
             tableLayoutPanel2.PerformLayout();
@@ -188,12 +160,10 @@ namespace CDS.CSharpScript2.WinForms.Sample.Demos.OpenCvSharpStaticDemo
         }
 
         #endregion
-        private TableLayoutPanel tableLayoutPanel1;
         private Button btnCompile;
         private Button btnRun;
         private GroupBox groupBoxScript;
-        private CDS.CSharpScript2.ScintillaEditor.ScintillaScriptEditor scintillaScriptEditor;
-        private CDS.CSharpScript2.ScintillaEditor.RTFOutputPanel outputPanel;
+        private CDS.CSharpScript2.ScintillaEditor.ScriptEditorPanel scriptPanel;
         private TableLayoutPanel tableLayoutPanel2;
         private PictureBox pictureBoxDest;
         private Label label1;

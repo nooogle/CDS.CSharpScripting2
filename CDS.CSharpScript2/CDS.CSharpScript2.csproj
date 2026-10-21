@@ -12,7 +12,7 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<Title>CDS C# Scripting Engine</Title>
-		<Description>Roslyn-powered C# scripting engine providing compilation, execution, IntelliSense (code completion, classification, signature help), and editor integration. Embed full C# scripting — including globals and assembly references — into any .NET 10 application.</Description>
+		<Description>Roslyn-powered C# scripting engine providing compilation, execution, IntelliSense (code completion, classification, signature help), and editor integration. Embed full C# scripting — including globals and assembly references — into any .NET 10 or .NET Framework 4.8 application.</Description>
 		<PackageIcon>script.png</PackageIcon>
 		<PackageReadmeFile>readme.md</PackageReadmeFile>
 		<PackageTags>roslyn;csharp;scripting;intellisense;code-completion;compiler;embedding</PackageTags>
