@@ -76,7 +76,9 @@ public partial class ScintillaScriptEditor
                 return null;
             }
 
-            return await manager.GetDocPageAsync(position, cancellationToken);
+            var page = await manager.GetDocPageAsync(position, cancellationToken);
+            ThrowIfSuperseded(manager, stateVersion, documentVersion, cancellationToken);
+            return page;
         }
         catch (ObjectDisposedException) when (IsStale(manager, stateVersion))
         {
@@ -103,7 +105,9 @@ public partial class ScintillaScriptEditor
                 return null;
             }
 
-            return await manager.GetDocPageAsync(target, cancellationToken);
+            var page = await manager.GetDocPageAsync(target, cancellationToken);
+            ThrowIfSuperseded(manager, stateVersion, null, cancellationToken);
+            return page;
         }
         catch (ObjectDisposedException) when (IsStale(manager, stateVersion))
         {
@@ -146,6 +150,22 @@ public partial class ScintillaScriptEditor
         }
 
         return !IsStale(manager, stateVersion);
+    }
+
+    /// <summary>
+    /// Abandons a lookup whose result no longer belongs to the editor: the environment was replaced
+    /// or the editor disposed while it ran, or (for a position lookup) the text changed.
+    /// </summary>
+    /// <remarks>
+    /// Cancellation rather than a <see langword="null"/> result: the panel keeps its current page for a
+    /// cancelled request, whereas null means "no documentation here" and would replace it.
+    /// </remarks>
+    private void ThrowIfSuperseded(Editors.EditorManager manager, int stateVersion, long? documentVersion, CancellationToken cancellationToken)
+    {
+        if (IsStale(manager, stateVersion) || (documentVersion is long version && version != _documentVersion))
+        {
+            throw new OperationCanceledException(cancellationToken);
+        }
     }
 
     private bool IsStale(Editors.EditorManager? manager, int stateVersion)

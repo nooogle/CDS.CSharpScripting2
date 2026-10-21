@@ -39,7 +39,7 @@ namespace CDS.CSharpScript2.ScintillaEditor
             // 
             this.tableLayoutPanel.ColumnCount = 2;
             this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 0F));
             this.tableLayoutPanel.Controls.Add(this.scintillaScriptEditor, 0, 0);
             this.tableLayoutPanel.Controls.Add(this.outputPanel, 0, 1);
             this.tableLayoutPanel.Controls.Add(this.docsPanel, 1, 0);

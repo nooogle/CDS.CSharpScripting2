@@ -25,6 +25,10 @@ namespace CDS.CSharpScript2.ScintillaEditor;
 [Description("A C# script editor with an output panel and an F1 documentation panel.")]
 public partial class ScriptEditorPanel : UserControl
 {
+    // The docs column's preferred width in logical pixels; it is capped at half the control so the
+    // editor and output keep a usable width when the control is small.
+    private const int PreferredDocsWidth = 300;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ScriptEditorPanel"/> class.
     /// </summary>
@@ -37,6 +41,8 @@ public partial class ScriptEditorPanel : UserControl
         docsPanel.Editor = scintillaScriptEditor;
         docsPanel.ShowRequested += (_, _) => docsPanel.Visible = true;
         docsPanel.CloseRequested += (_, _) => docsPanel.Visible = false;
+        docsPanel.VisibleChanged += (_, _) => UpdateDocsColumn();
+        Resize += (_, _) => UpdateDocsColumn();
     }
 
     /// <summary>
@@ -93,5 +99,18 @@ public partial class ScriptEditorPanel : UserControl
             scintillaScriptEditor.Theme = value;
             outputPanel.Theme = value;
         }
+    }
+
+    /// <summary>
+    /// Sizes the docs column: nothing while the panel is hidden, otherwise its preferred width, but
+    /// never more than half the control.
+    /// </summary>
+    private void UpdateDocsColumn()
+    {
+        var column = tableLayoutPanel.ColumnStyles[1];
+        var preferred = (int)Math.Round(PreferredDocsWidth * DeviceDpi / 96.0);
+
+        column.SizeType = SizeType.Absolute;
+        column.Width = docsPanel.Visible ? Math.Min(preferred, ClientSize.Width / 2) : 0;
     }
 }
